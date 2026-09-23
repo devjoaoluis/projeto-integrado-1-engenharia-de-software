@@ -4,6 +4,11 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
+  auth: {
+    login: (data: any) => ipcRenderer.invoke("auth:login", data),
+    logout: () => ipcRenderer.invoke("auth:logout"),
+    getCurrentUser: () => ipcRenderer.invoke("auth:current-user"),
+  },
   properties: {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
