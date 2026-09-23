@@ -22,4 +22,11 @@ contextBridge.exposeInMainWorld("api", {
     list: (propertyId: string) => ipcRenderer.invoke("property-media:list", propertyId),
     delete: (id: string) => ipcRenderer.invoke("property-media:delete", id),
   },
+  clients: {
+    create: (data: any) => ipcRenderer.invoke("clients:create", data),
+    get: (id: string) => ipcRenderer.invoke("clients:get", id),
+    list: () => ipcRenderer.invoke("clients:list"),
+    update: (data: any) => ipcRenderer.invoke("clients:update", data),
+    delete: (id: string) => ipcRenderer.invoke("clients:delete", id),
+  },
 });

@@ -151,6 +151,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "clients": {
+      "name": "clients",
     "sessions": {
       "name": "sessions",
       "columns": {
@@ -161,6 +163,8 @@
           "notNull": true,
           "autoincrement": false
         },
+        "name": {
+          "name": "name",
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -168,6 +172,9 @@
           "notNull": true,
           "autoincrement": false
         },
+        "cpf_cnpj": {
+          "name": "cpf_cnpj",
+          "type": "text",
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -175,6 +182,8 @@
           "notNull": true,
           "autoincrement": false
         },
+        "phone": {
+          "name": "phone",
         "expires_at": {
           "name": "expires_at",
           "type": "integer",
@@ -250,6 +259,10 @@
         }
       },
       "indexes": {
+        "clients_cpf_cnpj_unique": {
+          "name": "clients_cpf_cnpj_unique",
+          "columns": [
+            "cpf_cnpj"
         "users_email_unique": {
           "name": "users_email_unique",
           "columns": [
@@ -260,7 +273,15 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "clients_cpf_cnpj_unique": {
+          "name": "clients_cpf_cnpj_unique",
+          "columns": [
+            "cpf_cnpj"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
       "checkConstraints": {}
     }
   },
