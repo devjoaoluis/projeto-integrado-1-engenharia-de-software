@@ -115,9 +115,7 @@ Substitua o `propertyId` pelo ID de um imóvel existente e coloque um caminho re
 ```javascript
 const novaMidia = await window.api.propertyMedia.add({
   propertyId: "ID_DO_IMOVEL_AQUI",
-  type: "PHOTO",
-  localPath: "C:\\Users\\proje\\Pictures\\teste.jpg", // <--- Coloque o caminho de uma foto real sua aqui
-  isMain: true
+  sourceFilePath: "C:\\Users\\proje\\Pictures\\teste.jpg" // <--- Coloque o caminho de uma foto real sua aqui
 });
 
 console.log("Mídia adicionada:", novaMidia);

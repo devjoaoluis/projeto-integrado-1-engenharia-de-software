@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld("api", {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
     list: () => ipcRenderer.invoke("properties:list"),
-    update: (data: any) => ipcRenderer.invoke("properties:update", data),
+    update: (id: string, data: any) => ipcRenderer.invoke("properties:update", { id, ...data }),
     delete: (id: string) => ipcRenderer.invoke("properties:delete", id),
   },
   propertyMedia: {
