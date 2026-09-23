@@ -5,6 +5,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
   auth: {
+    register: (data: any) => ipcRenderer.invoke("auth:register", data),
     login: (data: any) => ipcRenderer.invoke("auth:login", data),
     logout: () => ipcRenderer.invoke("auth:logout"),
     getCurrentUser: () => ipcRenderer.invoke("auth:current-user"),
@@ -13,7 +14,7 @@ contextBridge.exposeInMainWorld("api", {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
     list: () => ipcRenderer.invoke("properties:list"),
-    update: (data: any) => ipcRenderer.invoke("properties:update", data),
+    update: (id: string, data: any) => ipcRenderer.invoke("properties:update", { id, ...data }),
     delete: (id: string) => ipcRenderer.invoke("properties:delete", id),
   },
   propertyMedia: {

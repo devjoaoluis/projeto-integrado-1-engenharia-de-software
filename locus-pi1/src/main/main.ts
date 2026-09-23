@@ -1,7 +1,9 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-
+import { registerPropertiesIpc } from './ipc/properties.ipc';
+import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
+import { registerAuthIpc } from './ipc/auth.ipc';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -30,15 +32,13 @@ const createWindow = () => {
   mainWindow.webContents.openDevTools();
 };
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   createWindow();
   
-  const { registerPropertiesIpc } = require('./ipc/properties.ipc');
-  const { registerPropertyMediaIpc } = require('./ipc/property-media.ipc');
-  const { registerAuthIpc } = require('./ipc/auth.ipc');
   registerPropertiesIpc();
   registerPropertyMediaIpc();
   registerAuthIpc();

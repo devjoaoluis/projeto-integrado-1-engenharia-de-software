@@ -1,11 +1,12 @@
 import { ipcMain } from "electron";
+import { RegisterUser, RegisterUserDTO } from "../application/use-cases/auth/register-user.use-case";
 import { LoginUser, LoginUserDTO } from "../application/use-cases/auth/login-user.use-case";
 import { GetCurrentUser } from "../application/use-cases/auth/get-current-user.use-case";
 import { LogoutUser } from "../application/use-cases/auth/logout-user.use-case";
 
 import { DrizzleUserRepository } from "../infrastructure/repositories/drizzle-user.repository";
 import { DrizzleSessionRepository } from "../infrastructure/repositories/drizzle-session.repository";
-import { Argon2PasswordHasher } from "../infrastructure/security/argon2-password-hasher";
+import { BcryptPasswordHasher } from "../infrastructure/security/bcrypt-password-hasher";
 
 // Local in-memory store for session ID since the main process maintains state
 let currentSessionId: string | null = null;
@@ -13,11 +14,21 @@ let currentSessionId: string | null = null;
 export function registerAuthIpc() {
   const userRepository = new DrizzleUserRepository();
   const sessionRepository = new DrizzleSessionRepository();
-  const passwordHasher = new Argon2PasswordHasher();
+  const passwordHasher = new BcryptPasswordHasher();
 
+  const registerUser = new RegisterUser(userRepository, passwordHasher);
   const loginUser = new LoginUser(userRepository, passwordHasher, sessionRepository);
   const getCurrentUser = new GetCurrentUser(sessionRepository, userRepository);
   const logoutUser = new LogoutUser(sessionRepository);
+
+  ipcMain.handle("auth:register", async (_, data: RegisterUserDTO) => {
+    try {
+      const user = await registerUser.execute(data);
+      return { success: true, user };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
 
   ipcMain.handle("auth:login", async (_, data: LoginUserDTO) => {
     try {
