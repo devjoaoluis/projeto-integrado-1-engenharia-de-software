@@ -1,9 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import Login from "./Login.jsx";
+import { HashRouter } from "react-router-dom";
+import App from "./App.jsx";
+import { AuthProvider } from "./auth/AuthContext.jsx";
+import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <Login />
+    <HashRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </HashRouter>
   </StrictMode>
 );
