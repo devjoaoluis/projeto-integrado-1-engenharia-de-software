@@ -6,5 +6,6 @@ import path from "path";
 const databasePath = path.join(app.getPath("userData"), "database.db");
 
 const sqlite = new Database(databasePath);
+sqlite.pragma('foreign_keys = ON');
 
 export const db = drizzle(sqlite);
