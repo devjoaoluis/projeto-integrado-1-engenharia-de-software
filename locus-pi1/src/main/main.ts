@@ -38,8 +38,10 @@ app.on('ready', () => {
   
   const { registerPropertiesIpc } = require('./ipc/properties.ipc');
   const { registerPropertyMediaIpc } = require('./ipc/property-media.ipc');
+  const { registerClientsIpc } = require('./ipc/clients.ipc');
   registerPropertiesIpc();
   registerPropertyMediaIpc();
+  registerClientsIpc();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
