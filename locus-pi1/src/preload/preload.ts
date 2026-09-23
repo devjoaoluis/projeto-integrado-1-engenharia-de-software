@@ -5,6 +5,7 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
   auth: {
+    register: (data: any) => ipcRenderer.invoke("auth:register", data),
     login: (data: any) => ipcRenderer.invoke("auth:login", data),
     logout: () => ipcRenderer.invoke("auth:logout"),
     getCurrentUser: () => ipcRenderer.invoke("auth:current-user"),

@@ -1,14 +1,14 @@
-import * as argon2 from "argon2";
+import * as bcrypt from "bcryptjs";
 import { IPasswordHasher } from "../../domain/repositories/password-hasher";
 
-export class Argon2PasswordHasher implements IPasswordHasher {
+export class BcryptPasswordHasher implements IPasswordHasher {
   async hash(password: string): Promise<string> {
-    return argon2.hash(password);
+    return bcrypt.hash(password, 10);
   }
 
   async compare(password: string, passwordHash: string): Promise<boolean> {
     try {
-      return await argon2.verify(passwordHash, password);
+      return await bcrypt.compare(password, passwordHash);
     } catch {
       return false;
     }
