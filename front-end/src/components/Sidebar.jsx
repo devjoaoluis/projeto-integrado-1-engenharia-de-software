@@ -1,4 +1,3 @@
-// src/components/Sidebar.jsx
 import { 
   Home, 
   Building2, 
