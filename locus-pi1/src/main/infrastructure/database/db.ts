@@ -9,7 +9,8 @@ const client = createClient({
   url: `file:${databasePath}`,
 });
 
-sqlite.exec(`
+// Initialize tables automatically for development
+client.executeMultiple(`
   CREATE TABLE IF NOT EXISTS properties (
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
@@ -42,6 +43,6 @@ sqlite.exec(`
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
-`);
+`).catch(console.error);
 
-export const db = drizzle(sqlite);
+export const db = drizzle(client);

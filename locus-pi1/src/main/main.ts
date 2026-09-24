@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 import { registerPropertiesIpc } from './ipc/properties.ipc';
 import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
 import { registerAuthIpc } from './ipc/auth.ipc';
+import { registerClientsIpc } from './ipc/clients.ipc';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -16,6 +17,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
     },
   });
 
@@ -39,11 +41,9 @@ const createWindow = () => {
 app.on('ready', () => {
   createWindow();
   
-  const { registerPropertiesIpc } = require('./ipc/properties.ipc');
-  const { registerPropertyMediaIpc } = require('./ipc/property-media.ipc');
-  const { registerClientsIpc } = require('./ipc/clients.ipc');
   registerPropertiesIpc();
   registerPropertyMediaIpc();
+  registerAuthIpc();
   registerClientsIpc();
 });
 

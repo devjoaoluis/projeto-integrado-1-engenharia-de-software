@@ -4,7 +4,16 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   build: {
     rollupOptions: {
-      external: ['@libsql/client', 'bcryptjs', 'drizzle-orm'],
+      external: [
+        'electron',
+        '@libsql/client',
+        'bcryptjs',
+        'drizzle-orm',
+        'drizzle-orm/libsql',
+        'sqlite',
+        'sqlite3',
+        'better-sqlite3'
+      ],
     },
   },
 });
