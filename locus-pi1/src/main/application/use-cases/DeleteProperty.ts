@@ -1,3 +1,4 @@
+import { PropertyStatus } from "../../domain/entities/Property";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
 import { IPropertyMediaRepository } from "../../domain/repositories/IPropertyMediaRepository";
 import { IFileStorage } from "../../domain/repositories/IFileStorage";
@@ -13,6 +14,10 @@ export class DeleteProperty {
     const property = await this.propertyRepository.findById(id);
     if (!property) {
       throw new Error(`Property with id ${id} not found`);
+    }
+
+    if (property.status === PropertyStatus.ALUGADO) {
+      throw new Error("A rented property cannot be deleted");
     }
 
     const medias = await this.propertyMediaRepository.findByPropertyId(id);

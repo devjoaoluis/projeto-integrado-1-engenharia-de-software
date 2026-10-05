@@ -34,6 +34,19 @@ class MockFileStorage implements IFileStorage {
 }
 
 describe("DeleteProperty Use Case", () => {
+  it("preserves media when deletion of a rented property is rejected", async () => {
+    const propRepo = new MockPropertyRepository();
+    const mediaRepo = new MockPropertyMediaRepository();
+    const storage = new MockFileStorage();
+    await propRepo.create({ id: "rented", title: "T", address: "A", price: 100, description: null,
+      status: PropertyStatus.ALUGADO, createdAt: 1, updatedAt: 1 });
+    await mediaRepo.create({ id: "media", propertyId: "rented", type: MediaType.IMAGE,
+      fileName: "x.jpg", filePath: "x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
+    await assert.rejects(new DeleteProperty(propRepo, mediaRepo, storage).execute("rented"), /cannot be deleted/);
+    assert.equal(propRepo.properties.length, 1);
+    assert.equal(mediaRepo.medias.length, 1);
+    assert.deepStrictEqual(storage.deletedFiles, []);
+  });
   it("should delete a property and its related media files", async () => {
     const propRepo = new MockPropertyRepository();
     const mediaRepo = new MockPropertyMediaRepository();

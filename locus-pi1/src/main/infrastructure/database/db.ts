@@ -43,4 +43,27 @@ sqlite.exec(`
   );
 `);
 
+sqlite.exec(`
+CREATE TABLE IF NOT EXISTS rentals (
+  id TEXT PRIMARY KEY NOT NULL,
+  property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+  monthly_rent REAL NOT NULL CHECK (monthly_rent > 0),
+  start_date INTEGER NOT NULL,
+  due_day INTEGER NOT NULL CHECK (due_day BETWEEN 1 AND 31),
+  parent_rental_id TEXT REFERENCES rentals(id) ON DELETE RESTRICT,
+  formal_consent TEXT,
+  contract_signed INTEGER NOT NULL DEFAULT 0 CHECK (contract_signed IN (0, 1)),
+  signatures_notarized INTEGER NOT NULL DEFAULT 0 CHECK (signatures_notarized IN (0, 1)),
+  initial_payments_paid INTEGER NOT NULL DEFAULT 0 CHECK (initial_payments_paid IN (0, 1)),
+  keys_released_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK (parent_rental_id IS NULL OR length(trim(formal_consent)) > 0 AND formal_consent IS NOT NULL),
+  CHECK (keys_released_at IS NULL OR (contract_signed = 1 AND signatures_notarized = 1 AND initial_payments_paid = 1))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(property_id) WHERE parent_rental_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
+`);
+
 export const db = drizzle(sqlite);

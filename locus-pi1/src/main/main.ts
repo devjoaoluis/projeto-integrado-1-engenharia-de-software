@@ -42,6 +42,8 @@ app.on('ready', () => {
   registerPropertiesIpc();
   registerPropertyMediaIpc();
   registerClientsIpc();
+  const { registerRentalsIpc } = require('./ipc/rentals.ipc');
+  registerRentalsIpc();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
