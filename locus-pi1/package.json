@@ -51,5 +51,13 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.21.5": true,
+    "esbuild@0.28.2": true,
+    "electron@32.1.2": true,
+    "electron-winstaller@5.4.4": true
   }
 }

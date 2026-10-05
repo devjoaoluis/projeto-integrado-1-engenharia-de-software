@@ -1,10 +1,14 @@
-import { defineConfig } from "drizzle-kit";
+import { defineConfig } from 'drizzle-kit';
+import path from 'node:path';
+
+const appDataPath = process.env.APPDATA || '';
+const dbPath = path.join(appDataPath, 'locus-pi1', 'database.db').replace(/\\/g, '/');
 
 export default defineConfig({
-  schema: "./src/main/infrastructure/database/schema/*",
-  out: "./src/main/infrastructure/database/migrations",
-  dialect: "sqlite",
+  schema: './src/main/infrastructure/database/schema/*', // ou o caminho exato da sua pasta de schema
+  out: './drizzle',
+  dialect: 'sqlite',
   dbCredentials: {
-    url: "file:C:/Users/proje/AppData/Roaming/locus-pi1/database.db"
-  }
+    url: `file:${dbPath}`,
+  },
 });
