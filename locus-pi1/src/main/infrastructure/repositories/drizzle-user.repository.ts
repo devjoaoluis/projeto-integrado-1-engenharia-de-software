@@ -39,4 +39,11 @@ export class DrizzleUserRepository implements IUserRepository {
       atualizadoEm: row.atualizadoEm,
     };
   }
+
+  // Adicione o método dentro da classe DrizzleUserRepository:
+
+  async count(): Promise<number> {
+    const result = await db.select().from(users);
+    return result.length;
+  }
 }

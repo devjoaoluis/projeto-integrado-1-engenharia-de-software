@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("api", {
     login: (data: any) => ipcRenderer.invoke("auth:login", data),
     logout: () => ipcRenderer.invoke("auth:logout"),
     getCurrentUser: () => ipcRenderer.invoke("auth:current-user"),
+    hasUsers: () => ipcRenderer.invoke("auth:has-users"),
   },
   properties: {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
