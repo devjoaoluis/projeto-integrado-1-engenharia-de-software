@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("api", {
   properties: {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
+    overview: (id: string) => ipcRenderer.invoke("properties:overview", id),
     list: () => ipcRenderer.invoke("properties:list"),
     update: (id: string, data: any) =>
       ipcRenderer.invoke("properties:update", { id, ...data }),
@@ -29,11 +30,36 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("property-media:list", propertyId),
     delete: (id: string) => ipcRenderer.invoke("property-media:delete", id),
   },
+  propertyHistory: {
+    record: (data: import("../main/application/use-cases/RecordPropertyHistory").RecordPropertyHistoryDTO) => ipcRenderer.invoke("property-history:record", data),
+  },
+  rentals: {
+    create: (data: import("../main/application/use-cases/CreateRental").CreateRentalDTO) => ipcRenderer.invoke("rentals:create", data),
+    get: (id: string) => ipcRenderer.invoke("rentals:get", id),
+    list: () => ipcRenderer.invoke("rentals:list"),
+    updatePrerequisites: (data: import("../main/application/use-cases/UpdateRentalPrerequisites").UpdateRentalPrerequisitesDTO) => ipcRenderer.invoke("rentals:update-prerequisites", data),
+    releaseKeys: (id: string) => ipcRenderer.invoke("rentals:release-keys", id),
+  },
+  owners: {
+    create: (data: import("../main/application/use-cases/CreateContact").CreateContactDTO) => ipcRenderer.invoke("owners:create", data),
+    update: (data: import("../main/application/use-cases/UpdateContact").UpdateContactDTO) => ipcRenderer.invoke("owners:update", data),
+    get: (id: string) => ipcRenderer.invoke("owners:get", id),
+    list: () => ipcRenderer.invoke("owners:list"),
+    delete: (id: string) => ipcRenderer.invoke("owners:delete", id),
+  },
+  guarantors: {
+    create: (data: import("../main/application/use-cases/CreateContact").CreateContactDTO) => ipcRenderer.invoke("guarantors:create", data),
+    update: (data: import("../main/application/use-cases/UpdateContact").UpdateContactDTO) => ipcRenderer.invoke("guarantors:update", data),
+    get: (id: string) => ipcRenderer.invoke("guarantors:get", id),
+    list: () => ipcRenderer.invoke("guarantors:list"),
+    delete: (id: string) => ipcRenderer.invoke("guarantors:delete", id),
+  },
   clients: {
-    create: (data: any) => ipcRenderer.invoke("clients:create", data),
+    create: (data: import("../main/application/use-cases/CreateClient").CreateClientDTO) => ipcRenderer.invoke("clients:create", data),
     get: (id: string) => ipcRenderer.invoke("clients:get", id),
+    profile: (id: string) => ipcRenderer.invoke("clients:profile", id),
     list: () => ipcRenderer.invoke("clients:list"),
-    update: (data: any) => ipcRenderer.invoke("clients:update", data),
+    update: (data: import("../main/application/use-cases/UpdateClient").UpdateClientDTO) => ipcRenderer.invoke("clients:update", data),
     delete: (id: string) => ipcRenderer.invoke("clients:delete", id),
   },
 });
