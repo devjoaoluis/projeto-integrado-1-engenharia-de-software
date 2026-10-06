@@ -57,4 +57,15 @@ export function registerAuthIpc() {
     }
     return { success: true };
   });
+
+  ipcMain.handle("auth:has-users", async () => {
+  try {
+    const userCount = await userRepository.count();
+    const hasUsers = userCount > 0;
+    
+    return { success: true, hasUsers };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+});
 }
