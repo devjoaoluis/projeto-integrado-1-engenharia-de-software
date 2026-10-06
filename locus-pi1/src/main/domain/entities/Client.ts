@@ -1,9 +1,8 @@
-export interface Client {
-  id: string;
-  name: string;
-  cpfCnpj: string;
-  phone: string;
-  email: string | null;
-  createdAt: number;
-  updatedAt: number;
+import { Contact } from "./Contact";
+
+export type ClientType = "TENANT" | "INTERESTED";
+
+export interface Client extends Contact {
+  type: ClientType;
+  guarantorId: string | null;
 }

@@ -49,7 +49,7 @@ beforeEach(async () => {
     DELETE FROM rentals; DELETE FROM property_media; DELETE FROM properties; DELETE FROM clients;
     INSERT INTO properties VALUES ('property', 'Casa', 'Rua', 'Descrição', 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO properties VALUES ('other', 'Outra casa', 'Outra rua', NULL, 1000, 'DISPONIVEL', 1, 1);
-    INSERT INTO clients VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);`);
+    INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);`);
 });
 after(() => {
   client.close();

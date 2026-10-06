@@ -1,3 +1,5 @@
+import { GetClientProfile } from "../application/use-cases/GetClientProfile";
+import { DrizzleGuarantorRepository } from "../infrastructure/repositories/DrizzleGuarantorRepository";
 import { ipcMain } from "electron";
 import { CreateClient, CreateClientDTO } from "../application/use-cases/CreateClient";
 import { GetClient } from "../application/use-cases/GetClient";
@@ -10,11 +12,15 @@ import { DrizzleClientRepository } from "../infrastructure/repositories/DrizzleC
 export function registerClientsIpc() {
   const clientRepo = new DrizzleClientRepository();
 
-  const createClient = new CreateClient(clientRepo);
+  const guarantorRepo = new DrizzleGuarantorRepository();
+  const profile = new GetClientProfile(clientRepo, guarantorRepo);
+  const createClient = new CreateClient(clientRepo, guarantorRepo);
   const getClient = new GetClient(clientRepo);
   const listClients = new ListClients(clientRepo);
-  const updateClient = new UpdateClient(clientRepo);
+  const updateClient = new UpdateClient(clientRepo, guarantorRepo);
   const deleteClient = new DeleteClient(clientRepo);
+
+  ipcMain.handle("clients:profile", async (_, id: string) => profile.execute(id));
 
   ipcMain.handle("clients:create", async (_, data: CreateClientDTO) => {
     return await createClient.execute(data);
