@@ -54,7 +54,7 @@ describe("Client Use Cases", () => {
     });
 
     assert.strictEqual(client.name, "João Silva");
-    assert.strictEqual(client.cpfCnpj, "123.456.789-00");
+    assert.strictEqual(client.cpfCnpj, "12345678900");
     assert.strictEqual(client.phone, "(85) 99999-9999");
     assert.strictEqual(client.email, "joao@email.com");
     assert.ok(client.id);

@@ -37,8 +37,8 @@ beforeEach(async () => {
   await sqlite.executeMultiple(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
     DELETE FROM rentals; DELETE FROM properties; DELETE FROM clients;
     INSERT INTO properties VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
-    INSERT INTO clients VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);
-    INSERT INTO clients VALUES ('subtenant', 'Cliente 2', '456', '9999', NULL, 1, 1);`);
+    INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);
+    INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('subtenant', 'Cliente 2', '456', '9999', NULL, 1, 1);`);
 });
 after(() => {
   sqlite.close();
@@ -54,7 +54,7 @@ describe("Rental SQLite persistence", () => {
       await initializeDatabase(bootstrap);
       assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
       assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
-      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 10);
+      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 12);
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {

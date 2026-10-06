@@ -4,6 +4,7 @@ import started from 'electron-squirrel-startup';
 import { registerPropertiesIpc } from './ipc/properties.ipc';
 import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
 import { registerAuthIpc } from './ipc/auth.ipc';
+import { registerContactsIpc } from './ipc/contacts.ipc';
 import { registerClientsIpc } from './ipc/clients.ipc';
 import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
 import { registerRentalsIpc } from './ipc/rentals.ipc';
@@ -48,6 +49,7 @@ app.on('ready', async () => {
   registerPropertyMediaIpc();
   registerAuthIpc();
   registerClientsIpc();
+  registerContactsIpc();
   registerRentalsIpc();
   registerPropertyOverviewIpc();
   createWindow();

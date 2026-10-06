@@ -1,3 +1,4 @@
+import { initializeContacts } from "./initializeContacts";
 import { propertyHistoryTables } from "./propertyHistoryTables";
 import { Client } from "@libsql/client";
 
@@ -76,4 +77,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(pro
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
 `);
   await client.executeMultiple(propertyHistoryTables);
+  await initializeContacts(client);
 }

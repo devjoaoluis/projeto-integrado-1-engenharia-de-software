@@ -36,6 +36,13 @@
       "when": 1791303018818,
       "tag": "0004_add_property_history",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791304409518,
+      "tag": "0005_add_contact_profiles",
+      "breakpoints": true
     }
   ]
 }

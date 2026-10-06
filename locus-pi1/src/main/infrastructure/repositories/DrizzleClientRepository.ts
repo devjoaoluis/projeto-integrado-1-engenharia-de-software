@@ -12,6 +12,8 @@ export class DrizzleClientRepository implements IClientRepository {
       cpfCnpj: client.cpfCnpj,
       phone: client.phone,
       email: client.email,
+      type: client.type,
+      guarantorId: client.guarantorId,
       createdAt: client.createdAt,
       updatedAt: client.updatedAt,
     });
@@ -25,7 +27,7 @@ export class DrizzleClientRepository implements IClientRepository {
   }
 
   async findByCpfCnpj(cpfCnpj: string): Promise<Client | null> {
-    const result = await db.select().from(clients).where(eq(clients.cpfCnpj, cpfCnpj)).limit(1);
+    const result = await db.select().from(clients).where(eq(clients.cpfCnpj, cpfCnpj.replace(/\D/g, ""))).limit(1);
     if (!result || result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
@@ -43,6 +45,8 @@ export class DrizzleClientRepository implements IClientRepository {
         cpfCnpj: client.cpfCnpj,
         phone: client.phone,
         email: client.email,
+        type: client.type,
+        guarantorId: client.guarantorId,
         updatedAt: client.updatedAt,
       })
       .where(eq(clients.id, client.id));
@@ -60,6 +64,8 @@ export class DrizzleClientRepository implements IClientRepository {
       cpfCnpj: row.cpfCnpj,
       phone: row.phone,
       email: row.email,
+      type: row.type,
+      guarantorId: row.guarantorId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };
