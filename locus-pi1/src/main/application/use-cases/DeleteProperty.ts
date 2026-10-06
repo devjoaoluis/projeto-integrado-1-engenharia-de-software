@@ -1,3 +1,4 @@
+import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
 import { PropertyStatus } from "../../domain/entities/Property";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
 import { IPropertyMediaRepository } from "../../domain/repositories/IPropertyMediaRepository";
@@ -7,7 +8,8 @@ export class DeleteProperty {
   constructor(
     private propertyRepository: IPropertyRepository,
     private propertyMediaRepository: IPropertyMediaRepository,
-    private fileStorage: IFileStorage
+    private fileStorage: IFileStorage,
+    private historyRepository?: IPropertyHistoryRepository
   ) {}
 
   async execute(id: string): Promise<void> {
@@ -18,6 +20,13 @@ export class DeleteProperty {
 
     if (property.status === PropertyStatus.ALUGADO) {
       throw new Error("A rented property cannot be deleted");
+    }
+
+    if (this.historyRepository) {
+      const history = await this.historyRepository.findByPropertyId(id);
+      if (Object.values(history).some(records => records.length > 0)) {
+        throw new Error("A property with history cannot be deleted");
+      }
     }
 
     const medias = await this.propertyMediaRepository.findByPropertyId(id);

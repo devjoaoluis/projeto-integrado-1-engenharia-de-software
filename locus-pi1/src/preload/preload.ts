@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld("api", {
   properties: {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
+    overview: (id: string) => ipcRenderer.invoke("properties:overview", id),
     list: () => ipcRenderer.invoke("properties:list"),
     update: (id: string, data: any) => ipcRenderer.invoke("properties:update", { id, ...data }),
     delete: (id: string) => ipcRenderer.invoke("properties:delete", id),
@@ -22,6 +23,9 @@ contextBridge.exposeInMainWorld("api", {
     add: (data: any) => ipcRenderer.invoke("property-media:add", data),
     list: (propertyId: string) => ipcRenderer.invoke("property-media:list", propertyId),
     delete: (id: string) => ipcRenderer.invoke("property-media:delete", id),
+  },
+  propertyHistory: {
+    record: (data: import("../main/application/use-cases/RecordPropertyHistory").RecordPropertyHistoryDTO) => ipcRenderer.invoke("property-history:record", data),
   },
   rentals: {
     create: (data: import("../main/application/use-cases/CreateRental").CreateRentalDTO) => ipcRenderer.invoke("rentals:create", data),

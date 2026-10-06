@@ -1,3 +1,4 @@
+import { propertyHistoryTables } from "./propertyHistoryTables";
 import { Client } from "@libsql/client";
 
 export async function initializeDatabase(client: Client): Promise<void> {
@@ -74,4 +75,5 @@ CREATE TABLE IF NOT EXISTS rentals (
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(property_id) WHERE parent_rental_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
 `);
+  await client.executeMultiple(propertyHistoryTables);
 }
