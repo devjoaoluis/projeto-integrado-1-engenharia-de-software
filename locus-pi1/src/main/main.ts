@@ -5,6 +5,7 @@ import { registerPropertiesIpc } from './ipc/properties.ipc';
 import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
 import { registerAuthIpc } from './ipc/auth.ipc';
 import { registerClientsIpc } from './ipc/clients.ipc';
+import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
 import { registerRentalsIpc } from './ipc/rentals.ipc';
 import { databaseReady } from './infrastructure/database/db';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -48,6 +49,7 @@ app.on('ready', async () => {
   registerAuthIpc();
   registerClientsIpc();
   registerRentalsIpc();
+  registerPropertyOverviewIpc();
   createWindow();
 });
 
