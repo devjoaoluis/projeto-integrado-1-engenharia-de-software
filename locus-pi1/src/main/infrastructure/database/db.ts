@@ -3,9 +3,15 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import path from "path";
 
-const databasePath = path.join(app.getPath("userData"), "database.db");
+let basePath = "";
+try {
+  basePath = app && app.getPath ? app.getPath("userData") : path.join(process.cwd(), "test-userdata");
+} catch (e) {
+  basePath = path.join(process.cwd(), "test-userdata");
+}
+const databasePath = path.join(basePath, "database.db");
 
-const client = createClient({
+export const client = createClient({
   url: `file:${databasePath}`,
 });
 
