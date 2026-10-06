@@ -7,6 +7,8 @@ export interface RegisterUserDTO {
   nome: string;
   email: string;
   senha: string;
+  perguntaSeguranca: string;
+  respostaSeguranca: string;
 }
 
 export class RegisterUser {
@@ -15,36 +17,50 @@ export class RegisterUser {
     private passwordHasher: IPasswordHasher
   ) {}
 
-  async execute(dto: RegisterUserDTO): Promise<Omit<User, 'senhaHash'>> {
-    if (!dto.nome || !dto.email || !dto.senha) {
-      throw new Error("Nome, email e senha são obrigatórios.");
+  async execute(dto: RegisterUserDTO): Promise<Omit<User, "senhaHash" | "respostaHash">> {
+    if (
+      !dto.nome ||
+      !dto.email ||
+      !dto.senha ||
+      !dto.perguntaSeguranca ||
+      !dto.respostaSeguranca
+    ) {
+      throw new Error("Todos os campos são obrigatórios.");
     }
 
     if (dto.senha.length < 6) {
       throw new Error("A senha deve ter pelo menos 6 caracteres.");
     }
 
-    const existingUser = await this.userRepository.findByEmail(dto.email);
+    // Normaliza o e-mail (remove espaços e converte para minúsculas)
+    const emailNormalizado = dto.email.trim().toLowerCase();
+
+    const existingUser = await this.userRepository.findByEmail(emailNormalizado);
     if (existingUser) {
       throw new Error("Este email já está em uso.");
     }
 
     const senhaHash = await this.passwordHasher.hash(dto.senha);
+
+    const respostaNormalizada = dto.respostaSeguranca.trim().toLowerCase();
+    const respostaHash = await this.passwordHasher.hash(respostaNormalizada);
+
     const now = Date.now();
 
     const newUser: User = {
       id: randomUUID(),
-      nome: dto.nome,
-      email: dto.email,
+      nome: dto.nome.trim(),
+      email: emailNormalizado, // Utiliza o e-mail normalizado
       senhaHash,
+      perguntaSeguranca: dto.perguntaSeguranca,
+      respostaHash,
       criadoEm: now,
       atualizadoEm: now,
     };
 
     const createdUser = await this.userRepository.create(newUser);
 
-    // Retornamos o usuário omitindo a senha, por segurança
-    const { senhaHash: _, ...userSemSenha } = createdUser;
-    return userSemSenha;
+    const { senhaHash: _, respostaHash: __, ...userSemDadosSensiveis } = createdUser;
+    return userSemDadosSensiveis;
   }
 }

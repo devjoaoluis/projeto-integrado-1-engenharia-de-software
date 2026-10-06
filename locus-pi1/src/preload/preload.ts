@@ -10,17 +10,23 @@ contextBridge.exposeInMainWorld("api", {
     logout: () => ipcRenderer.invoke("auth:logout"),
     getCurrentUser: () => ipcRenderer.invoke("auth:current-user"),
     hasUsers: () => ipcRenderer.invoke("auth:has-users"),
+    getSecurityQuestion: (email: string) =>
+      ipcRenderer.invoke("auth:get-security-question", email),
+    resetPassword: (data: any) =>
+      ipcRenderer.invoke("auth:reset-password", data),
   },
   properties: {
     create: (data: any) => ipcRenderer.invoke("properties:create", data),
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
     list: () => ipcRenderer.invoke("properties:list"),
-    update: (id: string, data: any) => ipcRenderer.invoke("properties:update", { id, ...data }),
+    update: (id: string, data: any) =>
+      ipcRenderer.invoke("properties:update", { id, ...data }),
     delete: (id: string) => ipcRenderer.invoke("properties:delete", id),
   },
   propertyMedia: {
     add: (data: any) => ipcRenderer.invoke("property-media:add", data),
-    list: (propertyId: string) => ipcRenderer.invoke("property-media:list", propertyId),
+    list: (propertyId: string) =>
+      ipcRenderer.invoke("property-media:list", propertyId),
     delete: (id: string) => ipcRenderer.invoke("property-media:delete", id),
   },
   clients: {
