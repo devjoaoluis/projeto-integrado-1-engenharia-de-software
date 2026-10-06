@@ -1,14 +1,14 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { LoginUser } from "../login-user.use-case";
-import { GetCurrentUser } from "../get-current-user.use-case";
-import { LogoutUser } from "../logout-user.use-case";
-import { User } from "../../../../domain/entities/user.entity";
-import { Session } from "../../../../domain/entities/session.entity";
-import { IUserRepository } from "../../../../domain/repositories/user.repository";
-import { ISessionRepository } from "../../../../domain/repositories/session.repository";
-import { IPasswordHasher } from "../../../../domain/repositories/password-hasher";
-import { InvalidCredentialsError } from "../../../../domain/errors/auth.errors";
+import { LoginUser } from "../auth/login-user.use-case";
+import { GetCurrentUser } from "../auth/get-current-user.use-case";
+import { LogoutUser } from "../auth/logout-user.use-case";
+import { User } from "../../../domain/entities/user.entity";
+import { Session } from "../../../domain/entities/session.entity";
+import { IUserRepository } from "../../../domain/repositories/user.repository";
+import { ISessionRepository } from "../../../domain/repositories/session.repository";
+import { IPasswordHasher } from "../../../domain/repositories/password-hasher";
+import { InvalidCredentialsError } from "../../../domain/errors/auth.errors";
 
 // Fakes
 class FakeUserRepository implements IUserRepository {

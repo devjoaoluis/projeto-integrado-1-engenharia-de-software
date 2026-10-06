@@ -23,6 +23,13 @@ contextBridge.exposeInMainWorld("api", {
     list: (propertyId: string) => ipcRenderer.invoke("property-media:list", propertyId),
     delete: (id: string) => ipcRenderer.invoke("property-media:delete", id),
   },
+  rentals: {
+    create: (data: import("../main/application/use-cases/CreateRental").CreateRentalDTO) => ipcRenderer.invoke("rentals:create", data),
+    get: (id: string) => ipcRenderer.invoke("rentals:get", id),
+    list: () => ipcRenderer.invoke("rentals:list"),
+    updatePrerequisites: (data: import("../main/application/use-cases/UpdateRentalPrerequisites").UpdateRentalPrerequisitesDTO) => ipcRenderer.invoke("rentals:update-prerequisites", data),
+    releaseKeys: (id: string) => ipcRenderer.invoke("rentals:release-keys", id),
+  },
   clients: {
     create: (data: any) => ipcRenderer.invoke("clients:create", data),
     get: (id: string) => ipcRenderer.invoke("clients:get", id),
