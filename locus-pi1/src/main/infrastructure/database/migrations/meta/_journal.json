@@ -19,8 +19,15 @@
     {
       "idx": 2,
       "version": "6",
+      "when": 1790203000001,
+      "tag": "0002_add_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
       "when": 1791219600000,
-      "tag": "0002_add_rentals",
+      "tag": "0003_add_rentals",
       "breakpoints": true
     }
   ]

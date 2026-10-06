@@ -1,23 +1,29 @@
-import { describe, it, beforeEach, after } from "node:test";
+import { describe, it, before, beforeEach, after } from "node:test";
 import assert from "node:assert";
 import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { createClient } from "@libsql/client";
+import { initializeDatabase } from "../../database/initializeDatabase";
+import { drizzle } from "drizzle-orm/libsql";
+import { PropertyStatus } from "../../../domain/entities/Property";
 import { Rental } from "../../../domain/entities/Rental";
 
-const sqlite = new Database(":memory:");
-sqlite.pragma("foreign_keys = ON");
+const sqlite = createClient({ url: "file::memory:" });
 const migrations = path.join(process.cwd(), "src/main/infrastructure/database/migrations");
-for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_rentals.sql"]) {
-  sqlite.exec(fs.readFileSync(path.join(migrations, name), "utf8"));
-}
+before(async () => {
+  await sqlite.execute("PRAGMA foreign_keys = ON");
+  for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_auth.sql", "0003_add_rentals.sql"]) {
+    await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, name), "utf8"));
+  }
+});
 // Inject an isolated real SQLite database without starting Electron.
 const databaseModule = require.resolve("../../database/db");
 const previousModule = require.cache[databaseModule];
 require.cache[databaseModule] = { exports: { db: drizzle(sqlite) } } as NodeModule;
 // eslint-disable-next-line @typescript-eslint/no-var-requires -- load after injecting the test database
 const { DrizzleRentalRepository } = require("../DrizzleRentalRepository") as typeof import("../DrizzleRentalRepository");
+// eslint-disable-next-line @typescript-eslint/no-var-requires -- load after injecting the test database
+const { DrizzlePropertyRepository } = require("../DrizzlePropertyRepository") as typeof import("../DrizzlePropertyRepository");
 const repo = new DrizzleRentalRepository();
 
 function rental(id = "rental"): Rental {
@@ -27,8 +33,8 @@ function rental(id = "rental"): Rental {
     keysReleasedAt: null, createdAt: 1, updatedAt: 2 };
 }
 
-beforeEach(() => {
-  sqlite.exec(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
+beforeEach(async () => {
+  await sqlite.executeMultiple(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
     DELETE FROM rentals; DELETE FROM properties; DELETE FROM clients;
     INSERT INTO properties VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO clients VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);
@@ -41,25 +47,28 @@ after(() => {
 });
 
 describe("Rental SQLite persistence", () => {
-  it("bootstraps fresh and existing databases idempotently", () => {
-    const bootstrap = new Database(":memory:");
+  it("bootstraps fresh and existing databases idempotently", async () => {
+    const bootstrap = createClient({ url: "file::memory:" });
     try {
-      const source = fs.readFileSync(path.join(process.cwd(), "src/main/infrastructure/database/db.ts"), "utf8");
-      const statements = [...source.matchAll(/sqlite\.exec\(`([\s\S]*?)`\);/g)].map(match => match[1]);
-      assert.equal(statements.length, 2);
-      for (let run = 0; run < 2; run++) for (const statement of statements) bootstrap.exec(statement);
-      assert.equal((bootstrap.prepare("PRAGMA table_info(rentals)").all()).length, 14);
+      await initializeDatabase(bootstrap);
+      await initializeDatabase(bootstrap);
+      assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
+      assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
+      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 6);
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {
     await repo.create(rental());
-    assert.equal((sqlite.prepare("SELECT status FROM properties").get() as { status: string }).status, "ALUGADO");
-    assert.equal((await repo.findById("rental")).monthlyRent, 1000);
+    assert.equal((await sqlite.execute("SELECT status FROM properties")).rows[0].status, "ALUGADO");
+    const saved = await repo.findById("rental");
+    assert.ok(saved);
+    assert.equal(saved.monthlyRent, 1000);
     assert.equal((await repo.findAll()).length, 1);
   });
   it("rolls the status change back when insertion fails", async () => {
-    await assert.rejects(repo.create({ ...rental(), tenantId: "missing" }), /FOREIGN KEY/);
-    assert.equal((sqlite.prepare("SELECT status FROM properties").get() as { status: string }).status, "DISPONIVEL");
+    await assert.rejects(repo.create({ ...rental(), tenantId: "missing" }), (error: Error & { cause?: Error }) =>
+      /FOREIGN KEY/.test(error.cause?.message ?? error.message));
+    assert.equal((await sqlite.execute("SELECT status FROM properties")).rows[0].status, "DISPONIVEL");
     assert.equal((await repo.findAll()).length, 0);
   });
   it("rejects concurrent primary associations", async () => {
@@ -82,9 +91,20 @@ describe("Rental SQLite persistence", () => {
     assert.equal((await repo.releaseKeys("rental", 20)).keysReleasedAt, 10);
     await assert.rejects(repo.updatePrerequisites("rental", { contractSigned: false, signaturesNotarized: true, initialPaymentsPaid: true }), /already released/);
   });
+  it("prevents property edits from changing ALUGADO while allowing other edits", async () => {
+    await repo.create(rental());
+    const propertyRepo = new DrizzlePropertyRepository();
+    const property = await propertyRepo.findById("property");
+    assert.ok(property);
+    await assert.rejects(propertyRepo.update({ ...property, status: PropertyStatus.DISPONIVEL }), /must keep ALUGADO/);
+    await propertyRepo.update({ ...property, title: "Casa atualizada" });
+    const updated = await propertyRepo.findById("property");
+    assert.equal(updated?.status, PropertyStatus.ALUGADO);
+    assert.equal(updated?.title, "Casa atualizada");
+  });
   it("preserves rentals when deleting referenced properties or clients", async () => {
     await repo.create(rental());
-    assert.throws(() => sqlite.prepare("DELETE FROM properties").run(), /FOREIGN KEY/);
-    assert.throws(() => sqlite.prepare("DELETE FROM clients WHERE id = 'tenant'").run(), /FOREIGN KEY/);
+    await assert.rejects(sqlite.execute("DELETE FROM properties"), /FOREIGN KEY/);
+    await assert.rejects(sqlite.execute("DELETE FROM clients WHERE id = 'tenant'"), /FOREIGN KEY/);
   });
 });

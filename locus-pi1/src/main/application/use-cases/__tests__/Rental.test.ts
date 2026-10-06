@@ -16,11 +16,13 @@ class MockRentalRepository implements IRentalRepository {
   async findAll() { return this.rentals; }
   async updatePrerequisites(id: string, data: Pick<Rental, "contractSigned" | "signaturesNotarized" | "initialPaymentsPaid">) {
     const rental = await this.findById(id);
+    if (!rental) throw new Error("Rental not found");
     Object.assign(rental, data);
     return rental;
   }
   async releaseKeys(id: string, date: number) {
     const rental = await this.findById(id);
+    if (!rental) throw new Error("Rental not found");
     rental.keysReleasedAt = date;
     return rental;
   }

@@ -32,7 +32,7 @@ export class DrizzlePropertyRepository implements IPropertyRepository {
   }
 
   async update(property: Property): Promise<Property> {
-    if (property.status !== PropertyStatus.ALUGADO && db.select({ id: rentals.id }).from(rentals)
+    if (property.status !== PropertyStatus.ALUGADO && await db.select({ id: rentals.id }).from(rentals)
       .where(eq(rentals.propertyId, property.id)).limit(1).get()) {
       throw new Error("A property with a rental must keep ALUGADO status");
     }
