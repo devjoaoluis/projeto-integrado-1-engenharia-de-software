@@ -5,6 +5,8 @@ export interface UpdatePropertyDTO {
   id: string;
   title?: string;
   address?: string;
+  neighborhood?: string;
+  bedrooms?: number;
   description?: string;
   price?: number;
   status?: PropertyStatus;
@@ -26,6 +28,12 @@ export class UpdateProperty {
     if (dto.address !== undefined) {
       if (dto.address.trim() === "") throw new Error("Address cannot be empty");
       property.address = dto.address;
+    }
+    if (dto.neighborhood !== undefined) {
+      property.neighborhood = dto.neighborhood;
+    }
+    if (dto.bedrooms !== undefined) {
+      property.bedrooms = dto.bedrooms;
     }
     if (dto.price !== undefined) {
       if (dto.price < 0) throw new Error("Price cannot be negative");

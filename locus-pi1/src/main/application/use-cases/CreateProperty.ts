@@ -5,6 +5,8 @@ import { IPropertyRepository } from "../../domain/repositories/IPropertyReposito
 export interface CreatePropertyDTO {
   title: string;
   address: string;
+  neighborhood?: string;
+  bedrooms?: number;
   description?: string;
   price: number;
 }
@@ -27,6 +29,8 @@ export class CreateProperty {
       id: randomUUID(),
       title: dto.title,
       address: dto.address,
+      neighborhood: dto.neighborhood || null,
+      bedrooms: dto.bedrooms ?? null,
       description: dto.description || null,
       price: dto.price,
       status: PropertyStatus.CADASTRADO,
