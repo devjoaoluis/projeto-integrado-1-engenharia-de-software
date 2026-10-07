@@ -2,6 +2,7 @@ import { ipcMain } from "electron";
 import { RegisterUser, RegisterUserDTO } from "../application/use-cases/auth/register-user.use-case";
 import { LoginUser, LoginUserDTO } from "../application/use-cases/auth/login-user.use-case";
 import { GetCurrentUser } from "../application/use-cases/auth/get-current-user.use-case";
+import { ResetPassword, ResetPasswordDTO } from "../application/use-cases/auth/reset-password.use-case";
 import { LogoutUser } from "../application/use-cases/auth/logout-user.use-case";
 
 import { DrizzleUserRepository } from "../infrastructure/repositories/drizzle-user.repository";
@@ -19,6 +20,7 @@ export function registerAuthIpc() {
   const loginUser = new LoginUser(userRepository, passwordHasher, sessionRepository);
   const getCurrentUser = new GetCurrentUser(sessionRepository, userRepository);
   const logoutUser = new LogoutUser(sessionRepository);
+  const resetPassword = new ResetPassword(userRepository, passwordHasher, sessionRepository);
 
   ipcMain.handle("auth:register", async (_, data: RegisterUserDTO) => {
     try {
@@ -89,44 +91,12 @@ export function registerAuthIpc() {
     }
   });
 
-  // Redefine a senha tratando 'resposta' ou 'respostaSeguranca' e normalizando os dados
-  ipcMain.handle("auth:reset-password", async (_, data: any) => {
+  ipcMain.handle("auth:reset-password", async (_, data: ResetPasswordDTO) => {
     try {
-      const email = data.email;
-      const resposta = data.respostaSeguranca || data.resposta;
-      const novaSenha = data.novaSenha;
-
-      if (!email || !resposta || !novaSenha) {
-        return { success: false, error: "Todos os campos são obrigatórios." };
-      }
-
-      const emailNormalizado = email.trim().toLowerCase();
-      const user = await userRepository.findByEmail(emailNormalizado);
-
-      if (!user) {
-        return { success: false, error: "Usuário não encontrado." };
-      }
-
-      if (!user.respostaHash) {
-        return { success: false, error: "Usuário não possui pergunta de segurança configurada." };
-      }
-
-      const respostaNormalizada = resposta.trim().toLowerCase();
-      const isRespostaValida = await passwordHasher.compare(
-        respostaNormalizada,
-        user.respostaHash
-      );
-
-      if (!isRespostaValida) {
-        return { success: false, error: "Resposta de segurança incorreta." };
-      }
-
-      const novaSenhaHash = await passwordHasher.hash(novaSenha);
-      await userRepository.updatePassword(user.id, novaSenhaHash);
-
+      await resetPassword.execute(data);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      return { success: false, error: error instanceof Error ? error.message : "Não foi possível redefinir a senha." };
     }
   });
 }

@@ -8,7 +8,7 @@ export class GetCurrentUser {
     private userRepository: IUserRepository
   ) {}
 
-  async execute(sessionId: string): Promise<User | null> {
+  async execute(sessionId: string): Promise<Omit<User, "senhaHash" | "respostaHash"> | null> {
     if (!sessionId) {
       return null;
     }
@@ -31,6 +31,13 @@ export class GetCurrentUser {
       return null;
     }
 
-    return user;
+    return {
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      perguntaSeguranca: user.perguntaSeguranca,
+      criadoEm: user.criadoEm,
+      atualizadoEm: user.atualizadoEm,
+    };
   }
 }
