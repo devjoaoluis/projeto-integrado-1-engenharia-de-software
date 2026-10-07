@@ -10,7 +10,7 @@ import { DrizzleRentalRepository } from "../infrastructure/repositories/DrizzleR
 export function registerPropertyOverviewIpc() {
   const historyRepo = new DrizzlePropertyHistoryRepository();
   const propertyRepo = new DrizzlePropertyRepository();
-  const overview = new GetPropertyOverview(propertyRepo, new DrizzlePropertyMediaRepository(), historyRepo);
+  const overview = new GetPropertyOverview(propertyRepo, new DrizzlePropertyMediaRepository(), historyRepo, new DrizzleRentalRepository());
   const record = new RecordPropertyHistory(historyRepo, propertyRepo, new DrizzleClientRepository(), new DrizzleRentalRepository());
 
   ipcMain.handle("properties:overview", async (_, propertyId: string) => overview.execute(propertyId));

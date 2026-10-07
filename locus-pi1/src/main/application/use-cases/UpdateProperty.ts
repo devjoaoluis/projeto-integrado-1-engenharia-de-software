@@ -14,6 +14,7 @@ export interface UpdatePropertyDTO {
   fiscalStatus?: string;
   sanitationStatus?: string;
   registrationDate?: string;
+  ownerId?: string | null;
   status?: PropertyStatus;
 }
 
@@ -67,6 +68,9 @@ export class UpdateProperty {
     }
     if (dto.registrationDate !== undefined) {
       property.registrationDate = dto.registrationDate || null;
+    }
+    if (dto.ownerId !== undefined) {
+      property.ownerId = dto.ownerId || null;
     }
     if (dto.status !== undefined) {
       property.status = dto.status;

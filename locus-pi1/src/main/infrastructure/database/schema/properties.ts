@@ -13,6 +13,7 @@ export const properties = sqliteTable("properties", {
   fiscalStatus: text("fiscal_status"),
   sanitationStatus: text("sanitation_status"),
   registrationDate: text("registration_date"),
+  ownerId: text("owner_id"),
   status: text("status", {
     enum: ["CADASTRADO", "DISPONIVEL", "VENDIDO", "ALUGADO", "INATIVO"],
   })

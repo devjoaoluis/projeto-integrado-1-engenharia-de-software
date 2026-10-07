@@ -5,6 +5,7 @@ import { Sidebar } from "../components/Sidebar";
 const titulos = {
     "/home": "Home",
     "/imoveis": "Imóveis",
+    "/contatos": "Contatos",
     "/imoveis/cadastrar": "Cadastrar Imóvel",
     "/contratos": "Contratos",
     "/pagamentos": "Pagamentos",

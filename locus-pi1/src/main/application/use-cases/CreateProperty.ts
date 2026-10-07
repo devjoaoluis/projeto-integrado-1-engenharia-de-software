@@ -14,6 +14,7 @@ export interface CreatePropertyDTO {
   fiscalStatus?: string;
   sanitationStatus?: string;
   registrationDate?: string;
+  ownerId?: string | null;
 }
 
 export class CreateProperty {
@@ -48,6 +49,7 @@ export class CreateProperty {
       fiscalStatus: dto.fiscalStatus || null,
       sanitationStatus: dto.sanitationStatus || null,
       registrationDate: dto.registrationDate || null,
+      ownerId: dto.ownerId ?? null,
       status: PropertyStatus.CADASTRADO,
       createdAt: Date.now(),
       updatedAt: Date.now(),
