@@ -51,4 +51,16 @@ export class DrizzleRentalRepository implements IRentalRepository {
         .where(eq(rentals.id, id)).returning().get();
     });
   }
+
+  async cancel(id: string, cancelledAt: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      const rental = await tx.select().from(rentals).where(eq(rentals.id, id)).get();
+      if (!rental) throw new Error(`Rental with id ${id} not found`);
+      if (rental.parentRentalId === null) {
+        await tx.update(properties).set({ status: "DISPONIVEL", updatedAt: cancelledAt })
+          .where(eq(properties.id, rental.propertyId)).run();
+      }
+      await tx.delete(rentals).where(eq(rentals.id, id)).run();
+    });
+  }
 }

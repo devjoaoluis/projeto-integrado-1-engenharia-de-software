@@ -88,6 +88,8 @@ contextBridge.exposeInMainWorld("api", {
 
     releaseKeys: (id: string) =>
       ipcRenderer.invoke("rentals:release-keys", id),
+    cancel: (id: string) =>
+      ipcRenderer.invoke("rentals:cancel", id),
   },
 
   owners: {

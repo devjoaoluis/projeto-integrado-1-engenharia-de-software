@@ -6,6 +6,7 @@ ALTER TABLE `properties` ADD `type` text;
 ALTER TABLE `properties` ADD `fiscal_status` text;
 ALTER TABLE `properties` ADD `sanitation_status` text;
 ALTER TABLE `properties` ADD `registration_date` text;
+ALTER TABLE `properties` ADD `owner_id` text;
 
 CREATE INDEX `idx_status_neighborhood` ON `properties` (`status`, `neighborhood`);
 CREATE INDEX `idx_price` ON `properties` (`price`);

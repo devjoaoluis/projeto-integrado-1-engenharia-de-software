@@ -8,24 +8,43 @@ function VisaoGeralImovel() {
   const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState("contratos");
   const [midiaAtiva, setMidiaAtiva] = useState(0);
+  const [locatarios, setLocatarios] = useState([]);
+  const [proprietarios, setProprietarios] = useState([]);
+  const [proprietarioId, setProprietarioId] = useState("");
+  const [salvandoProprietario, setSalvandoProprietario] = useState(false);
+  const [erroProprietario, setErroProprietario] = useState("");
+  const [locacao, setLocacao] = useState({
+    tenantId: "",
+    monthlyRent: "",
+    startDate: new Date().toISOString().slice(0, 10),
+    dueDay: "10",
+  });
+  const [salvandoLocacao, setSalvandoLocacao] = useState(false);
+  const [erroLocacao, setErroLocacao] = useState("");
+  const [sucessoLocacao, setSucessoLocacao] = useState("");
 
   const [result, setResult] = useState({ id: null, imovel: null, erro: "" });
+
+  async function carregarOverview() {
+    const overview = await window.api.properties.overview(id);
+    const contracts = [...overview.contracts.current, ...overview.contracts.previous, ...overview.contracts.scheduled];
+    const tenantNames = Object.fromEntries(await Promise.all(
+      [...new Set(contracts.map(contract => contract.tenantId))].map(async tenantId => {
+        try { return [tenantId, (await window.api.clients.get(tenantId)).name]; }
+        catch { return [tenantId, "Locatário não encontrado"]; }
+      })
+    ));
+    const modelo = adaptPropertyOverview(overview, tenantNames);
+    setProprietarioId(modelo.ownerId || "");
+    setResult({ id, imovel: modelo, erro: "" });
+    setMidiaAtiva(0);
+  }
+
   useEffect(() => {
     let active = true;
     async function load() {
       try {
-        const overview = await window.api.properties.overview(id);
-        const contracts = [...overview.contracts.current, ...overview.contracts.previous, ...overview.contracts.scheduled];
-        const tenantNames = Object.fromEntries(await Promise.all(
-          [...new Set(contracts.map(contract => contract.tenantId))].map(async tenantId => {
-            try { return [tenantId, (await window.api.clients.get(tenantId)).name]; }
-            catch { return [tenantId, "Locatário não encontrado"]; }
-          })
-        ));
-        if (active) {
-          setResult({ id, imovel: adaptPropertyOverview(overview, tenantNames), erro: "" });
-          setMidiaAtiva(0);
-        }
+        if (active) await carregarOverview();
       } catch {
         if (active) setResult({ id, imovel: null, erro: "Não foi possível carregar este imóvel. Ele pode ter sido removido." });
       }
@@ -34,14 +53,84 @@ function VisaoGeralImovel() {
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    let active = true;
+    window.api.clients.list()
+      .then((clientes) => {
+        if (active) setLocatarios((clientes || []).filter((cliente) => cliente.type === "TENANT"));
+      })
+      .catch((error) => console.error("Erro ao carregar locatários:", error));
+    window.api.owners.list()
+      .then((lista) => { if (active) setProprietarios(lista || []); })
+      .catch((error) => console.error("Erro ao carregar proprietários:", error));
+    return () => { active = false; };
+  }, []);
+
   if (result.id !== id) return <p role="status">Carregando imóvel...</p>;
   if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
   const imovel = result.imovel;
+  const contratoVigente = imovel.contratos.find((contrato) => contrato.status === "Vigente");
+  const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
+
+  function atualizarLocacao(event) {
+    const { name, value } = event.target;
+    setLocacao((atual) => ({ ...atual, [name]: value }));
+  }
+
+  async function associarLocatario(event) {
+    event.preventDefault();
+    setErroLocacao("");
+    setSucessoLocacao("");
+    setSalvandoLocacao(true);
+    try {
+      await window.api.rentals.create({
+        propertyId: imovel.id,
+        tenantId: locacao.tenantId,
+        monthlyRent: imovel.valor,
+        startDate: new Date(`${locacao.startDate}T00:00:00`).getTime(),
+        dueDay: Number(locacao.dueDay),
+      });
+      await carregarOverview();
+      setSucessoLocacao("Locatário associado com sucesso. O imóvel foi marcado como alugado.");
+      setLocacao((atual) => ({ ...atual, tenantId: "" }));
+    } catch (error) {
+      console.error("Erro ao associar locatário:", error);
+      setErroLocacao(error.message || "Não foi possível associar o locatário.");
+    } finally {
+      setSalvandoLocacao(false);
+    }
+  }
+
+  async function salvarProprietario(event) {
+    event.preventDefault();
+    setErroProprietario("");
+    setSalvandoProprietario(true);
+    try {
+      await window.api.properties.update(imovel.id, { ownerId: proprietarioId || null });
+      await carregarOverview();
+    } catch (error) {
+      console.error("Erro ao associar proprietário:", error);
+      setErroProprietario(error.message || "Não foi possível associar o proprietário.");
+    } finally {
+      setSalvandoProprietario(false);
+    }
+  }
+
+  async function desassociarLocatario() {
+    if (!contratoVigente || !window.confirm("Deseja desassociar este locatário?")) return;
+    try {
+      await window.api.rentals.cancel(contratoVigente.id);
+      await carregarOverview();
+      setSucessoLocacao("Locatário desassociado com sucesso.");
+    } catch (error) {
+      setErroLocacao(error.message || "Não foi possível desassociar o locatário.");
+    }
+  }
 
   return (
     <>
@@ -83,7 +172,7 @@ function VisaoGeralImovel() {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 12px;
+          gap: 14px;
         }
 
         .galeria-imovel {
@@ -145,6 +234,83 @@ function VisaoGeralImovel() {
           font-size: 13px;
         }
 
+        .associacao-locacao {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .associacao-locacao h3 {
+          margin: 0 0 2px;
+          color: #1976d2;
+        }
+
+        .form-locacao {
+          display: grid;
+          grid-template-columns: 2fr repeat(3, 1fr) auto;
+          gap: 12px;
+          align-items: end;
+          margin-top: 2px;
+        }
+
+        .form-locacao label {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          color: #555;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .form-locacao input, .form-locacao select {
+          min-height: 40px;
+          padding: 0 10px;
+          border: 1px solid #c8cdd2;
+          border-radius: 4px;
+          background: white;
+        }
+
+        .form-locacao button {
+          min-height: 40px;
+          padding: 0 14px;
+          border: none;
+          border-radius: 4px;
+          background: #1976d2;
+          color: white;
+          cursor: pointer;
+          font-weight: 600;
+        }
+
+        .form-locacao-valor {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-height: 40px;
+          color: #555;
+          font-size: 12px;
+        }
+
+        .form-locacao-valor span {
+          min-height: 40px;
+          display: flex;
+          align-items: center;
+          color: #1976d2;
+          font-size: 16px;
+        }
+
+        @media (max-width: 900px) {
+          .form-locacao {
+            grid-template-columns: repeat(2, 1fr);
+          }
+          .form-locacao button {
+            grid-column: span 2;
+          }
+        }
+
         .imovel-titulo {
           font-size: 24px;
           font-weight: bold;
@@ -155,6 +321,46 @@ function VisaoGeralImovel() {
         .imovel-endereco {
           color: #666;
           font-size: 14px;
+          margin: 0;
+        }
+
+        .imovel-descricao {
+          max-width: 720px;
+          margin: 0;
+          color: #444;
+          white-space: pre-wrap;
+          line-height: 1.5;
+        }
+
+        .imovel-detalhes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px 20px;
+          margin: 0;
+          color: #555;
+          font-size: 14px;
+        }
+
+        .locatario-atual {
+          background: #eef8f1;
+          border: 1px solid #b7dfc1;
+          border-radius: 8px;
+          padding: 12px;
+          color: #245b32;
+          margin: 0;
+        }
+
+        .proprietario-atual {
+          background: #eef8f1;
+          border: 1px solid #b7dfc1;
+          border-radius: 8px;
+          padding: 12px;
+          color: #245b32;
+          margin: 0;
+        }
+
+        .associacao-locacao > p[role="alert"],
+        .associacao-locacao > p[role="status"] {
           margin: 0;
         }
 
@@ -223,6 +429,11 @@ function VisaoGeralImovel() {
           <div className="imovel-header-info">
             <h2 className="imovel-titulo">{imovel.titulo}</h2>
             <p className="imovel-endereco">{imovel.endereco}</p>
+            <p className="imovel-descricao">{imovel.descricao || "Nenhuma descrição cadastrada."}</p>
+            <p className="imovel-detalhes">
+              <span><strong>Quartos:</strong> {imovel.quartos ?? "Não informado"}</span>
+              <span><strong>Tipo:</strong> {imovel.tipo || "Não informado"}</span>
+            </p>
 
             <div className="imovel-tags">
               <Badge texto={imovel.status} cor={imovel.status === "Disponível" ? "verde" : "vermelho"} />
@@ -275,6 +486,71 @@ function VisaoGeralImovel() {
               </p>
             </>
           )}
+        </section>
+
+        <section className="associacao-locacao" aria-label="Associar locatário">
+          <h3>Associar locatário</h3>
+          {contratoVigente && (
+            <p className="locatario-atual">
+              <strong>Locatário associado:</strong> {contratoVigente.locatario}
+            </p>
+          )}
+          <form className="form-locacao" onSubmit={associarLocatario}>
+            <label>
+              Locatário cadastrado
+              <select name="tenantId" value={locacao.tenantId} onChange={atualizarLocacao} required>
+                <option value="">Selecione</option>
+                {locatarios.map((locatario) => (
+                  <option key={locatario.id} value={locatario.id}>{locatario.name}</option>
+                ))}
+              </select>
+            </label>
+            <div className="form-locacao-valor">
+              <strong>Valor do aluguel</strong>
+              <span>{valorFormatado}</span>
+            </div>
+            <label>
+              Início
+              <input name="startDate" type="date" value={locacao.startDate} onChange={atualizarLocacao} required />
+            </label>
+            <label>
+              Dia de vencimento
+              <input name="dueDay" type="number" min="1" max="31" value={locacao.dueDay} onChange={atualizarLocacao} required />
+            </label>
+            <button type="submit" disabled={salvandoLocacao || locatarios.length === 0 || Boolean(contratoVigente)}>
+              {contratoVigente ? "Locatário associado" : salvandoLocacao ? "Salvando..." : "Associar"}
+            </button>
+          </form>
+          {locatarios.length === 0 && <p>Nenhum cliente do tipo locatário foi cadastrado.</p>}
+          {erroLocacao && <p role="alert">{erroLocacao}</p>}
+          {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
+          {contratoVigente && (
+            <button type="button" className="voltar-btn" onClick={desassociarLocatario}>
+              Desassociar locatário
+            </button>
+          )}
+        </section>
+
+        <section className="associacao-locacao" aria-label="Associar proprietário">
+          <h3>Associar proprietário</h3>
+          <p className="proprietario-atual">
+            <strong>Proprietário atual:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
+          </p>
+          <form className="form-locacao" onSubmit={salvarProprietario}>
+            <label>
+              Proprietário cadastrado
+              <select value={proprietarioId} onChange={(event) => setProprietarioId(event.target.value)}>
+                <option value="">Nenhum proprietário</option>
+                {proprietarios.map((proprietario) => (
+                  <option key={proprietario.id} value={proprietario.id}>{proprietario.name}</option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" disabled={salvandoProprietario}>
+              {salvandoProprietario ? "Salvando..." : "Salvar proprietário"}
+            </button>
+          </form>
+          {erroProprietario && <p role="alert">{erroProprietario}</p>}
         </section>
 
 

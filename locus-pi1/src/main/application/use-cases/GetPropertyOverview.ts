@@ -2,12 +2,14 @@ import { PropertyOverview } from "../../domain/entities/PropertyHistory";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
 import { IPropertyMediaRepository } from "../../domain/repositories/IPropertyMediaRepository";
 import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
+import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 
 export class GetPropertyOverview {
   constructor(
     private propertyRepository: IPropertyRepository,
     private mediaRepository: IPropertyMediaRepository,
     private historyRepository: IPropertyHistoryRepository,
+    private rentalRepository?: IRentalRepository,
   ) {}
 
   async execute(propertyId: string): Promise<PropertyOverview> {
@@ -25,6 +27,25 @@ export class GetPropertyOverview {
         contracts.scheduled.push(contract);
       } else {
         contracts.current.push(contract);
+      }
+    }
+    if (this.rentalRepository) {
+      const rentals = (await this.rentalRepository.findAll()).filter((rental) => rental.propertyId === propertyId && rental.parentRentalId === null);
+      for (const rental of rentals) {
+        if (!contracts.current.some((contract) => contract.rentalId === rental.id)) {
+          contracts.current.push({
+            id: rental.id,
+            propertyId: rental.propertyId,
+            tenantId: rental.tenantId,
+            rentalId: rental.id,
+            reference: rental.id,
+            monthlyRent: rental.monthlyRent,
+            startDate: rental.startDate,
+            endDate: null,
+            status: "ACTIVE",
+            createdAt: rental.createdAt,
+          });
+        }
       }
     }
     return { property, media, contracts, payments: history.payments,

@@ -13,6 +13,7 @@ const dadosVazios = {
     numero: "",
     complemento: "",
     valorAluguel: "",
+    quartos: "",
     tipo: "",
     situacaoSaneamento: "",
     valorIptu: "",
@@ -74,6 +75,7 @@ function CadastrarImovel() {
                 numero: numeroExt,
                 complemento: compExt,
                 valorAluguel: imovelEditar.valorAluguel ?? imovelEditar.price ?? "",
+                quartos: imovelEditar.quartos ?? imovelEditar.bedrooms ?? "",
                 descricao: imovelEditar.descricao ?? imovelEditar.description ?? "",
                 valorIptu: imovelEditar.valorIptu ?? imovelEditar.iptu ?? "",
                 tipo: imovelEditar.tipo ?? imovelEditar.type ?? "",
@@ -149,6 +151,7 @@ function CadastrarImovel() {
                 description: dados.descricao || "",
                 price: Number(dados.valorAluguel) || 0,
                 valorAluguel: Number(dados.valorAluguel) || 0,
+                bedrooms: dados.quartos === "" ? undefined : Number(dados.quartos),
                 iptu: dados.valorIptu === "" ? undefined : Number(dados.valorIptu),
                 valorIptu: dados.valorIptu === "" ? undefined : Number(dados.valorIptu),
                 type: dados.tipo,
@@ -328,6 +331,15 @@ function CadastrarImovel() {
                             min="0"
                             step="0.01"
                             value={dados.valorIptu}
+                            onChange={mudar}
+                        />
+                        <Campo
+                            label="Número de quartos"
+                            name="quartos"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={dados.quartos}
                             onChange={mudar}
                         />
 

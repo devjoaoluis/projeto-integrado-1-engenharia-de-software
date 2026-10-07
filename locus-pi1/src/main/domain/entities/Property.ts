@@ -19,6 +19,7 @@ export interface Property {
   fiscalStatus?: string | null;
   sanitationStatus?: string | null;
   registrationDate?: string | null;
+  ownerId?: string | null;
   status: PropertyStatus;
   createdAt: number;
   updatedAt: number;

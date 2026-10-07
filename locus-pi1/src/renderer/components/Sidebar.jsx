@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   Building2,
+  Users,
   FileText,
   ArrowLeftRight,
   CalendarDays,
@@ -13,6 +14,7 @@ import { sair } from "../auth/session";
 const menuItens = [
   { nome: "Home", icone: Home, to: "/home" },
   { nome: "Imóveis", icone: Building2, to: "/imoveis" },
+  { nome: "Contatos", icone: Users, to: "/contatos" },
   { nome: "Contratos", icone: FileText, to: "/contratos" },
   { nome: "Pagamentos", icone: ArrowLeftRight, to: "/pagamentos" },
   { nome: "Visitas", icone: CalendarDays, to: "/visitas" },

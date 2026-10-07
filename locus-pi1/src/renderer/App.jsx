@@ -8,6 +8,7 @@ import Home from "./Home";
 import Imoveis from "./Imoveis";
 import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
+import Contatos from "./Contatos";
 
 export default function App() {
   const [hasUsers, setHasUsers] = useState(null);
@@ -53,6 +54,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/imoveis" element={<Imoveis />} />
+            <Route path="/contatos" element={<Contatos />} />
                 <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
             <Route path="/contratos" element={<div>Contratos</div>} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
