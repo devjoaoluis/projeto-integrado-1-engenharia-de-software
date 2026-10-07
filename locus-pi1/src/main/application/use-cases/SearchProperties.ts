@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { PropertyStatus } from "../../domain/entities/Property";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
-import { SearchPropertiesResult, SearchPropertiesParams } from "../../../shared/types/properties";
+import { SearchPropertiesResult } from "../../../shared/types/properties";
 
 export const SearchPropertiesSchema = z.object({
   q: z.string().optional(),

@@ -12,7 +12,7 @@ const sqlite = createClient({ url: "file::memory:" });
 const migrations = path.join(process.cwd(), "src/main/infrastructure/database/migrations");
 before(async () => {
   await sqlite.execute("PRAGMA foreign_keys = ON");
-  for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_auth.sql", "0003_add_rentals.sql"]) {
+  for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_auth.sql", "0003_add_rentals.sql", "0006_search_filters.sql"]) {
     await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, name), "utf8"));
   }
 });
@@ -36,7 +36,7 @@ function rental(id = "rental"): Rental {
 beforeEach(async () => {
   await sqlite.executeMultiple(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
     DELETE FROM rentals; DELETE FROM properties; DELETE FROM clients;
-    INSERT INTO properties VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
+    INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);
     INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('subtenant', 'Cliente 2', '456', '9999', NULL, 1, 1);`);
 });

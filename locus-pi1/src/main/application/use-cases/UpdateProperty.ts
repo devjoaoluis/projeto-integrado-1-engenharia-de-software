@@ -16,6 +16,11 @@ export class UpdateProperty {
   constructor(private propertyRepository: IPropertyRepository) {}
 
   async execute(dto: UpdatePropertyDTO): Promise<Property> {
+    if (dto.bedrooms !== undefined && dto.bedrooms !== null &&
+        (!Number.isSafeInteger(dto.bedrooms) || dto.bedrooms < 0)) {
+      throw new Error("Bedrooms must be a non-negative integer");
+    }
+
     const property = await this.propertyRepository.findById(dto.id);
     if (!property) {
       throw new Error(`Property with id ${dto.id} not found`);

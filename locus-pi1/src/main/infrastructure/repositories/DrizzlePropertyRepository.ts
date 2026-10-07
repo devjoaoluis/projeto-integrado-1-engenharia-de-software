@@ -1,5 +1,6 @@
 import { rentals } from "../database/schema/rentals";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, inArray, sql } from "drizzle-orm";
+import { SearchPropertiesParams, SearchPropertiesResult, PropertyStatus as SearchPropertyStatus } from "../../../shared/types/properties";
 import { db } from "../database/db";
 import { properties } from "../database/schema/properties";
 import { Property, PropertyStatus } from "../../domain/entities/Property";
@@ -34,8 +35,7 @@ export class DrizzlePropertyRepository implements IPropertyRepository {
     return results.map((row) => this.mapToDomain(row));
   }
 
-  async search(params: any): Promise<any> {
-    const { eq, and, like, gte, lte, desc, asc, inArray, sql } = require("drizzle-orm");
+  async search(params: SearchPropertiesParams): Promise<SearchPropertiesResult> {
     const {
       q, neighborhood, priceMin, priceMax, bedrooms, status,
       orderBy = "recent", page = 1, limit = 20
@@ -97,7 +97,7 @@ export class DrizzlePropertyRepository implements IPropertyRepository {
 
     // Map to domain or return as is. Let's return as partial.
     return {
-      items: results,
+      items: results.map(item => ({ ...item, status: item.status as SearchPropertyStatus })),
       total,
       limit,
       offset
