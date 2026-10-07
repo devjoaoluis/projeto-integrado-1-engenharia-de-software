@@ -26,7 +26,6 @@ function Imoveis() {
                         const midias = await window.api.propertyMedia.list(imovel.id);
                         if (midias && midias.length > 0) {
                             const rawPath = midias[0].filePath.replace(/\\/g, '/');
-                            // Sanitiza caminhos locais para evitar bloqueio URI
                             foto = rawPath.startsWith('http') 
                                 ? rawPath 
                                 : `file:///${encodeURI(rawPath)}`;
@@ -44,10 +43,33 @@ function Imoveis() {
         }
     }
 
-    // Aplicação do fatiamento por página
+    async function handleRemover(id) {
+        if (window.confirm("Tem certeza que deseja excluir este imóvel?")) {
+            try {
+                await window.api.properties.delete(id);
+                setImoveis((prev) => prev.filter((imovel) => imovel.id !== id));
+            } catch (error) {
+                console.error("Erro ao remover:", error);
+                alert("Erro ao remover o imóvel: " + error.message);
+            }
+        }
+    }
+
+    // Passa o objeto completo do imóvel pela memória da navegação (state)
+    function handleEditar(imovel) {
+        navigate("/imoveis/cadastrar", { state: { imovelEditar: imovel } });
+    }
+
+    const totalPaginas = Math.ceil(imoveis.length / ITENS_POR_PAGINA) || 1;
+
+    useEffect(() => {
+        if (pagina > totalPaginas) {
+            setPagina(totalPaginas);
+        }
+    }, [imoveis.length, pagina, totalPaginas]);
+
     const inicio = (pagina - 1) * ITENS_POR_PAGINA;
     const imoveisPaginados = imoveis.slice(inicio, inicio + ITENS_POR_PAGINA);
-    const totalPaginas = Math.ceil(imoveis.length / ITENS_POR_PAGINA) || 1;
 
     return (
         <>
@@ -77,7 +99,8 @@ function Imoveis() {
                     <Button
                         texto="Cadastrar imóvel"
                         type="button"
-                        onClick={() => navigate("/imoveis/cadastrar")}
+                        /* Se clicar em cadastrar, garante que o estado de edição vai vazio */
+                        onClick={() => navigate("/imoveis/cadastrar", { state: null })}
                     />
                 </div>
             </div>
@@ -93,6 +116,8 @@ function Imoveis() {
                         tipo="Residencial" 
                         status={imovel.status} 
                         foto={imovel.foto} 
+                        onEditar={() => handleEditar(imovel)}
+                        onRemover={() => handleRemover(imovel.id)}
                     />
                 ))}
             </div>
