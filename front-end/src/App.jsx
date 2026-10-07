@@ -3,6 +3,7 @@ import Login from "./Login";
 import AppLayout from "./layouts/AppLayout";
 import Home from "./Home";
 import Imoveis from "./Imoveis";
+import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Locatarios from "./Locatarios";
 
@@ -15,6 +16,7 @@ export default function App() {
             <Route element={<AppLayout />}>
                 <Route path="/home" element={<Home />} />
                 <Route path="/imoveis" element={<Imoveis />} />
+                <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
                 <Route path="/contratos" element={<div>Contratos</div>} />
                 <Route path="/pagamentos" element={<div>Pagamentos</div>} />
                 <Route path="/visitas" element={<div>Visitas</div>} />

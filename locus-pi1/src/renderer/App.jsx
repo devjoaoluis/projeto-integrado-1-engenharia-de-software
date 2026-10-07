@@ -6,6 +6,7 @@ import ForgotPassword from "./components/ForgotPassword"
 import AppLayout from "./layouts/AppLayout";
 import Home from "./Home";
 import Imoveis from "./Imoveis";
+import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/imoveis" element={<Imoveis />} />
+                <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
             <Route path="/contratos" element={<div>Contratos</div>} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
             <Route path="/visitas" element={<div>Visitas</div>} />
