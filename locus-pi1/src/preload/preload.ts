@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("api", {
     get: (id: string) => ipcRenderer.invoke("properties:get", id),
     overview: (id: string) => ipcRenderer.invoke("properties:overview", id),
     list: () => ipcRenderer.invoke("properties:list"),
+    search: (data: any) => ipcRenderer.invoke("properties:search", data),
     update: (id: string, data: any) =>
       ipcRenderer.invoke("properties:update", { id, ...data }),
     delete: (id: string) => ipcRenderer.invoke("properties:delete", id),

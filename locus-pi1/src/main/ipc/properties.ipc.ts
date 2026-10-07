@@ -3,6 +3,7 @@ import { ipcMain } from "electron";
 import { CreateProperty, CreatePropertyDTO } from "../application/use-cases/CreateProperty";
 import { GetProperty } from "../application/use-cases/GetProperty";
 import { ListProperties } from "../application/use-cases/ListProperties";
+import { SearchProperties, SearchPropertiesDTO } from "../application/use-cases/SearchProperties";
 import { UpdateProperty, UpdatePropertyDTO } from "../application/use-cases/UpdateProperty";
 import { DeleteProperty } from "../application/use-cases/DeleteProperty";
 
@@ -18,6 +19,7 @@ export function registerPropertiesIpc() {
   const createProperty = new CreateProperty(propertyRepo);
   const getProperty = new GetProperty(propertyRepo);
   const listProperties = new ListProperties(propertyRepo);
+  const searchProperties = new SearchProperties(propertyRepo);
   const updateProperty = new UpdateProperty(propertyRepo);
   const deleteProperty = new DeleteProperty(propertyRepo, propertyMediaRepo, fileStorage, new DrizzlePropertyHistoryRepository());
 
@@ -31,6 +33,18 @@ export function registerPropertiesIpc() {
 
   ipcMain.handle("properties:list", async () => {
     return await listProperties.execute();
+  });
+
+  ipcMain.handle("properties:search", async (_, data: SearchPropertiesDTO) => {
+    try {
+      return await searchProperties.execute(data || {});
+    } catch (e: any) {
+      if (e.errors) {
+        // Zod error
+        return { error: true, message: "Validation error", details: e.errors };
+      }
+      return { error: true, message: e.message };
+    }
   });
 
   ipcMain.handle("properties:update", async (_, data: UpdatePropertyDTO) => {

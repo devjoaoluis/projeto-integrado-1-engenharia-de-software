@@ -11,6 +11,7 @@ class MockPropertyRepository implements IPropertyRepository {
   public properties: Property[] = [];
   async create(p: Property): Promise<Property> { this.properties.push(p); return p; }
   async findById(id: string): Promise<Property | null> { return this.properties.find(p => p.id === id) || null; }
+  async search(params: any): Promise<any> { return { items: this.properties, total: this.properties.length, limit: 20, offset: 0 }; }
   async findAll(): Promise<Property[]> { return this.properties; }
   async update(p: Property): Promise<Property> { return p; }
   async delete(id: string): Promise<void> { this.properties = this.properties.filter(p => p.id !== id); }
@@ -38,7 +39,7 @@ describe("DeleteProperty Use Case", () => {
     const propRepo = new MockPropertyRepository();
     const mediaRepo = new MockPropertyMediaRepository();
     const storage = new MockFileStorage();
-    await propRepo.create({ id: "rented", title: "T", address: "A", price: 100, description: null,
+    await propRepo.create({ id: "rented", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100, description: null,
       status: PropertyStatus.ALUGADO, createdAt: 1, updatedAt: 1 });
     await mediaRepo.create({ id: "media", propertyId: "rented", type: MediaType.IMAGE,
       fileName: "x.jpg", filePath: "x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
@@ -54,7 +55,7 @@ describe("DeleteProperty Use Case", () => {
 
     const useCase = new DeleteProperty(propRepo, mediaRepo, storage);
 
-    await propRepo.create({ id: "prop1", title: "T", address: "A", price: 100, description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
+    await propRepo.create({ id: "prop1", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100, description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
     await mediaRepo.create({ id: "m1", propertyId: "prop1", type: MediaType.IMAGE, fileName: "x.jpg", filePath: "path/to/x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
 
     await useCase.execute("prop1");

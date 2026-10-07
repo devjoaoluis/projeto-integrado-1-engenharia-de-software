@@ -9,9 +9,12 @@ export async function initializeDatabase(client: Client): Promise<void> {
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     address TEXT NOT NULL,
+    neighborhood TEXT,
+    bedrooms INTEGER,
     description TEXT,
     price REAL NOT NULL,
     status TEXT DEFAULT 'CADASTRADO' NOT NULL,
+    search_normalized TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
@@ -78,4 +81,37 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
 `);
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
+
+  const tableInfo = await client.execute("PRAGMA table_info(properties)");
+  const columns = tableInfo.rows.map((row) => row.name);
+  
+  if (!columns.includes("neighborhood")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN neighborhood TEXT");
+  }
+  if (!columns.includes("bedrooms")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN bedrooms INTEGER");
+  }
+  if (!columns.includes("search_normalized")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN search_normalized TEXT");
+    
+    // Backfill
+    const result = await client.execute("SELECT id, title, address, neighborhood FROM properties");
+    for (const row of result.rows) {
+      const title = row.title as string;
+      const address = row.address as string;
+      const neighborhood = (row.neighborhood as string) || "";
+      const searchNormalized = `${title} ${address} ${neighborhood}`
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+      await client.execute({
+        sql: "UPDATE properties SET search_normalized = ? WHERE id = ?",
+        args: [searchNormalized, row.id]
+      });
+    }
+  }
+
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_price ON properties (price)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_bedrooms ON properties (bedrooms)");
 }
