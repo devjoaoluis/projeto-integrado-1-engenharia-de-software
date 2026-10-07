@@ -16,7 +16,7 @@ function Imoveis() {
     async function carregarImoveis() {
         try {
             const dados = await window.api.properties.list();
-            
+
             const imoveisComFoto = await Promise.all(
                 dados.map(async (imovel) => {
                     let foto = "";
@@ -83,15 +83,15 @@ function Imoveis() {
 
             <div className="imoveis-grade">
                 {imoveis.map((imovel) => (
-                    <CardImovel 
-                        key={imovel.id} 
-                        id={imovel.id.substring(0, 6)} 
+                    <CardImovel
+                        key={imovel.id}
+                        id={imovel.id}
                         titulo={imovel.title}
-                        endereco={imovel.address} 
-                        valor={imovel.price} 
-                        tipo="Residencial" 
-                        status={imovel.status} 
-                        foto={imovel.foto} 
+                        endereco={imovel.address}
+                        valor={imovel.price}
+                        tipo={null}
+                        status={imovel.status}
+                        foto={imovel.foto}
                     />
                 ))}
             </div>
