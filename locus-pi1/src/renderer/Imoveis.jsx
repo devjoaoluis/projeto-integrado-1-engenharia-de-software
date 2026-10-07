@@ -4,6 +4,8 @@ import Button from "./Button";
 import CardImovel from "./components/CardImovel";
 import Paginacao from "./components/Paginacao";
 
+const ITENS_POR_PAGINA = 4;
+
 function Imoveis() {
     const navigate = useNavigate();
     const [pagina, setPagina] = useState(1);
@@ -23,9 +25,11 @@ function Imoveis() {
                     try {
                         const midias = await window.api.propertyMedia.list(imovel.id);
                         if (midias && midias.length > 0) {
-                            // Ensure the path is properly formatted for URI
-                            const filePath = midias[0].filePath.replace(/\\/g, '/');
-                            foto = `file:///${filePath}`;
+                            const rawPath = midias[0].filePath.replace(/\\/g, '/');
+                            // Sanitiza caminhos locais para evitar bloqueio URI
+                            foto = rawPath.startsWith('http') 
+                                ? rawPath 
+                                : `file:///${encodeURI(rawPath)}`;
                         }
                     } catch (err) {
                         console.error("Erro ao carregar mídia para", imovel.id, err);
@@ -40,21 +44,20 @@ function Imoveis() {
         }
     }
 
+    // Aplicação do fatiamento por página
+    const inicio = (pagina - 1) * ITENS_POR_PAGINA;
+    const imoveisPaginados = imoveis.slice(inicio, inicio + ITENS_POR_PAGINA);
+    const totalPaginas = Math.ceil(imoveis.length / ITENS_POR_PAGINA) || 1;
+
     return (
         <>
             <style>
                 {`
                     .imoveis-topo {
                         display: flex;
-                        justify-content: space-between;
+                        justify-content: flex-end;
                         align-items: center;
                         margin-bottom: 24px;
-                    }
-
-                    .imoveis-titulo {
-                        font-size: 32px;
-                        font-weight: bold;
-                        color: #1976d2;
                     }
 
                     .imoveis-acao {
@@ -70,8 +73,6 @@ function Imoveis() {
             </style>
 
             <div className="imoveis-topo">
-                <h2 className="imoveis-titulo">Imóveis</h2>
-
                 <div className="imoveis-acao">
                     <Button
                         texto="Cadastrar imóvel"
@@ -82,7 +83,7 @@ function Imoveis() {
             </div>
 
             <div className="imoveis-grade">
-                {imoveis.map((imovel) => (
+                {imoveisPaginados.map((imovel) => (
                     <CardImovel 
                         key={imovel.id} 
                         id={imovel.id.substring(0, 6)} 
@@ -96,8 +97,12 @@ function Imoveis() {
                 ))}
             </div>
 
-            {imoveis.length > 4 && (
-                <Paginacao paginaAtual={pagina} totalPaginas={Math.ceil(imoveis.length / 4) || 1} onMudar={setPagina} />
+            {imoveis.length > ITENS_POR_PAGINA && (
+                <Paginacao 
+                    paginaAtual={pagina} 
+                    totalPaginas={totalPaginas} 
+                    onMudar={setPagina} 
+                />
             )}
         </>
     );

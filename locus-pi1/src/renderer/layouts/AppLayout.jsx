@@ -5,6 +5,7 @@ import { Sidebar } from "../components/Sidebar";
 const titulos = {
     "/home": "Home",
     "/imoveis": "Imóveis",
+    "/imoveis/cadastrar": "Cadastrar Imóvel",
     "/contratos": "Contratos",
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
@@ -41,6 +42,7 @@ function AppLayout() {
                     .topo h1 {
                         font-size: 24px;
                         font-weight: bold;
+                        margin: 0;
                     }
 
                     .topo-icones {
@@ -61,7 +63,7 @@ function AppLayout() {
 
                 <div className="principal">
                     <header className="topo">
-                        <h1>{titulos[pathname]}</h1>
+                        <h1>{titulos[pathname] || "Locus Marismar"}</h1>
                         <div className="topo-icones">
                             <User size={20} />
                             <Bell size={20} />
