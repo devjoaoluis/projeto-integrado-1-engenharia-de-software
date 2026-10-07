@@ -30,18 +30,11 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   properties: {
-    create: (data: any) =>
-      ipcRenderer.invoke("properties:create", data),
-
-    get: (id: string) =>
-      ipcRenderer.invoke("properties:get", id),
-
-    overview: (id: string) =>
-      ipcRenderer.invoke("properties:overview", id),
-
-    list: () =>
-      ipcRenderer.invoke("properties:list"),
-
+    create: (data: any) => ipcRenderer.invoke("properties:create", data),
+    get: (id: string) => ipcRenderer.invoke("properties:get", id),
+    overview: (id: string) => ipcRenderer.invoke("properties:overview", id),
+    list: () => ipcRenderer.invoke("properties:list"),
+    search: (data: any) => ipcRenderer.invoke("properties:search", data),
     update: (id: string, data: any) =>
       ipcRenderer.invoke("properties:update", {
         id,

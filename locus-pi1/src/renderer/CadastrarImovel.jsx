@@ -21,6 +21,18 @@ const dadosVazios = {
     descricao: "",
 };
 
+function formatarDataCadastro(value) {
+    if (!value) return "";
+    if (typeof value === "number" || /^\d+$/.test(String(value))) {
+        const data = new Date(Number(value));
+        if (!Number.isNaN(data.getTime())) {
+            return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`;
+        }
+    }
+    const texto = String(value);
+    return texto.length >= 7 ? texto.substring(0, 7) : texto;
+}
+
 function CadastrarImovel() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -50,10 +62,11 @@ function CadastrarImovel() {
                 if (partes.length > 2) bairroExt = partes[2];
             }
 
-            let dataCadFormatada = imovelEditar.dataCadastro || imovelEditar.createdAt || "";
-            if (dataCadFormatada && dataCadFormatada.length > 7) {
-                dataCadFormatada = dataCadFormatada.substring(0, 7);
-            }
+            const dataCadFormatada = formatarDataCadastro(
+                imovelEditar.registrationDate ||
+                imovelEditar.dataCadastro ||
+                imovelEditar.createdAt
+            );
 
             setDados({
                 rua: ruaExt,
@@ -64,7 +77,7 @@ function CadastrarImovel() {
                 descricao: imovelEditar.descricao ?? imovelEditar.description ?? "",
                 valorIptu: imovelEditar.valorIptu ?? imovelEditar.iptu ?? "",
                 tipo: imovelEditar.tipo ?? imovelEditar.type ?? "",
-                situacaoFiscal: imovelEditar.situacaoFiscal ?? imovelEditar.status ?? "",
+                situacaoFiscal: imovelEditar.situacaoFiscal ?? imovelEditar.fiscalStatus ?? "",
                 situacaoSaneamento: imovelEditar.situacaoSaneamento ?? imovelEditar.sanitationStatus ?? "",
                 dataCadastro: dataCadFormatada,
             });
@@ -136,13 +149,15 @@ function CadastrarImovel() {
                 description: dados.descricao || "",
                 price: Number(dados.valorAluguel) || 0,
                 valorAluguel: Number(dados.valorAluguel) || 0,
-                iptu: Number(dados.valorIptu) || 0,
-                valorIptu: Number(dados.valorIptu) || 0,
+                iptu: dados.valorIptu === "" ? undefined : Number(dados.valorIptu),
+                valorIptu: dados.valorIptu === "" ? undefined : Number(dados.valorIptu),
                 type: dados.tipo,
                 tipo: dados.tipo,
-                status: dados.situacaoFiscal,
+                fiscalStatus: dados.situacaoFiscal,
                 situacaoFiscal: dados.situacaoFiscal,
+                sanitationStatus: dados.situacaoSaneamento,
                 situacaoSaneamento: dados.situacaoSaneamento,
+                registrationDate: dados.dataCadastro,
                 dataCadastro: dados.dataCadastro,
             };
 

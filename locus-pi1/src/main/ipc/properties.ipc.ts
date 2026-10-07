@@ -1,4 +1,5 @@
 import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
+import { ZodError } from "zod";
 import { ipcMain } from "electron";
 
 import {
@@ -8,12 +9,11 @@ import {
 
 import { GetProperty } from "../application/use-cases/GetProperty";
 import { ListProperties } from "../application/use-cases/ListProperties";
-
+import { SearchProperties, SearchPropertiesDTO } from "../application/use-cases/SearchProperties";
 import {
   UpdateProperty,
   UpdatePropertyDTO,
 } from "../application/use-cases/UpdateProperty";
-
 import { DeleteProperty } from "../application/use-cases/DeleteProperty";
 
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
@@ -28,6 +28,7 @@ export function registerPropertiesIpc() {
   const createProperty = new CreateProperty(propertyRepo);
   const getProperty = new GetProperty(propertyRepo);
   const listProperties = new ListProperties(propertyRepo);
+  const searchProperties = new SearchProperties(propertyRepo);
   const updateProperty = new UpdateProperty(propertyRepo);
 
   const deleteProperty = new DeleteProperty(
@@ -60,6 +61,18 @@ export function registerPropertiesIpc() {
       return await listProperties.execute();
     }
   );
+
+  // SEARCH
+  ipcMain.handle("properties:search", async (_, data: SearchPropertiesDTO) => {
+    try {
+      return await searchProperties.execute(data || {});
+    } catch (e: unknown) {
+      if (e instanceof ZodError) {
+        return { error: true, message: "Validation error", details: e.issues };
+      }
+      return { error: true, message: e instanceof Error ? e.message : "Search failed" };
+    }
+  });
 
   // UPDATE
   ipcMain.handle(

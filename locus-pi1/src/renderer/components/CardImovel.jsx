@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Badge from "./Badge";
 
 function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onRemover }) {
@@ -110,7 +111,11 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                 )}
 
                 <div className="card-imovel-corpo">
-                    <h3 className="card-imovel-titulo">{titulo || `Imóvel #${id}`}</h3>
+                    <h3 className="card-imovel-titulo">
+                        <Link to={`/imoveis/${encodeURIComponent(id)}`} aria-label={`Ver detalhes do imóvel ${id}`}>
+                            {titulo || `Imóvel #${id}`}
+                        </Link>
+                    </h3>
                     <p className="card-imovel-endereco">{endereco}</p>
 
                     <div className="card-imovel-etiquetas">

@@ -9,9 +9,12 @@ export async function initializeDatabase(client: Client): Promise<void> {
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     address TEXT NOT NULL,
+    neighborhood TEXT,
+    bedrooms INTEGER,
     description TEXT,
     price REAL NOT NULL,
     status TEXT DEFAULT 'CADASTRADO' NOT NULL,
+    search_normalized TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
@@ -50,6 +53,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"nome" text NOT NULL,
 	"email" text NOT NULL,
 	"senha_hash" text NOT NULL,
+	"pergunta_seguranca" text,
+	"resposta_hash" text,
 	"criado_em" integer NOT NULL,
 	"atualizado_em" integer NOT NULL
 );
@@ -76,6 +81,60 @@ CREATE TABLE IF NOT EXISTS rentals (
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(property_id) WHERE parent_rental_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
 `);
+  // Legacy accounts keep their password and have no recovery question until configured.
+  const userColumns = await client.execute("PRAGMA table_info(users)");
+  const columnNames = new Set(userColumns.rows.map((column) => String(column.name)));
+  for (const column of ["pergunta_seguranca", "resposta_hash"]) {
+    if (!columnNames.has(column)) {
+      await client.execute(`ALTER TABLE users ADD COLUMN ${column} TEXT`);
+    }
+  }
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
+
+  const tableInfo = await client.execute("PRAGMA table_info(properties)");
+  const columns = tableInfo.rows.map((row) => row.name);
+  
+  if (!columns.includes("neighborhood")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN neighborhood TEXT");
+  }
+  if (!columns.includes("bedrooms")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN bedrooms INTEGER");
+  }
+  if (!columns.includes("search_normalized")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN search_normalized TEXT");
+
+  }
+  if (!columns.includes("iptu")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN iptu REAL");
+  }
+  if (!columns.includes("type")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN type TEXT");
+  }
+  if (!columns.includes("fiscal_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN fiscal_status TEXT");
+  }
+  if (!columns.includes("sanitation_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN sanitation_status TEXT");
+  }
+  if (!columns.includes("registration_date")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN registration_date TEXT");
+  }
+
+  // Also repair databases where the migration already added the column.
+  const result = await client.execute("SELECT id, title, address, neighborhood FROM properties WHERE search_normalized IS NULL");
+  for (const row of result.rows) {
+    const searchNormalized = `${row.title} ${row.address} ${row.neighborhood || ""}`
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    await client.execute({
+      sql: "UPDATE properties SET search_normalized = ? WHERE id = ?",
+      args: [searchNormalized, row.id]
+    });
+  }
+
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_price ON properties (price)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_bedrooms ON properties (bedrooms)");
 }

@@ -14,6 +14,7 @@ const titulos = {
 
 function AppLayout() {
     const { pathname } = useLocation();
+    const titulo = titulos[pathname] ?? (pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" : pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" : "Locus");
 
     return (
         <>
@@ -62,7 +63,7 @@ function AppLayout() {
 
                 <div className="principal">
                     <header className="topo">
-                        <h1>{titulos[pathname]}</h1>
+                        <h1>{titulo}</h1>
                         <div className="topo-icones">
                             <User size={20} />
                             <Bell size={20} />

@@ -18,7 +18,7 @@ function Imoveis() {
     async function carregarImoveis() {
         try {
             const dados = await window.api.properties.list();
-            
+
             const imoveisComFoto = await Promise.all(
                 dados.map(async (imovel) => {
                     let foto = "";
@@ -55,7 +55,6 @@ function Imoveis() {
         }
     }
 
-    // Passa o objeto completo do imóvel pela memória da navegação (state)
     function handleEditar(imovel) {
         navigate("/imoveis/cadastrar", { state: { imovelEditar: imovel } });
     }
@@ -99,7 +98,6 @@ function Imoveis() {
                     <Button
                         texto="Cadastrar imóvel"
                         type="button"
-                        /* Se clicar em cadastrar, garante que o estado de edição vai vazio */
                         onClick={() => navigate("/imoveis/cadastrar", { state: null })}
                     />
                 </div>
@@ -109,11 +107,11 @@ function Imoveis() {
                 {imoveisPaginados.map((imovel) => (
                     <CardImovel 
                         key={imovel.id} 
-                        id={imovel.id.substring(0, 6)} 
+                        id={imovel.id} 
                         titulo={imovel.title}
                         endereco={imovel.address} 
                         valor={imovel.price} 
-                        tipo="Residencial" 
+                        tipo={imovel.type || "Residencial"} 
                         status={imovel.status} 
                         foto={imovel.foto} 
                         onEditar={() => handleEditar(imovel)}

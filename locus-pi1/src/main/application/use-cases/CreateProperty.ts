@@ -5,8 +5,15 @@ import { IPropertyRepository } from "../../domain/repositories/IPropertyReposito
 export interface CreatePropertyDTO {
   title: string;
   address: string;
+  neighborhood?: string;
+  bedrooms?: number;
   description?: string;
   price: number;
+  iptu?: number;
+  type?: string;
+  fiscalStatus?: string;
+  sanitationStatus?: string;
+  registrationDate?: string;
 }
 
 export class CreateProperty {
@@ -23,12 +30,24 @@ export class CreateProperty {
       throw new Error("Price cannot be negative");
     }
 
+    if (dto.bedrooms !== undefined && dto.bedrooms !== null &&
+        (!Number.isSafeInteger(dto.bedrooms) || dto.bedrooms < 0)) {
+      throw new Error("Bedrooms must be a non-negative integer");
+    }
+
     const property: Property = {
       id: randomUUID(),
       title: dto.title,
       address: dto.address,
+      neighborhood: dto.neighborhood || null,
+      bedrooms: dto.bedrooms ?? null,
       description: dto.description || null,
       price: dto.price,
+      iptu: dto.iptu ?? null,
+      type: dto.type || null,
+      fiscalStatus: dto.fiscalStatus || null,
+      sanitationStatus: dto.sanitationStatus || null,
+      registrationDate: dto.registrationDate || null,
       status: PropertyStatus.CADASTRADO,
       createdAt: Date.now(),
       updatedAt: Date.now(),

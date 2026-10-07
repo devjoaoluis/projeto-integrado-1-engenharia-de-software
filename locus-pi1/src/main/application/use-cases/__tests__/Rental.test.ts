@@ -30,7 +30,7 @@ class MockRentalRepository implements IRentalRepository {
 
 function fixture(status = PropertyStatus.DISPONIVEL) {
   const repo = new MockRentalRepository();
-  const property: Property = { id: "property", title: "Casa", address: "Rua", price: 1000,
+  const property: Property = { id: "property", title: "Casa", address: "Rua", neighborhood: null, bedrooms: null, price: 1000,
     description: null, status, createdAt: 1, updatedAt: 1 };
   const properties = { findById: async (id: string) => id === property.id ? property : null } as IPropertyRepository;
   const clients = { findById: async (id: string) => id === "tenant" || id === "subtenant" ? { id } : null } as IClientRepository;
