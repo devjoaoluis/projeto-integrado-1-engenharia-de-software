@@ -3,8 +3,8 @@ export interface User {
   nome: string;
   email: string;
   senhaHash: string;
-  perguntaSeguranca: string;
-  respostaHash: string;
+  perguntaSeguranca: string | null;
+  respostaHash: string | null;
   criadoEm: number;
   atualizadoEm: number;
 }

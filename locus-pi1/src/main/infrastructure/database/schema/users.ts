@@ -5,8 +5,8 @@ export const users = sqliteTable("users", {
   nome: text("nome").notNull(),
   email: text("email").notNull().unique(),
   senhaHash: text("senha_hash").notNull(),
-  perguntaSeguranca: text("pergunta_seguranca").notNull(),
-  respostaHash: text("resposta_hash").notNull(),
+  perguntaSeguranca: text("pergunta_seguranca"),
+  respostaHash: text("resposta_hash"),
   criadoEm: integer("criado_em").notNull(),
   atualizadoEm: integer("atualizado_em").notNull(),
 });
