@@ -8,6 +8,8 @@ export default function Register({ onSuccess }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [perguntaSeguranca, setPerguntaSeguranca] = useState("");
+  const [respostaSeguranca, setRespostaSeguranca] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +27,13 @@ export default function Register({ onSuccess }) {
     setLoading(true);
 
     try {
-      const response = await window.api.auth.register({ nome, email, senha });
+      const response = await window.api.auth.register({
+        nome,
+        email,
+        senha,
+        perguntaSeguranca,
+        respostaSeguranca,
+      });
 
       if (response.success) {
         onSuccess();
@@ -146,6 +154,22 @@ export default function Register({ onSuccess }) {
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
                 placeholder="Repetir Senha"
+                required
+              />
+
+              <Input
+                type="text"
+                value={perguntaSeguranca}
+                onChange={(e) => setPerguntaSeguranca(e.target.value)}
+                placeholder="Pergunta de segurança (ex: Qual seu primeiro pet?)"
+                required
+              />
+
+              <Input
+                type="text"
+                value={respostaSeguranca}
+                onChange={(e) => setRespostaSeguranca(e.target.value)}
+                placeholder="Resposta de segurança"
                 required
               />
             </div>

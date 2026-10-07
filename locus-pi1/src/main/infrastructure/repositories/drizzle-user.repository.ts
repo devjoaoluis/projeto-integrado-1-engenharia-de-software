@@ -11,8 +11,13 @@ export class DrizzleUserRepository implements IUserRepository {
     return this.mapToDomain(result[0]);
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    async findByEmail(email: string): Promise<User | null> {
+    const emailNormalizado = email.trim().toLowerCase();
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, emailNormalizado))
+      .limit(1);
     if (!result || result.length === 0) return null;
     return this.mapToDomain(result[0]);
   }
@@ -23,10 +28,27 @@ export class DrizzleUserRepository implements IUserRepository {
       nome: user.nome,
       email: user.email,
       senhaHash: user.senhaHash,
+      perguntaSeguranca: user.perguntaSeguranca,
+      respostaHash: user.respostaHash,
       criadoEm: user.criadoEm,
       atualizadoEm: user.atualizadoEm,
     });
     return user;
+  }
+
+  async updatePassword(userId: string, newPasswordHash: string): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        senhaHash: newPasswordHash,
+        atualizadoEm: Date.now(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  async count(): Promise<number> {
+    const result = await db.select().from(users);
+    return result.length;
   }
 
   private mapToDomain(row: typeof users.$inferSelect): User {
@@ -35,15 +57,10 @@ export class DrizzleUserRepository implements IUserRepository {
       nome: row.nome,
       email: row.email,
       senhaHash: row.senhaHash,
+      perguntaSeguranca: row.perguntaSeguranca,
+      respostaHash: row.respostaHash,
       criadoEm: row.criadoEm,
       atualizadoEm: row.atualizadoEm,
     };
-  }
-
-  // Adicione o método dentro da classe DrizzleUserRepository:
-
-  async count(): Promise<number> {
-    const result = await db.select().from(users);
-    return result.length;
   }
 }

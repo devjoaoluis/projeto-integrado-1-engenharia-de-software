@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
+import ForgotPassword from "./components/ForgotPassword"
 import AppLayout from "./layouts/AppLayout";
 import Home from "./Home";
 import Imoveis from "./Imoveis";
@@ -46,6 +47,7 @@ export default function App() {
       ) : (
         <>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Home />} />
