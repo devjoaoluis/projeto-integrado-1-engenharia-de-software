@@ -15,11 +15,16 @@ function FormLogin() {
 
         if (senha.length < 6) {
             setErro("A senha deve ter no mínimo 6 caracteres.");
-                return;
-    }
+            return;
+        }
 
         if (window.api) {
-            const res = await window.api.auth.login({ email, senha });
+            // Trim no email para evitar erros de espaços acidentais no input
+            const res = await window.api.auth.login({ 
+                email: email.trim(), 
+                senha 
+            });
+            
             if (!res.success) {
                 setErro(res.error || "Email ou senha inválidos.");
                 return;
@@ -85,6 +90,12 @@ function FormLogin() {
                         display: block;
                         margin-bottom: 14px;
                         color: #1976d2;
+                        text-decoration: none;
+                        cursor: pointer;
+                    }
+
+                    .esqueci-senha:hover {
+                        text-decoration: underline;
                     }
 
                     .erro-login {
@@ -128,7 +139,11 @@ function FormLogin() {
 
                         <a
                             className="esqueci-senha"
-                            href="#/login"
+                            href="#"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/forgot-password");
+                            }}
                         >
                             Esqueci minha senha
                         </a>

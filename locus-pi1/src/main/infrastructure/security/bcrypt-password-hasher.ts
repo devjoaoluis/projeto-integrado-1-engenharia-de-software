@@ -1,16 +1,13 @@
-import * as bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { IPasswordHasher } from "../../domain/repositories/password-hasher";
 
 export class BcryptPasswordHasher implements IPasswordHasher {
-  async hash(password: string): Promise<string> {
-    return bcrypt.hash(password, 10);
+  async hash(plainText: string): Promise<string> {
+    return await bcrypt.hash(plainText, 10);
   }
 
-  async compare(password: string, passwordHash: string): Promise<boolean> {
-    try {
-      return await bcrypt.compare(password, passwordHash);
-    } catch {
-      return false;
-    }
+  async compare(plainText: string, hash: string): Promise<boolean> {
+    // A ordem OBRIGATÓRIA é: (textoPuro, hash)
+    return await bcrypt.compare(plainText, hash);
   }
 }

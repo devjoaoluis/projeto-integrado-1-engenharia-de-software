@@ -9,6 +9,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["jest", "node"]
   }
 }
