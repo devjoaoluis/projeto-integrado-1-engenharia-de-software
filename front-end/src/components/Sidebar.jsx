@@ -6,6 +6,7 @@ import {
   ArrowLeftRight,
   CalendarDays,
   ClipboardCheck,
+  Users,
   LogOut,
 } from "lucide-react";
 import { sair } from "../auth/session";
@@ -17,6 +18,7 @@ const menuItens = [
   { nome: "Pagamentos", icone: ArrowLeftRight, to: "/pagamentos" },
   { nome: "Visitas", icone: CalendarDays, to: "/visitas" },
   { nome: "Vistorias", icone: ClipboardCheck, to: "/vistorias" },
+  { nome: "Locatários", icone: Users, to: "/locatarios" },
 ];
 
 export function Sidebar() {

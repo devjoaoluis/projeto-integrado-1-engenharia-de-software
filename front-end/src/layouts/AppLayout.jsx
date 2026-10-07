@@ -9,6 +9,7 @@ const titulos = {
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
+    "/locatarios": "Locatários",
 };
 
 function AppLayout() {

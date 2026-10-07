@@ -4,6 +4,7 @@ import AppLayout from "./layouts/AppLayout";
 import Home from "./Home";
 import Imoveis from "./Imoveis";
 import CadastrarImovel from "./CadastrarImovel";
+import Locatarios from "./Locatarios";
 
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
                 <Route path="/visitas" element={<div>Visitas</div>} />
                 <Route path="/vistorias" element={<div>Vistorias</div>} />
                 <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
+                <Route path="/locatarios" element={<Locatarios />} />  
             </Route>
 
             <Route path="*" element={<Navigate to="/login" replace />} />
