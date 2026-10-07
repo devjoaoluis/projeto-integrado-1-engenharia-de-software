@@ -80,6 +80,9 @@ export function registerAuthIpc() {
         return { success: false, error: "E-mail não encontrado." };
       }
 
+      if (!user.perguntaSeguranca || !user.respostaHash) {
+        return { success: false, error: "Usuário não possui pergunta de segurança configurada." };
+      }
       return { success: true, pergunta: user.perguntaSeguranca };
     } catch (error: any) {
       return { success: false, error: error.message };

@@ -50,6 +50,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"nome" text NOT NULL,
 	"email" text NOT NULL,
 	"senha_hash" text NOT NULL,
+	"pergunta_seguranca" text,
+	"resposta_hash" text,
 	"criado_em" integer NOT NULL,
 	"atualizado_em" integer NOT NULL
 );
@@ -76,6 +78,14 @@ CREATE TABLE IF NOT EXISTS rentals (
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(property_id) WHERE parent_rental_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
 `);
+  // Legacy accounts keep their password and have no recovery question until configured.
+  const userColumns = await client.execute("PRAGMA table_info(users)");
+  const columnNames = new Set(userColumns.rows.map((column) => String(column.name)));
+  for (const column of ["pergunta_seguranca", "resposta_hash"]) {
+    if (!columnNames.has(column)) {
+      await client.execute(`ALTER TABLE users ADD COLUMN ${column} TEXT`);
+    }
+  }
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
 }
