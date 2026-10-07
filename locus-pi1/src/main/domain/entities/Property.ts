@@ -14,6 +14,11 @@ export interface Property {
   bedrooms: number | null;
   description: string | null;
   price: number;
+  iptu?: number | null;
+  type?: string | null;
+  fiscalStatus?: string | null;
+  sanitationStatus?: string | null;
+  registrationDate?: string | null;
   status: PropertyStatus;
   createdAt: number;
   updatedAt: number;

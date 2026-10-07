@@ -7,7 +7,6 @@ export const MAX_VIDEOS = 2;
 const EXT_FOTOS = ["jpg", "jpeg", "png", "webp"];
 const EXT_VIDEOS = ["mp4", "mkv", "webm"];
 
-// Descobre se o arquivo é foto ou vídeo pela extensão (as mesmas que o backend aceita)
 function tipoDoArquivo(file) {
     const ext = file.name.split(".").pop().toLowerCase();
     if (EXT_FOTOS.includes(ext)) return "foto";
@@ -15,7 +14,6 @@ function tipoDoArquivo(file) {
     return null;
 }
 
-// Dois arquivos com mesmo nome, tamanho e data de modificação são considerados o mesmo
 function chave(file) {
     return `${file.name}-${file.size}-${file.lastModified}`;
 }
@@ -24,7 +22,6 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
     const inputRef = useRef(null);
     const [aviso, setAviso] = useState("");
 
-    // Libera da memória as pré-visualizações ao sair da tela
     const atual = useRef({ fotos, videos });
     atual.current = { fotos, videos };
     useEffect(() => {
@@ -37,16 +34,22 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
 
     const cheio = fotos.length >= MAX_FOTOS && videos.length >= MAX_VIDEOS;
 
-    // Junta fotos e vídeos numa lista só para mostrar
     const itens = [
         ...fotos.map((m) => ({ ...m, tipo: "foto" })),
         ...videos.map((m) => ({ ...m, tipo: "video" })),
     ];
 
     function escolher(e) {
-        adicionar(Array.from(e.target.files));
-        e.target.value = ""; // permite escolher o mesmo arquivo de novo
-    }
+    const rawFiles = Array.from(e.target.files);
+
+    const arquivosSeguros = rawFiles.map((file) => {
+        file.caminhoLocal = window.api.getPathForFile(file); // antes: file.path
+        return file;
+    });
+
+    adicionar(arquivosSeguros);
+    e.target.value = "";
+}
 
     function adicionar(novos) {
         const jaAdicionados = new Set([...fotos, ...videos].map((m) => chave(m.file)));

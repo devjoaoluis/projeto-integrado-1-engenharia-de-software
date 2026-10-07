@@ -4,6 +4,8 @@ import Button from "./Button";
 import CardImovel from "./components/CardImovel";
 import Paginacao from "./components/Paginacao";
 
+const ITENS_POR_PAGINA = 4;
+
 function Imoveis() {
     const navigate = useNavigate();
     const [pagina, setPagina] = useState(1);
@@ -23,9 +25,10 @@ function Imoveis() {
                     try {
                         const midias = await window.api.propertyMedia.list(imovel.id);
                         if (midias && midias.length > 0) {
-                            // Ensure the path is properly formatted for URI
-                            const filePath = midias[0].filePath.replace(/\\/g, '/');
-                            foto = `file:///${filePath}`;
+                            const rawPath = midias[0].filePath.replace(/\\/g, '/');
+                            foto = rawPath.startsWith('http') 
+                                ? rawPath 
+                                : `file:///${encodeURI(rawPath)}`;
                         }
                     } catch (err) {
                         console.error("Erro ao carregar mídia para", imovel.id, err);
@@ -40,21 +43,42 @@ function Imoveis() {
         }
     }
 
+    async function handleRemover(id) {
+        if (window.confirm("Tem certeza que deseja excluir este imóvel?")) {
+            try {
+                await window.api.properties.delete(id);
+                setImoveis((prev) => prev.filter((imovel) => imovel.id !== id));
+            } catch (error) {
+                console.error("Erro ao remover:", error);
+                alert("Erro ao remover o imóvel: " + error.message);
+            }
+        }
+    }
+
+    function handleEditar(imovel) {
+        navigate("/imoveis/cadastrar", { state: { imovelEditar: imovel } });
+    }
+
+    const totalPaginas = Math.ceil(imoveis.length / ITENS_POR_PAGINA) || 1;
+
+    useEffect(() => {
+        if (pagina > totalPaginas) {
+            setPagina(totalPaginas);
+        }
+    }, [imoveis.length, pagina, totalPaginas]);
+
+    const inicio = (pagina - 1) * ITENS_POR_PAGINA;
+    const imoveisPaginados = imoveis.slice(inicio, inicio + ITENS_POR_PAGINA);
+
     return (
         <>
             <style>
                 {`
                     .imoveis-topo {
                         display: flex;
-                        justify-content: space-between;
+                        justify-content: flex-end;
                         align-items: center;
                         margin-bottom: 24px;
-                    }
-
-                    .imoveis-titulo {
-                        font-size: 32px;
-                        font-weight: bold;
-                        color: #1976d2;
                     }
 
                     .imoveis-acao {
@@ -70,34 +94,38 @@ function Imoveis() {
             </style>
 
             <div className="imoveis-topo">
-                <h2 className="imoveis-titulo">Imóveis</h2>
-
                 <div className="imoveis-acao">
                     <Button
                         texto="Cadastrar imóvel"
                         type="button"
-                        onClick={() => navigate("/imoveis/cadastrar")}
+                        onClick={() => navigate("/imoveis/cadastrar", { state: null })}
                     />
                 </div>
             </div>
 
             <div className="imoveis-grade">
-                {imoveis.map((imovel) => (
-                    <CardImovel
-                        key={imovel.id}
-                        id={imovel.id}
+                {imoveisPaginados.map((imovel) => (
+                    <CardImovel 
+                        key={imovel.id} 
+                        id={imovel.id} 
                         titulo={imovel.title}
-                        endereco={imovel.address}
-                        valor={imovel.price}
-                        tipo={null}
-                        status={imovel.status}
-                        foto={imovel.foto}
+                        endereco={imovel.address} 
+                        valor={imovel.price} 
+                        tipo={imovel.type || "Residencial"} 
+                        status={imovel.status} 
+                        foto={imovel.foto} 
+                        onEditar={() => handleEditar(imovel)}
+                        onRemover={() => handleRemover(imovel.id)}
                     />
                 ))}
             </div>
 
-            {imoveis.length > 4 && (
-                <Paginacao paginaAtual={pagina} totalPaginas={Math.ceil(imoveis.length / 4) || 1} onMudar={setPagina} />
+            {imoveis.length > ITENS_POR_PAGINA && (
+                <Paginacao 
+                    paginaAtual={pagina} 
+                    totalPaginas={totalPaginas} 
+                    onMudar={setPagina} 
+                />
             )}
         </>
     );

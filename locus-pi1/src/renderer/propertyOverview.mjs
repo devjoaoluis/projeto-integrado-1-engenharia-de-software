@@ -19,6 +19,12 @@ export function adaptPropertyOverview(overview, tenantNames = {}) {
     valor: property.price,
     status: propertyStatuses[property.status] ?? property.status,
     foto: photo ? mediaFileUrl(photo.filePath) : null,
+    midias: media.map(item => ({
+      id: item.id,
+      tipo: item.type,
+      nome: item.fileName,
+      url: mediaFileUrl(item.filePath),
+    })),
     contratos: [
       ...contracts.current.map(item => ({ ...item, label: "Vigente" })),
       ...contracts.previous.map(item => ({ ...item, label: item.status === "CANCELLED" ? "Cancelado" : "Encerrado" })),

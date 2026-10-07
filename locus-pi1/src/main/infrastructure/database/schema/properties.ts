@@ -8,6 +8,11 @@ export const properties = sqliteTable("properties", {
   bedrooms: integer("bedrooms"),
   description: text("description"),
   price: real("price").notNull(),
+  iptu: real("iptu"),
+  type: text("type"),
+  fiscalStatus: text("fiscal_status"),
+  sanitationStatus: text("sanitation_status"),
+  registrationDate: text("registration_date"),
   status: text("status", {
     enum: ["CADASTRADO", "DISPONIVEL", "VENDIDO", "ALUGADO", "INATIVO"],
   })

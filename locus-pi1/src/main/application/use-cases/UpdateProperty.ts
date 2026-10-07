@@ -9,6 +9,11 @@ export interface UpdatePropertyDTO {
   bedrooms?: number;
   description?: string;
   price?: number;
+  iptu?: number;
+  type?: string;
+  fiscalStatus?: string;
+  sanitationStatus?: string;
+  registrationDate?: string;
   status?: PropertyStatus;
 }
 
@@ -46,6 +51,22 @@ export class UpdateProperty {
     }
     if (dto.description !== undefined) {
       property.description = dto.description;
+    }
+    if (dto.iptu !== undefined) {
+      if (dto.iptu < 0) throw new Error("IPTU cannot be negative");
+      property.iptu = dto.iptu;
+    }
+    if (dto.type !== undefined) {
+      property.type = dto.type || null;
+    }
+    if (dto.fiscalStatus !== undefined) {
+      property.fiscalStatus = dto.fiscalStatus || null;
+    }
+    if (dto.sanitationStatus !== undefined) {
+      property.sanitationStatus = dto.sanitationStatus || null;
+    }
+    if (dto.registrationDate !== undefined) {
+      property.registrationDate = dto.registrationDate || null;
     }
     if (dto.status !== undefined) {
       property.status = dto.status;

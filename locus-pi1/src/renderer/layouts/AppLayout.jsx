@@ -5,6 +5,7 @@ import { Sidebar } from "../components/Sidebar";
 const titulos = {
     "/home": "Home",
     "/imoveis": "Imóveis",
+    "/imoveis/cadastrar": "Cadastrar Imóvel",
     "/contratos": "Contratos",
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
@@ -42,6 +43,7 @@ function AppLayout() {
                     .topo h1 {
                         font-size: 24px;
                         font-weight: bold;
+                        margin: 0;
                     }
 
                     .topo-icones {

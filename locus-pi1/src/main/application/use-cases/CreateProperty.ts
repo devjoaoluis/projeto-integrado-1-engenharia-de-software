@@ -9,6 +9,11 @@ export interface CreatePropertyDTO {
   bedrooms?: number;
   description?: string;
   price: number;
+  iptu?: number;
+  type?: string;
+  fiscalStatus?: string;
+  sanitationStatus?: string;
+  registrationDate?: string;
 }
 
 export class CreateProperty {
@@ -38,6 +43,11 @@ export class CreateProperty {
       bedrooms: dto.bedrooms ?? null,
       description: dto.description || null,
       price: dto.price,
+      iptu: dto.iptu ?? null,
+      type: dto.type || null,
+      fiscalStatus: dto.fiscalStatus || null,
+      sanitationStatus: dto.sanitationStatus || null,
+      registrationDate: dto.registrationDate || null,
       status: PropertyStatus.CADASTRADO,
       createdAt: Date.now(),
       updatedAt: Date.now(),

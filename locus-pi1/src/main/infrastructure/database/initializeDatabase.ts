@@ -105,6 +105,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
     await client.execute("ALTER TABLE properties ADD COLUMN search_normalized TEXT");
 
   }
+  if (!columns.includes("iptu")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN iptu REAL");
+  }
+  if (!columns.includes("type")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN type TEXT");
+  }
+  if (!columns.includes("fiscal_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN fiscal_status TEXT");
+  }
+  if (!columns.includes("sanitation_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN sanitation_status TEXT");
+  }
+  if (!columns.includes("registration_date")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN registration_date TEXT");
+  }
 
   // Also repair databases where the migration already added the column.
   const result = await client.execute("SELECT id, title, address, neighborhood FROM properties WHERE search_normalized IS NULL");

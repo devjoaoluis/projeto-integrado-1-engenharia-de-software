@@ -7,6 +7,7 @@ function VisaoGeralImovel() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [abaAtiva, setAbaAtiva] = useState("contratos");
+  const [midiaAtiva, setMidiaAtiva] = useState(0);
 
   const [result, setResult] = useState({ id: null, imovel: null, erro: "" });
   useEffect(() => {
@@ -21,7 +22,10 @@ function VisaoGeralImovel() {
             catch { return [tenantId, "Locatário não encontrado"]; }
           })
         ));
-        if (active) setResult({ id, imovel: adaptPropertyOverview(overview, tenantNames), erro: "" });
+        if (active) {
+          setResult({ id, imovel: adaptPropertyOverview(overview, tenantNames), erro: "" });
+          setMidiaAtiva(0);
+        }
       } catch {
         if (active) setResult({ id, imovel: null, erro: "Não foi possível carregar este imóvel. Ele pode ter sido removido." });
       }
@@ -80,6 +84,65 @@ function VisaoGeralImovel() {
           flex-direction: column;
           justify-content: center;
           gap: 12px;
+        }
+
+        .galeria-imovel {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          padding: 20px;
+        }
+
+        .galeria-imovel h3 {
+          margin: 0 0 16px;
+          color: #1976d2;
+        }
+
+        .galeria-visualizador {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+        }
+
+        .galeria-conteudo {
+          width: min(720px, 100%);
+          height: 360px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f1f3f5;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .galeria-conteudo img, .galeria-conteudo video {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .galeria-navegacao {
+          width: 40px;
+          height: 40px;
+          border: none;
+          border-radius: 50%;
+          background: #1976d2;
+          color: white;
+          font-size: 22px;
+          cursor: pointer;
+        }
+
+        .galeria-navegacao:disabled {
+          background: #c8cdd2;
+          cursor: default;
+        }
+
+        .galeria-legenda {
+          margin: 12px 0 0;
+          text-align: center;
+          color: #666;
+          font-size: 13px;
         }
 
         .imovel-titulo {
@@ -167,6 +230,52 @@ function VisaoGeralImovel() {
             </div>
           </div>
         </div>
+
+        <section className="galeria-imovel" aria-label="Fotos e vídeos do imóvel">
+          <h3>Fotos e vídeos</h3>
+          {imovel.midias.length === 0 ? (
+            <p>Nenhuma foto ou vídeo cadastrado.</p>
+          ) : (
+            <>
+              <div className="galeria-visualizador">
+                <button
+                  className="galeria-navegacao"
+                  type="button"
+                  aria-label="Mídia anterior"
+                  disabled={midiaAtiva === 0}
+                  onClick={() => setMidiaAtiva((atual) => Math.max(0, atual - 1))}
+                >
+                  ‹
+                </button>
+                <div className="galeria-conteudo">
+                  {imovel.midias[midiaAtiva].tipo === "VIDEO" ? (
+                    <video controls src={imovel.midias[midiaAtiva].url}>
+                      Seu navegador não suporta a reprodução de vídeo.
+                    </video>
+                  ) : (
+                    <img
+                      src={imovel.midias[midiaAtiva].url}
+                      alt={imovel.midias[midiaAtiva].nome || `Mídia ${midiaAtiva + 1} do imóvel`}
+                    />
+                  )}
+                </div>
+                <button
+                  className="galeria-navegacao"
+                  type="button"
+                  aria-label="Próxima mídia"
+                  disabled={midiaAtiva === imovel.midias.length - 1}
+                  onClick={() => setMidiaAtiva((atual) => Math.min(imovel.midias.length - 1, atual + 1))}
+                >
+                  ›
+                </button>
+              </div>
+              <p className="galeria-legenda">
+                {midiaAtiva + 1} de {imovel.midias.length}
+                {imovel.midias[midiaAtiva].nome ? ` — ${imovel.midias[midiaAtiva].nome}` : ""}
+              </p>
+            </>
+          )}
+        </section>
 
 
         <div className="abas-container">
