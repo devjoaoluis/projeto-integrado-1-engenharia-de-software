@@ -25,6 +25,11 @@ export class CreateProperty {
       throw new Error("Price cannot be negative");
     }
 
+    if (dto.bedrooms !== undefined && dto.bedrooms !== null &&
+        (!Number.isSafeInteger(dto.bedrooms) || dto.bedrooms < 0)) {
+      throw new Error("Bedrooms must be a non-negative integer");
+    }
+
     const property: Property = {
       id: randomUUID(),
       title: dto.title,

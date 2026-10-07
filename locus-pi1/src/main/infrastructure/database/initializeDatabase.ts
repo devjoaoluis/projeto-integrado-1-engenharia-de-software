@@ -93,22 +93,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   }
   if (!columns.includes("search_normalized")) {
     await client.execute("ALTER TABLE properties ADD COLUMN search_normalized TEXT");
-    
-    // Backfill
-    const result = await client.execute("SELECT id, title, address, neighborhood FROM properties");
-    for (const row of result.rows) {
-      const title = row.title as string;
-      const address = row.address as string;
-      const neighborhood = (row.neighborhood as string) || "";
-      const searchNormalized = `${title} ${address} ${neighborhood}`
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
-      await client.execute({
-        sql: "UPDATE properties SET search_normalized = ? WHERE id = ?",
-        args: [searchNormalized, row.id]
-      });
-    }
+
+  }
+
+  // Also repair databases where the migration already added the column.
+  const result = await client.execute("SELECT id, title, address, neighborhood FROM properties WHERE search_normalized IS NULL");
+  for (const row of result.rows) {
+    const searchNormalized = `${row.title} ${row.address} ${row.neighborhood || ""}`
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    await client.execute({
+      sql: "UPDATE properties SET search_normalized = ? WHERE id = ?",
+      args: [searchNormalized, row.id]
+    });
   }
 
   await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");

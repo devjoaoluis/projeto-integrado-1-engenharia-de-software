@@ -1,4 +1,5 @@
 import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
+import { ZodError } from "zod";
 import { ipcMain } from "electron";
 import { CreateProperty, CreatePropertyDTO } from "../application/use-cases/CreateProperty";
 import { GetProperty } from "../application/use-cases/GetProperty";
@@ -38,12 +39,12 @@ export function registerPropertiesIpc() {
   ipcMain.handle("properties:search", async (_, data: SearchPropertiesDTO) => {
     try {
       return await searchProperties.execute(data || {});
-    } catch (e: any) {
-      if (e.errors) {
+    } catch (e: unknown) {
+      if (e instanceof ZodError) {
         // Zod error
-        return { error: true, message: "Validation error", details: e.errors };
+        return { error: true, message: "Validation error", details: e.issues };
       }
-      return { error: true, message: e.message };
+      return { error: true, message: e instanceof Error ? e.message : "Search failed" };
     }
   });
 

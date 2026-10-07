@@ -47,8 +47,8 @@ beforeEach(async () => {
   await client.executeMultiple(`DELETE FROM property_payments; DELETE FROM property_contracts;
     DELETE FROM property_inspections; DELETE FROM property_maintenances;
     DELETE FROM rentals; DELETE FROM property_media; DELETE FROM properties; DELETE FROM clients;
-    INSERT INTO properties VALUES ('property', 'Casa', 'Rua', 'Descrição', 1000, 'DISPONIVEL', 1, 1);
-    INSERT INTO properties VALUES ('other', 'Outra casa', 'Outra rua', NULL, 1000, 'DISPONIVEL', 1, 1);
+    INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('property', 'Casa', 'Rua', 'Descrição', 1000, 'DISPONIVEL', 1, 1);
+    INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('other', 'Outra casa', 'Outra rua', NULL, 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);`);
 });
 after(() => {
@@ -159,7 +159,7 @@ describe("HU05 property overview", () => {
     const old = createClient({ url: "file::memory:" });
     try {
       await old.execute("CREATE TABLE properties (id TEXT PRIMARY KEY, title TEXT NOT NULL, address TEXT NOT NULL, description TEXT, price REAL NOT NULL, status TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)");
-      await old.execute("INSERT INTO properties VALUES ('old', 'Casa antiga', 'Rua', NULL, 10, 'CADASTRADO', 1, 1)");
+      await old.execute("INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('old', 'Casa antiga', 'Rua', NULL, 10, 'CADASTRADO', 1, 1)");
       await initializeDatabase(old);
       await initializeDatabase(old);
       assert.equal((await old.execute("SELECT title FROM properties WHERE id = 'old'")).rows[0].title, "Casa antiga");

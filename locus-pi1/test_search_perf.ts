@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { db } from "./src/main/infrastructure/database/db";
 import { properties } from "./src/main/infrastructure/database/schema/properties";
 import { DrizzlePropertyRepository } from "./src/main/infrastructure/repositories/DrizzlePropertyRepository";
@@ -57,7 +58,7 @@ async function run() {
   console.log(`Found ${result.total} items. Returned ${result.items.length}.`);
   console.log(`Time taken: ${(end - start).toFixed(2)} ms`);
   
-  const explain = await db.run(require('drizzle-orm').sql`EXPLAIN QUERY PLAN SELECT * FROM properties WHERE status = 'CADASTRADO' AND neighborhood = 'Centro'`);
+  const explain = await db.run(sql`EXPLAIN QUERY PLAN SELECT * FROM properties WHERE status = 'CADASTRADO' AND neighborhood = 'Centro'`);
   console.log("EXPLAIN QUERY PLAN:", explain);
 }
 

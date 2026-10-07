@@ -1,4 +1,5 @@
 import { describe, it } from "node:test";
+import { ZodError } from "zod";
 import assert from "node:assert";
 import { SearchProperties } from "../SearchProperties";
 import { Property, PropertyStatus } from "../../../domain/entities/Property";
@@ -10,7 +11,7 @@ class MockPropertyRepository implements IPropertyRepository {
   async findById(id: string): Promise<Property | null> { return null; }
   async findAll(): Promise<Property[]> { return []; }
   async update(p: Property): Promise<Property> { return p; }
-  async delete(id: string): Promise<void> { }
+  async delete(id: string): Promise<void> { return; }
   
   async search(params: any): Promise<any> {
     // Basic mock implementation for testing
@@ -37,7 +38,7 @@ describe("SearchProperties Use Case", () => {
       async () => {
         await useCase.execute({ page: 1.5, limit: 20 });
       },
-      /Expected integer/
+      (error: unknown) => error instanceof ZodError && error.issues.some(issue => issue.path[0] === "page")
     );
   });
 
@@ -49,7 +50,7 @@ describe("SearchProperties Use Case", () => {
       async () => {
         await useCase.execute({ bedrooms: -1 });
       },
-      /greater than or equal to 0/
+      (error: unknown) => error instanceof ZodError && error.issues.some(issue => issue.path[0] === "bedrooms")
     );
   });
 
