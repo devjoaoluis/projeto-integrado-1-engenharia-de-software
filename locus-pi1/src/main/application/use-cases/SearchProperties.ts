@@ -8,11 +8,11 @@ export const SearchPropertiesSchema = z.object({
   neighborhood: z.union([z.string(), z.array(z.string())]).optional(),
   priceMin: z.number().min(0).optional(),
   priceMax: z.number().min(0).optional(),
-  bedrooms: z.number().min(0).optional(),
+  bedrooms: z.number().int().min(0).optional(),
   status: z.nativeEnum(PropertyStatus).optional(),
   orderBy: z.enum(["price_asc", "price_desc", "recent"]).default("recent"),
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(100).default(20),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
 });
 
 export type SearchPropertiesDTO = z.input<typeof SearchPropertiesSchema>;

@@ -1,8 +1,12 @@
-import { Client } from "../../domain/entities/Client";
+import { IGuarantorRepository } from "../../domain/repositories/IGuarantorRepository";
+import { requiredText, contactDocument, optionalEmail } from "./contactValidation";
+import { Client, ClientType } from "../../domain/entities/Client";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 
 export interface UpdateClientDTO {
   id: string;
+  type?: ClientType;
+  guarantorId?: string | null;
   name?: string;
   cpfCnpj?: string;
   phone?: string;
@@ -10,21 +14,22 @@ export interface UpdateClientDTO {
 }
 
 export class UpdateClient {
-  constructor(private clientRepository: IClientRepository) {}
+  constructor(private clientRepository: IClientRepository, private guarantorRepository?: IGuarantorRepository) {}
 
   async execute(dto: UpdateClientDTO): Promise<Client> {
-    const client = await this.clientRepository.findById(dto.id);
+    requiredText(dto?.id, "Client id");
+    const found = await this.clientRepository.findById(dto.id);
+    const client = found ? { ...found } : null;
     if (!client) {
       throw new Error(`Client with id ${dto.id} not found`);
     }
 
     if (dto.name !== undefined) {
-      if (dto.name.trim() === "") throw new Error("Name cannot be empty");
-      client.name = dto.name.trim();
+      client.name = requiredText(dto.name, "Name");
     }
 
     if (dto.cpfCnpj !== undefined) {
-      const cleanCpfCnpj = dto.cpfCnpj.trim();
+      const cleanCpfCnpj = contactDocument(dto.cpfCnpj);
       if (cleanCpfCnpj === "") throw new Error("CPF/CNPJ cannot be empty");
       if (cleanCpfCnpj !== client.cpfCnpj) {
         const existing = await this.clientRepository.findByCpfCnpj(cleanCpfCnpj);
@@ -36,14 +41,24 @@ export class UpdateClient {
     }
 
     if (dto.phone !== undefined) {
-      if (dto.phone.trim() === "") throw new Error("Phone cannot be empty");
-      client.phone = dto.phone.trim();
+      client.phone = requiredText(dto.phone, "Phone");
     }
 
     if (dto.email !== undefined) {
-      client.email = dto.email ? dto.email.trim() : null;
+      client.email = optionalEmail(dto.email);
     }
 
+    if (dto.type !== undefined) {
+      if (!["TENANT", "INTERESTED"].includes(dto.type)) throw new Error("Invalid client type");
+      client.type = dto.type;
+    }
+    if (dto.guarantorId !== undefined) {
+      if (dto.guarantorId !== null) {
+        requiredText(dto.guarantorId, "Guarantor id");
+        if (!this.guarantorRepository || !await this.guarantorRepository.findById(dto.guarantorId)) throw new Error("Guarantor not found");
+      }
+      client.guarantorId = dto.guarantorId;
+    }
     client.updatedAt = Date.now();
 
     return this.clientRepository.update(client);

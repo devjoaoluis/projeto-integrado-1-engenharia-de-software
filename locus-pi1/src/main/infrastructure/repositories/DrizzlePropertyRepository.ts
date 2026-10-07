@@ -1,3 +1,4 @@
+import { rentals } from "../database/schema/rentals";
 import { eq } from "drizzle-orm";
 import { db } from "../database/db";
 import { properties } from "../database/schema/properties";
@@ -104,6 +105,10 @@ export class DrizzlePropertyRepository implements IPropertyRepository {
   }
 
   async update(property: Property): Promise<Property> {
+    if (property.status !== PropertyStatus.ALUGADO && await db.select({ id: rentals.id }).from(rentals)
+      .where(eq(rentals.propertyId, property.id)).limit(1).get()) {
+      throw new Error("A property with a rental must keep ALUGADO status");
+    }
     await db
       .update(properties)
       .set({

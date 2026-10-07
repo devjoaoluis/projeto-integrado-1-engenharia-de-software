@@ -14,6 +14,9 @@ class MockPropertyRepository implements IPropertyRepository {
   async findById(id: string): Promise<Property | null> {
     return this.properties.find(p => p.id === id) || null;
   }
+  async search(params: any): Promise<any> {
+    return { items: this.properties, total: this.properties.length, limit: 20, offset: 0 };
+  }
   async findAll(): Promise<Property[]> {
     return this.properties;
   }

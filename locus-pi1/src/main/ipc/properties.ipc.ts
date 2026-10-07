@@ -1,3 +1,4 @@
+import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
 import { ipcMain } from "electron";
 import { CreateProperty, CreatePropertyDTO } from "../application/use-cases/CreateProperty";
 import { GetProperty } from "../application/use-cases/GetProperty";
@@ -20,7 +21,7 @@ export function registerPropertiesIpc() {
   const listProperties = new ListProperties(propertyRepo);
   const searchProperties = new SearchProperties(propertyRepo);
   const updateProperty = new UpdateProperty(propertyRepo);
-  const deleteProperty = new DeleteProperty(propertyRepo, propertyMediaRepo, fileStorage);
+  const deleteProperty = new DeleteProperty(propertyRepo, propertyMediaRepo, fileStorage, new DrizzlePropertyHistoryRepository());
 
   ipcMain.handle("properties:create", async (_, data: CreatePropertyDTO) => {
     return await createProperty.execute(data);

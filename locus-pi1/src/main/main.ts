@@ -4,7 +4,11 @@ import started from 'electron-squirrel-startup';
 import { registerPropertiesIpc } from './ipc/properties.ipc';
 import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
 import { registerAuthIpc } from './ipc/auth.ipc';
+import { registerContactsIpc } from './ipc/contacts.ipc';
 import { registerClientsIpc } from './ipc/clients.ipc';
+import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
+import { registerRentalsIpc } from './ipc/rentals.ipc';
+import { databaseReady } from './infrastructure/database/db';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -38,13 +42,17 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  createWindow();
+app.on('ready', async () => {
+  await databaseReady;
   
   registerPropertiesIpc();
   registerPropertyMediaIpc();
   registerAuthIpc();
   registerClientsIpc();
+  registerContactsIpc();
+  registerRentalsIpc();
+  registerPropertyOverviewIpc();
+  createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
