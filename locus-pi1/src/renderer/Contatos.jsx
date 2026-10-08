@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { mensagemErro } from "./utils/mensagemErro";
 
 const vazio = { name: "", cpfCnpj: "", phone: "", email: "", type: "TENANT", guarantorId: "" };
 
@@ -10,6 +11,8 @@ function Contatos() {
   const [formulario, setFormulario] = useState(vazio);
   const [editando, setEditando] = useState(null);
   const [erro, setErro] = useState("");
+  const [contatoParaRemover, setContatoParaRemover] = useState(null);
+  const [removendo, setRemovendo] = useState(false);
 
   const api = aba === "clients" ? window.api.clients : window.api[aba];
   const rotulo = { clients: "Clientes / Locatários", owners: "Proprietários", guarantors: "Fiadores" }[aba];
@@ -78,12 +81,23 @@ function Contatos() {
   }
 
   async function remover(id) {
-    if (!window.confirm("Tem certeza que deseja excluir este contato?")) return;
+    const contato = registros.find((registro) => registro.id === id);
+    if (contato) setContatoParaRemover(contato);
+  }
+
+  async function confirmarRemocao() {
+    if (!contatoParaRemover) return;
+    const id = contatoParaRemover.id;
+    setContatoParaRemover(null);
+    setRemovendo(true);
     try {
+      setErro("");
       await api.delete(id);
       await carregar();
     } catch (error) {
-      setErro(error.message || "Não foi possível excluir o contato.");
+      setErro(mensagemErro(error, "Não foi possível excluir este contato."));
+    } finally {
+      setRemovendo(false);
     }
   }
 
@@ -108,6 +122,12 @@ function Contatos() {
         .contatos-tabela th { color: #555; font-size: 13px; }
         .contatos-tabela td { font-size: 14px; }
         .contato-acoes { display: flex; gap: 8px; }
+        .contatos-erro { padding: 14px 16px; border: 1px solid #f2b8b5; border-radius: 8px; background: #fff5f5; color: #8a1c1c; }
+        .confirmacao-exclusao { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.35); }
+        .confirmacao-exclusao-conteudo { width: min(420px, calc(100vw - 32px)); padding: 24px; border-radius: 8px; background: white; box-shadow: 0 8px 28px rgba(0,0,0,.2); }
+        .confirmacao-exclusao-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+        .confirmacao-exclusao-acoes button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 4px; cursor: pointer; }
+        .confirmacao-excluir { color: white; background: #d32f2f; }
         @media (max-width: 900px) {
           .contatos-form { grid-template-columns: repeat(2, 1fr); }
           .contatos-form .campo-largo { grid-column: span 2; }
@@ -150,7 +170,7 @@ function Contatos() {
               {editando && <button className="cancelar" type="button" onClick={cancelarEdicao}>Cancelar</button>}
             </div>
           </form>
-          {erro && <p role="alert">{erro}</p>}
+          {erro && <div className="contatos-erro" role="alert"><strong>Não foi possível concluir a exclusão</strong><br />{erro}</div>}
         </section>
         <section className="contatos-card">
           <h2>{rotulo} cadastrados</h2>
@@ -164,7 +184,7 @@ function Contatos() {
                     {aba === "clients" && <><td>{contato.type === "TENANT" ? "Locatário" : "Interessado"}</td><td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td></>}
                     <td className="contato-acoes">
                       <button className="contato-acao" onClick={() => editar(contato)}>Editar</button>
-                      <button className="contato-acao excluir" onClick={() => remover(contato.id)}>Excluir</button>
+                      <button className="contato-acao excluir" disabled={removendo} onClick={() => remover(contato.id)}>Excluir</button>
                     </td>
                   </tr>
                 ))}
@@ -173,6 +193,18 @@ function Contatos() {
           )}
         </section>
       </div>
+      {contatoParaRemover && (
+        <div className="confirmacao-exclusao" role="dialog" aria-modal="true">
+          <div className="confirmacao-exclusao-conteudo">
+            <h2>Excluir cadastro?</h2>
+            <p>Deseja excluir <strong>{contatoParaRemover.name}</strong>? Essa ação não poderá ser desfeita.</p>
+            <div className="confirmacao-exclusao-acoes">
+              <button type="button" onClick={() => setContatoParaRemover(null)}>Cancelar</button>
+              <button type="button" className="confirmacao-excluir" onClick={confirmarRemocao}>Excluir</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

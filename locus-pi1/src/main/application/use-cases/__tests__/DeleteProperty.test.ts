@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import { DeleteProperty } from "../DeleteProperty";
 import { Property, PropertyStatus } from "../../../domain/entities/Property";
+import { Rental } from "../../../domain/entities/Rental";
 import { PropertyMedia, MediaType } from "../../../domain/entities/PropertyMedia";
 import { IPropertyRepository } from "../../../domain/repositories/IPropertyRepository";
 import { IPropertyMediaRepository } from "../../../domain/repositories/IPropertyMediaRepository";
@@ -43,7 +44,10 @@ describe("DeleteProperty Use Case", () => {
       status: PropertyStatus.ALUGADO, createdAt: 1, updatedAt: 1 });
     await mediaRepo.create({ id: "media", propertyId: "rented", type: MediaType.IMAGE,
       fileName: "x.jpg", filePath: "x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
-    await assert.rejects(new DeleteProperty(propRepo, mediaRepo, storage).execute("rented"), /cannot be deleted/);
+    await assert.rejects(
+      new DeleteProperty(propRepo, mediaRepo, storage).execute("rented"),
+      /Não é possível excluir um imóvel alugado/
+    );
     assert.equal(propRepo.properties.length, 1);
     assert.equal(mediaRepo.medias.length, 1);
     assert.deepStrictEqual(storage.deletedFiles, []);
@@ -63,5 +67,19 @@ describe("DeleteProperty Use Case", () => {
     assert.strictEqual(propRepo.properties.length, 0, "Property should be deleted");
     assert.strictEqual(mediaRepo.medias.length, 0, "Media records should be deleted");
     assert.deepStrictEqual(storage.deletedFiles, ["path/to/x.jpg"], "Files should be deleted");
+  });
+
+  it("does not block deletion because of a stale rented status when no rental exists", async () => {
+    const propRepo = new MockPropertyRepository();
+    const mediaRepo = new MockPropertyMediaRepository();
+    const storage = new MockFileStorage();
+    const rentalRepo = { findByPropertyId: async (_propertyId: string): Promise<Rental[]> => [] };
+
+    await propRepo.create({ id: "available-again", title: "T", address: "A", neighborhood: null, bedrooms: null,
+      price: 100, description: null, status: PropertyStatus.ALUGADO, createdAt: 1, updatedAt: 1 });
+
+    await new DeleteProperty(propRepo, mediaRepo, storage, undefined, rentalRepo).execute("available-again");
+
+    assert.equal(propRepo.properties.length, 0);
   });
 });
