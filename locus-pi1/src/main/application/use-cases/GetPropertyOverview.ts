@@ -30,10 +30,10 @@ export class GetPropertyOverview {
       }
     }
     if (this.rentalRepository) {
-      const rentals = (await this.rentalRepository.findAll()).filter((rental) => rental.propertyId === propertyId && rental.parentRentalId === null);
+      const rentals = await this.rentalRepository.findByPropertyId(propertyId);
       for (const rental of rentals) {
-        if (!contracts.current.some((contract) => contract.rentalId === rental.id)) {
-          contracts.current.push({
+        if (!history.contracts.some((contract) => contract.rentalId === rental.id)) {
+          (rental.startDate > now ? contracts.scheduled : contracts.current).push({
             id: rental.id,
             propertyId: rental.propertyId,
             tenantId: rental.tenantId,

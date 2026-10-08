@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../database/db";
 import { rentals } from "../database/schema/rentals";
+import { propertyContracts } from "../database/schema/property-history";
 import { properties } from "../database/schema/properties";
 import { Rental } from "../../domain/entities/Rental";
 import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
@@ -20,6 +22,11 @@ export class DrizzleRentalRepository implements IRentalRepository {
           rental.parentRentalId ? ["ALUGADO"] : ["CADASTRADO", "DISPONIVEL"]))).run();
       if (result.rowsAffected !== 1) throw new Error("Property is not available for this rental");
       await tx.insert(rentals).values(rental).run();
+      await tx.insert(propertyContracts).values({
+        id: randomUUID(), propertyId: rental.propertyId, tenantId: rental.tenantId, rentalId: rental.id,
+        reference: `LOC-${rental.id}`, monthlyRent: rental.monthlyRent, startDate: rental.startDate,
+        endDate: null, status: "ACTIVE", createdAt: rental.createdAt,
+      }).run();
       return rental;
     });
   }
@@ -60,6 +67,23 @@ export class DrizzleRentalRepository implements IRentalRepository {
     await db.transaction(async (tx) => {
       const rental = await tx.select().from(rentals).where(eq(rentals.id, id)).get();
       if (!rental) throw new Error(`Rental with id ${id} not found`);
+      const children = await tx.select({ id: rentals.id }).from(rentals).where(eq(rentals.parentRentalId, id)).limit(1);
+      if (children.length) throw new Error("Encerre as sublocações antes de encerrar a locação principal.");
+      const contracts = await tx.select().from(propertyContracts).where(eq(propertyContracts.rentalId, id));
+      if (!contracts.length) {
+        await tx.insert(propertyContracts).values({
+          id: randomUUID(), propertyId: rental.propertyId, tenantId: rental.tenantId, rentalId: null,
+          reference: `LOC-${rental.id}`, monthlyRent: rental.monthlyRent, startDate: rental.startDate,
+          endDate: cancelledAt > rental.startDate ? cancelledAt : null,
+          status: cancelledAt > rental.startDate ? "ENDED" : "CANCELLED", createdAt: rental.createdAt,
+        }).run();
+      }
+      for (const contract of contracts) {
+        await tx.update(propertyContracts).set({ rentalId: null,
+          status: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? "ENDED" : "CANCELLED") : contract.status,
+          endDate: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? cancelledAt : null) : contract.endDate,
+        }).where(eq(propertyContracts.id, contract.id)).run();
+      }
       if (rental.parentRentalId === null) {
         await tx.update(properties).set({ status: "DISPONIVEL", updatedAt: cancelledAt })
           .where(eq(properties.id, rental.propertyId)).run();

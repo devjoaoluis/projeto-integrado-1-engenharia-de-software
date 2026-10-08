@@ -21,6 +21,9 @@ export class CreateProperty {
   constructor(private propertyRepository: IPropertyRepository) {}
 
   async execute(dto: CreatePropertyDTO): Promise<Property> {
+    if (dto.price !== undefined && (!Number.isFinite(dto.price) || dto.price < 0)) throw new Error("Price must be a finite non-negative number");
+    if (dto.iptu !== undefined && dto.iptu !== null && (!Number.isFinite(dto.iptu) || dto.iptu < 0)) throw new Error("IPTU must be a finite non-negative number");
+    if (!Number.isFinite(dto.price)) throw new Error("Price is required");
     if (!dto.title || dto.title.trim() === "") {
       throw new Error("Title is required");
     }

@@ -52,6 +52,18 @@ describe("DeleteProperty Use Case", () => {
     assert.equal(mediaRepo.medias.length, 1);
     assert.deepStrictEqual(storage.deletedFiles, []);
   });
+  it("preserves files and media if the database rejects deletion after the initial checks", async () => {
+    const properties = new MockPropertyRepository();
+    const media = new MockPropertyMediaRepository();
+    const storage = new MockFileStorage();
+    await properties.create({ id: "blocked", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100,
+      description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
+    await media.create({ id: "m", propertyId: "blocked", type: MediaType.IMAGE, fileName: "x.jpg", filePath: "x.jpg", mimeType: "image/jpeg", size: 1, createdAt: 1 });
+    properties.delete = async () => { throw new Error("FOREIGN KEY constraint failed"); };
+    await assert.rejects(new DeleteProperty(properties, media, storage).execute("blocked"), /FOREIGN KEY/);
+    assert.equal(media.medias.length, 1);
+    assert.deepEqual(storage.deletedFiles, []);
+  });
   it("should delete a property and its related media files", async () => {
     const propRepo = new MockPropertyRepository();
     const mediaRepo = new MockPropertyMediaRepository();

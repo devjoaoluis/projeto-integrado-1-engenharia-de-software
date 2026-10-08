@@ -34,7 +34,7 @@ function fixture(status = PropertyStatus.DISPONIVEL) {
   const property: Property = { id: "property", title: "Casa", address: "Rua", neighborhood: null, bedrooms: null, price: 1000,
     description: null, status, createdAt: 1, updatedAt: 1 };
   const properties = { findById: async (id: string) => id === property.id ? property : null } as IPropertyRepository;
-  const clients = { findById: async (id: string) => id === "tenant" || id === "subtenant" ? { id } : null } as IClientRepository;
+  const clients = { findById: async (id: string) => id === "tenant" || id === "subtenant" ? { id, type: "TENANT" } : null } as IClientRepository;
   const dto: CreateRentalDTO = { propertyId: "property", tenantId: "tenant", monthlyRent: 1000, startDate: Date.now(), dueDay: 10 };
   return { repo, property, dto, create: new CreateRental(repo, properties, clients) };
 }

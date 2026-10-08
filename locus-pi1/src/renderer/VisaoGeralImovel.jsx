@@ -70,7 +70,7 @@ function VisaoGeralImovel() {
   if (result.id !== id) return <p role="status">Carregando imóvel...</p>;
   if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
   const imovel = result.imovel;
-  const contratoVigente = imovel.contratos.find((contrato) => contrato.status === "Vigente");
+  const contratoVigente = imovel.contratos.find((contrato) => contrato.status === "Vigente" && contrato.rentalId);
   const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
@@ -126,7 +126,7 @@ function VisaoGeralImovel() {
     if (!contratoVigente) return;
     setConfirmarDesassociacao(false);
     try {
-      await window.api.rentals.cancel(contratoVigente.id);
+      await window.api.rentals.cancel(contratoVigente.rentalId);
       await carregarOverview();
       setSucessoLocacao("Locatário desassociado com sucesso.");
     } catch (error) {

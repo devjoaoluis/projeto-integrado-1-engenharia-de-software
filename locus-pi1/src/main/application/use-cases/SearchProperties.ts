@@ -13,6 +13,8 @@ export const SearchPropertiesSchema = z.object({
   orderBy: z.enum(["price_asc", "price_desc", "recent"]).default("recent"),
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(100).default(20),
+}).refine(data => data.priceMin === undefined || data.priceMax === undefined || data.priceMin <= data.priceMax, {
+  message: "O preço mínimo não pode ser maior que o máximo.", path: ["priceMax"],
 });
 
 export type SearchPropertiesDTO = z.input<typeof SearchPropertiesSchema>;

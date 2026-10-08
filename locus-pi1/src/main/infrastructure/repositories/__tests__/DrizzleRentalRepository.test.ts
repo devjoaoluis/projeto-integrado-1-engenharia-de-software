@@ -12,8 +12,9 @@ const sqlite = createClient({ url: "file::memory:" });
 const migrations = path.join(process.cwd(), "src/main/infrastructure/database/migrations");
 before(async () => {
   await sqlite.execute("PRAGMA foreign_keys = ON");
-  for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_auth.sql", "0003_add_rentals.sql", "0006_search_filters.sql"]) {
-    await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, name), "utf8"));
+  const journal = JSON.parse(fs.readFileSync(path.join(migrations, "meta/_journal.json"), "utf8")) as { entries: { tag: string }[] };
+  for (const entry of journal.entries) {
+    await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, entry.tag + ".sql"), "utf8"));
   }
 });
 // Inject an isolated real SQLite database without starting Electron.
@@ -34,7 +35,7 @@ function rental(id = "rental"): Rental {
 }
 
 beforeEach(async () => {
-  await sqlite.executeMultiple(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
+  await sqlite.executeMultiple(`DELETE FROM property_payments; DELETE FROM property_contracts; DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
     DELETE FROM rentals; DELETE FROM properties; DELETE FROM clients;
     INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);
@@ -107,4 +108,67 @@ describe("Rental SQLite persistence", () => {
     await assert.rejects(sqlite.execute("DELETE FROM properties"), /FOREIGN KEY/);
     await assert.rejects(sqlite.execute("DELETE FROM clients WHERE id = 'tenant'"), /FOREIGN KEY/);
   });
+  it("preserves contracts and payments when ending a rental", async () => {
+    await repo.create(rental());
+    const contract = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
+    assert.notEqual(contract.id, "rental");
+    await sqlite.execute({ sql: "INSERT INTO property_payments VALUES ('payment', 'property', ?, 1000, 10, 'Aluguel', 10)", args: [contract.id] });
+    await repo.cancel("rental", 20);
+    const saved = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
+    assert.equal(saved.id, contract.id);
+    assert.equal(saved.rental_id, null);
+    assert.equal(saved.status, "ENDED");
+    assert.equal(saved.end_date, 20);
+    assert.equal((await sqlite.execute("SELECT count(*) AS total FROM property_payments")).rows[0].total, 1);
+    assert.equal(await repo.findById("rental"), null);
+    assert.equal((await sqlite.execute("SELECT status FROM properties")).rows[0].status, "DISPONIVEL");
+  });
+  it("keeps previous contract dates when ending the linked rental", async () => {
+    await repo.create(rental());
+    await sqlite.execute("UPDATE property_contracts SET status = 'ENDED', end_date = 10");
+    await repo.cancel("rental", 20);
+    const saved = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
+    assert.equal(saved.end_date, 10);
+    assert.equal(saved.status, "ENDED");
+    assert.equal(saved.rental_id, null);
+  });
+  it("requires ending sublettings first and keeps the property rented until the primary ends", async () => {
+    await repo.create(rental());
+    await repo.create({ ...rental("child"), tenantId: "subtenant", parentRentalId: "rental", formalConsent: "document.pdf" });
+    await assert.rejects(repo.cancel("rental", 20), /sublocações/);
+    assert.equal((await repo.findAll()).length, 2);
+    await repo.cancel("child", 20);
+    assert.equal((await sqlite.execute("SELECT status FROM properties")).rows[0].status, "ALUGADO");
+    await repo.cancel("rental", 30);
+    assert.equal((await sqlite.execute("SELECT count(*) AS total FROM property_contracts")).rows[0].total, 2);
+  });
+  it("records a future association as cancelled rather than ended before it started", async () => {
+    await repo.create({ ...rental(), startDate: 100 });
+    await repo.cancel("rental", 20);
+    const saved = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
+    assert.equal(saved.status, "CANCELLED");
+    assert.equal(saved.end_date, null);
+  });
+
+  it("upgrades legacy owner links and rental history without duplicating contracts", async () => {
+    const legacy = createClient({ url: "file::memory:" });
+    try {
+      const journal = JSON.parse(fs.readFileSync(path.join(migrations, "meta/_journal.json"), "utf8")) as { entries: { tag: string }[] };
+      for (const entry of journal.entries) await legacy.executeMultiple(fs.readFileSync(path.join(migrations, entry.tag + ".sql"), "utf8"));
+      await legacy.executeMultiple(`
+        INSERT INTO properties (id, title, address, price, status, owner_id, created_at, updated_at)
+        VALUES ('old', 'Casa antiga', 'Rua', 1000, 'ALUGADO', 'missing-owner', 1, 1);
+        INSERT INTO clients (id, name, cpf_cnpj, phone, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', 1, 1);
+        INSERT INTO rentals (id, property_id, tenant_id, monthly_rent, start_date, due_day, created_at, updated_at)
+        VALUES ('legacy-rental', 'old', 'tenant', 1000, 1, 10, 1, 1);
+      `);
+      await initializeDatabase(legacy);
+      await initializeDatabase(legacy);
+      assert.equal((await legacy.execute("SELECT owner_id FROM properties WHERE id = 'old'")).rows[0].owner_id, null);
+      assert.equal((await legacy.execute("SELECT count(*) AS total FROM property_contracts WHERE rental_id = 'legacy-rental'")).rows[0].total, 1);
+      assert.equal((await legacy.execute("SELECT title FROM properties WHERE id = 'old'")).rows[0].title, "Casa antiga");
+      await assert.rejects(legacy.execute("UPDATE properties SET owner_id = 'missing-owner' WHERE id = 'old'"), /Proprietário/);
+    } finally { legacy.close(); }
+  });
+
 });

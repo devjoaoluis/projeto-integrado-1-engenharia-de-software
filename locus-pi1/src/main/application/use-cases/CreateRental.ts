@@ -51,9 +51,11 @@ export class CreateRental {
     }
     const property = await this.propertyRepository.findById(dto.propertyId);
     if (!property) throw new Error(`Property with id ${dto.propertyId} not found`);
-    if (!await this.clientRepository.findById(dto.tenantId)) {
+    const tenant = await this.clientRepository.findById(dto.tenantId);
+    if (!tenant) {
       throw new Error(`Client with id ${dto.tenantId} not found`);
     }
+    if (tenant.type !== "TENANT") throw new Error("O cliente precisa estar cadastrado como locatário.");
     const parentRentalId = dto.parentRentalId ?? null;
     const formalConsent = dto.formalConsent?.trim() || null;
     if (parentRentalId) {

@@ -34,7 +34,7 @@ export function adaptPropertyOverview(overview, tenantNames = {}) {
       ...contracts.previous.map(item => ({ ...item, label: item.status === "CANCELLED" ? "Cancelado" : "Encerrado" })),
       ...contracts.scheduled.map(item => ({ ...item, label: "Agendado" })),
     ].map(item => ({
-      id: item.id, codigo: item.reference, locatario: tenantNames[item.tenantId] ?? "Locatário não encontrado",
+      id: item.id, rentalId: item.rentalId ?? null, codigo: item.reference, locatario: tenantNames[item.tenantId] ?? "Locatário não encontrado",
       inicio: date(item.startDate), fim: date(item.endDate), valor: item.monthlyRent, status: item.label,
     })),
     pagamentos: payments.map(item => ({

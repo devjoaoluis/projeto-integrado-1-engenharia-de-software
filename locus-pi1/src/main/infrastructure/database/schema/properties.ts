@@ -1,3 +1,4 @@
+import { owners } from "./contacts";
 import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 
 export const properties = sqliteTable("properties", {
@@ -13,7 +14,7 @@ export const properties = sqliteTable("properties", {
   fiscalStatus: text("fiscal_status"),
   sanitationStatus: text("sanitation_status"),
   registrationDate: text("registration_date"),
-  ownerId: text("owner_id"),
+  ownerId: text("owner_id").references(() => owners.id, { onDelete: "restrict" }),
   status: text("status", {
     enum: ["CADASTRADO", "DISPONIVEL", "VENDIDO", "ALUGADO", "INATIVO"],
   })
