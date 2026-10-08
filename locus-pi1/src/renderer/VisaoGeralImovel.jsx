@@ -70,7 +70,7 @@ function VisaoGeralImovel() {
   if (result.id !== id) return <p role="status">Carregando imóvel...</p>;
   if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
   const imovel = result.imovel;
-  const contratoVigente = imovel.contratos.find((contrato) => contrato.status === "Vigente" && contrato.rentalId);
+  const contratoAssociado = imovel.contratos.find((contrato) => ["Vigente", "Agendado"].includes(contrato.status) && contrato.rentalId);
   const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
@@ -123,10 +123,10 @@ function VisaoGeralImovel() {
   }
 
   async function desassociarLocatario() {
-    if (!contratoVigente) return;
+    if (!contratoAssociado) return;
     setConfirmarDesassociacao(false);
     try {
-      await window.api.rentals.cancel(contratoVigente.rentalId);
+      await window.api.rentals.cancel(contratoAssociado.rentalId);
       await carregarOverview();
       setSucessoLocacao("Locatário desassociado com sucesso.");
     } catch (error) {
@@ -366,6 +366,44 @@ function VisaoGeralImovel() {
           margin: 0;
         }
 
+        .confirmacao-exclusao {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, .35);
+            z-index: 10;
+        }
+
+        .confirmacao-exclusao-conteudo {
+            width: min(420px, calc(100vw - 32px));
+            padding: 24px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+        }
+
+        .confirmacao-exclusao-acoes {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .confirmacao-exclusao-acoes button {
+            min-height: 38px;
+            padding: 0 14px;
+            border: 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .confirmacao-excluir {
+            color: white;
+            background: #d32f2f;
+        }
+
         .imovel-tags {
           display: flex;
           gap: 8px;
@@ -492,9 +530,9 @@ function VisaoGeralImovel() {
 
         <section className="associacao-locacao" aria-label="Associar locatário">
           <h3>Associar locatário</h3>
-          {contratoVigente && (
+          {contratoAssociado && (
             <p className="locatario-atual">
-              <strong>Locatário associado:</strong> {contratoVigente.locatario}
+              <strong>Locatário associado:</strong> {contratoAssociado.locatario}
             </p>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
@@ -519,14 +557,14 @@ function VisaoGeralImovel() {
               Dia de vencimento
               <input name="dueDay" type="number" min="1" max="31" value={locacao.dueDay} onChange={atualizarLocacao} required />
             </label>
-            <button type="submit" disabled={salvandoLocacao || locatarios.length === 0 || Boolean(contratoVigente)}>
-              {contratoVigente ? "Locatário associado" : salvandoLocacao ? "Salvando..." : "Associar"}
+            <button type="submit" disabled={salvandoLocacao || locatarios.length === 0 || Boolean(contratoAssociado)}>
+              {contratoAssociado ? "Locatário associado" : salvandoLocacao ? "Salvando..." : "Associar"}
             </button>
           </form>
           {locatarios.length === 0 && <p>Nenhum cliente do tipo locatário foi cadastrado.</p>}
           {erroLocacao && <p role="alert">{erroLocacao}</p>}
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
-          {contratoVigente && (
+          {contratoAssociado && (
             <button type="button" className="voltar-btn" onClick={() => setConfirmarDesassociacao(true)}>
               Desassociar locatário
             </button>

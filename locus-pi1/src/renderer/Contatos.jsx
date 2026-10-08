@@ -170,7 +170,7 @@ function Contatos() {
               {editando && <button className="cancelar" type="button" onClick={cancelarEdicao}>Cancelar</button>}
             </div>
           </form>
-          {erro && <div className="contatos-erro" role="alert"><strong>Não foi possível concluir a exclusão</strong><br />{erro}</div>}
+          {erro && <div className="contatos-erro" role="alert"><strong>Não foi possível concluir a operação</strong><br />{erro}</div>}
         </section>
         <section className="contatos-card">
           <h2>{rotulo} cadastrados</h2>
