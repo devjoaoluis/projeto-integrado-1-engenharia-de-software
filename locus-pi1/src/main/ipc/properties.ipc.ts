@@ -43,8 +43,8 @@ export function registerPropertiesIpc() {
   // CREATE
   ipcMain.handle(
     "properties:create",
-    async (_, data: CreatePropertyDTO) => {
-      return await createProperty.execute(data);
+    async (_, data: CreatePropertyDTO & { bairro?: string }) => {
+      return await createProperty.execute({ ...data, neighborhood: data.neighborhood ?? data.bairro });
     }
   );
 
@@ -79,8 +79,8 @@ export function registerPropertiesIpc() {
   // UPDATE
   ipcMain.handle(
     "properties:update",
-    async (_, data: UpdatePropertyDTO) => {
-      return await updateProperty.execute(data);
+    async (_, data: UpdatePropertyDTO & { bairro?: string }) => {
+      return await updateProperty.execute({ ...data, neighborhood: data.neighborhood ?? data.bairro });
     }
   );
 

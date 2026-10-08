@@ -93,4 +93,37 @@ describe("property search persistence and validation", () => {
     assert.ok(result.items.some(item => item.id === property.id));
     assert.equal((await search.execute({ q: "original unica" })).total, 0);
   });
+  it("persists the neighborhood sent by the existing screen through IPC on create and edit", async () => {
+    const electronModule = require.resolve("electron");
+    const previousElectron = require.cache[electronModule];
+    const ipcModule = require.resolve("../../../ipc/properties.ipc");
+    const previousIpc = require.cache[ipcModule];
+    delete require.cache[ipcModule];
+    const handlers = new Map<string, (event: unknown, data: unknown) => Promise<unknown>>();
+    require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data: unknown) => Promise<unknown>) => handlers.set(name, handler) } } } as NodeModule;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
+      const { registerPropertiesIpc } = require("../../../ipc/properties.ipc") as typeof import("../../../ipc/properties.ipc");
+      registerPropertiesIpc();
+      const createHandler = handlers.get("properties:create");
+      const updateHandler = handlers.get("properties:update");
+      assert.ok(createHandler && updateHandler);
+      const property = await createHandler({}, { ...data, bairro: "Bairro exclusivo" }) as { id: string };
+      assert.equal((await repo.findById(property.id))?.neighborhood, "Bairro exclusivo");
+      assert.ok((await search.execute({ neighborhood: "Bairro exclusivo" })).items.some(item => item.id === property.id));
+      await updateHandler({}, { id: property.id, bairro: "Bairro editado" });
+      assert.equal((await repo.findById(property.id))?.neighborhood, "Bairro editado");
+      assert.ok((await search.execute({ q: "bairro editado" })).items.some(item => item.id === property.id));
+      await updateHandler({}, { id: property.id, title: "Outro título" });
+      assert.equal((await repo.findById(property.id))?.neighborhood, "Bairro editado");
+      await updateHandler({}, { id: property.id, neighborhood: "Campo oficial", bairro: "Não usar" });
+      assert.equal((await repo.findById(property.id))?.neighborhood, "Campo oficial");
+    } finally {
+      if (previousIpc) require.cache[ipcModule] = previousIpc;
+      else delete require.cache[ipcModule];
+      if (previousElectron) require.cache[electronModule] = previousElectron;
+      else delete require.cache[electronModule];
+    }
+  });
+
 });
