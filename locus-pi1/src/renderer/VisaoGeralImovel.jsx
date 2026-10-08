@@ -22,6 +22,7 @@ function VisaoGeralImovel() {
   const [salvandoLocacao, setSalvandoLocacao] = useState(false);
   const [erroLocacao, setErroLocacao] = useState("");
   const [sucessoLocacao, setSucessoLocacao] = useState("");
+  const [confirmarDesassociacao, setConfirmarDesassociacao] = useState(false);
 
   const [result, setResult] = useState({ id: null, imovel: null, erro: "" });
 
@@ -122,7 +123,8 @@ function VisaoGeralImovel() {
   }
 
   async function desassociarLocatario() {
-    if (!contratoVigente || !window.confirm("Deseja desassociar este locatário?")) return;
+    if (!contratoVigente) return;
+    setConfirmarDesassociacao(false);
     try {
       await window.api.rentals.cancel(contratoVigente.id);
       await carregarOverview();
@@ -525,7 +527,7 @@ function VisaoGeralImovel() {
           {erroLocacao && <p role="alert">{erroLocacao}</p>}
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
           {contratoVigente && (
-            <button type="button" className="voltar-btn" onClick={desassociarLocatario}>
+            <button type="button" className="voltar-btn" onClick={() => setConfirmarDesassociacao(true)}>
               Desassociar locatário
             </button>
           )}
@@ -575,6 +577,18 @@ function VisaoGeralImovel() {
           </button>
 
         </div>
+        {confirmarDesassociacao && (
+          <div className="confirmacao-exclusao" role="dialog" aria-modal="true">
+            <div className="confirmacao-exclusao-conteudo">
+              <h2>Desassociar locatário?</h2>
+              <p>O imóvel ficará disponível novamente para uma nova locação.</p>
+              <div className="confirmacao-exclusao-acoes">
+                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>Cancelar</button>
+                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>Desassociar</button>
+              </div>
+            </div>
+          </div>
+        )}
 
 
         <div className="aba-conteudo">

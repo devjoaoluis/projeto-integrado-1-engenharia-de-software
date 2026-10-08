@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Campo from "./components/Campo";
 import UploadMidia from "./components/UploadMidia";
+import { mensagemErro } from "./utils/mensagemErro";
 
 const TIPOS = ["Residencial", "Comercial"];
 const SITUACOES_FISCAIS = ["Regular", "Pendente"];
@@ -44,6 +45,7 @@ function CadastrarImovel() {
     const [fotos, setFotos] = useState([]);
     const [videos, setVideos] = useState([]);
     const [midiasExistentes, setMidiasExistentes] = useState([]);
+    const [erro, setErro] = useState("");
 
     useEffect(() => {
         if (imovelEditar) {
@@ -131,7 +133,7 @@ function CadastrarImovel() {
             setMidiasExistentes((prev) => prev.filter(m => (m.id || m) !== idMidia));
         } catch (error) {
             console.error("Erro ao remover mídia:", error);
-            alert("Não foi possível remover a mídia.");
+            setErro(mensagemErro(error, "Não foi possível remover a mídia. Tente novamente."));
         }
     }
 
@@ -190,7 +192,7 @@ function CadastrarImovel() {
             navigate("/imoveis", { replace: true });
         } catch (error) {
             console.error("Erro ao processar imóvel:", error);
-            alert("Erro ao salvar imóvel: " + (error.message || error));
+            setErro(mensagemErro(error, "Não foi possível salvar o imóvel. Confira os dados e tente novamente."));
         }
     }
 
@@ -308,6 +310,7 @@ function CadastrarImovel() {
                 `}
             </style>
 
+            {erro && <p role="alert" style={{ color: "#8a1c1c", background: "#fff5f5", padding: "12px 16px", borderRadius: "8px" }}>{erro}</p>}
             <form className="cadastro-fundo" onSubmit={handleSubmit}>
                 <div className="cadastro-card">
                     <h2 className="cadastro-titulo">{tituloPagina}</h2>

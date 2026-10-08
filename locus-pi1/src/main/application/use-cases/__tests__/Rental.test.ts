@@ -13,6 +13,7 @@ class MockRentalRepository implements IRentalRepository {
   rentals: Rental[] = [];
   async create(rental: Rental) { this.rentals.push(rental); return rental; }
   async findById(id: string) { return this.rentals.find(rental => rental.id === id) ?? null; }
+  async findByPropertyId(propertyId: string) { return this.rentals.filter(rental => rental.propertyId === propertyId); }
   async findAll() { return this.rentals; }
   async updatePrerequisites(id: string, data: Pick<Rental, "contractSigned" | "signaturesNotarized" | "initialPaymentsPaid">) {
     const rental = await this.findById(id);

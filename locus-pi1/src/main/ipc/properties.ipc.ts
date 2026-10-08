@@ -18,6 +18,7 @@ import { DeleteProperty } from "../application/use-cases/DeleteProperty";
 
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
 import { DrizzlePropertyMediaRepository } from "../infrastructure/repositories/DrizzlePropertyMediaRepository";
+import { DrizzleRentalRepository } from "../infrastructure/repositories/DrizzleRentalRepository";
 import { LocalFileStorage } from "../infrastructure/filesystem/LocalFileStorage";
 
 export function registerPropertiesIpc() {
@@ -35,7 +36,8 @@ export function registerPropertiesIpc() {
     propertyRepo,
     propertyMediaRepo,
     fileStorage,
-    new DrizzlePropertyHistoryRepository()
+    new DrizzlePropertyHistoryRepository(),
+    new DrizzleRentalRepository()
   );
 
   // CREATE

@@ -150,7 +150,7 @@ describe("HU05 property overview", () => {
       exists: async () => true,
       getPath: (directory, name) => path.join(directory, name),
     };
-    await assert.rejects(new DeleteProperty(propertyRepo, mediaRepo, storage, historyRepo).execute("property"), /history/);
+    await assert.rejects(new DeleteProperty(propertyRepo, mediaRepo, storage, historyRepo).execute("property"), /histórico/);
     assert.equal(deletedFiles, 0);
     assert.equal((await mediaRepo.findByPropertyId("property")).length, 1);
     await assert.rejects(client.execute("DELETE FROM properties WHERE id = 'property'"), /FOREIGN KEY/);

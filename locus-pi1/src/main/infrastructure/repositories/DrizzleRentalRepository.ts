@@ -28,6 +28,10 @@ export class DrizzleRentalRepository implements IRentalRepository {
     return (await db.select().from(rentals).where(eq(rentals.id, id)).get()) ?? null;
   }
 
+  async findByPropertyId(propertyId: string): Promise<Rental[]> {
+    return db.select().from(rentals).where(eq(rentals.propertyId, propertyId)).all();
+  }
+
   async findAll(): Promise<Rental[]> {
     return db.select().from(rentals).orderBy(rentals.createdAt).all();
   }
