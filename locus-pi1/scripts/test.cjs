@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 function findTests(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const filename = path.join(directory, entry.name);
-    return entry.isDirectory() ? findTests(filename) : entry.name.endsWith(".test.ts") ? [filename] : [];
+    return entry.isDirectory() ? findTests(filename) : /\.test\.(ts|mjs)$/.test(entry.name) ? [filename] : [];
   });
 }
 const tests = findTests(path.join(root, "src")).sort();
@@ -20,7 +20,9 @@ for (const filename of tests) {
   console.log(`\n${path.relative(root, filename)}`);
   const result = spawnSync(process.execPath, [
     "--require", path.join(__dirname, "register-typescript.cjs"),
-    "-e", "require(process.argv[1])", filename,
+    "-e", filename.endsWith(".mjs")
+      ? 'import(require("node:url").pathToFileURL(process.argv[1]).href).catch(error => { console.error(error); process.exitCode = 1; })'
+      : "require(process.argv[1])", filename,
   ], { cwd: root, stdio: "inherit" });
   if (result.error) console.error(result.error.message);
   if (result.status !== 0) failed = true;

@@ -12,8 +12,9 @@ const sqlite = createClient({ url: "file::memory:" });
 const migrations = path.join(process.cwd(), "src/main/infrastructure/database/migrations");
 before(async () => {
   await sqlite.execute("PRAGMA foreign_keys = ON");
-  for (const name of ["0000_quick_galactus.sql", "0001_add_clients.sql", "0002_add_auth.sql", "0003_add_rentals.sql", "0006_search_filters.sql"]) {
-    await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, name), "utf8"));
+  const journal = JSON.parse(fs.readFileSync(path.join(migrations, "meta/_journal.json"), "utf8")) as { entries: { tag: string }[] };
+  for (const entry of journal.entries) {
+    await sqlite.executeMultiple(fs.readFileSync(path.join(migrations, entry.tag + ".sql"), "utf8"));
   }
 });
 // Inject an isolated real SQLite database without starting Electron.
@@ -34,7 +35,7 @@ function rental(id = "rental"): Rental {
 }
 
 beforeEach(async () => {
-  await sqlite.executeMultiple(`DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
+  await sqlite.executeMultiple(`DELETE FROM property_payments; DELETE FROM property_contracts; DELETE FROM rentals WHERE parent_rental_id IS NOT NULL;
     DELETE FROM rentals; DELETE FROM properties; DELETE FROM clients;
     INSERT INTO properties (id, title, address, description, price, status, created_at, updated_at) VALUES ('property', 'Casa', 'Rua', NULL, 1000, 'DISPONIVEL', 1, 1);
     INSERT INTO clients (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES ('tenant', 'Cliente', '123', '9999', NULL, 1, 1);

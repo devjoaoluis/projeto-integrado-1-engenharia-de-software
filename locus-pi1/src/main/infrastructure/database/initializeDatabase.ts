@@ -121,8 +121,30 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
     await client.execute("ALTER TABLE properties ADD COLUMN registration_date TEXT");
   }
   if (!columns.includes("owner_id")) {
-    await client.execute("ALTER TABLE properties ADD COLUMN owner_id TEXT");
+    await client.execute("ALTER TABLE properties ADD COLUMN owner_id TEXT REFERENCES owners(id) ON DELETE RESTRICT");
   }
+
+  // Repair legacy orphan references without deleting properties or valid owners.
+  await client.execute("UPDATE properties SET owner_id = NULL WHERE owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE owners.id = properties.owner_id)");
+  // Persist a real contract for legacy rental associations as well.
+  await client.executeMultiple(`
+    INSERT INTO property_contracts (id, property_id, tenant_id, rental_id, reference, monthly_rent, start_date, end_date, status, created_at)
+    SELECT 'rental-' || r.id, r.property_id, r.tenant_id, r.id, 'LOC-' || r.id, r.monthly_rent, r.start_date, NULL, 'ACTIVE', r.created_at
+    FROM rentals r WHERE NOT EXISTS (SELECT 1 FROM property_contracts c WHERE c.rental_id = r.id);
+  `);
+
+  // Keep owner references valid on both new and upgraded databases.
+  await client.executeMultiple(`
+    CREATE TRIGGER IF NOT EXISTS properties_owner_insert BEFORE INSERT ON properties
+    WHEN NEW.owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE id = NEW.owner_id)
+    BEGIN SELECT RAISE(ABORT, 'Proprietário não encontrado.'); END;
+    CREATE TRIGGER IF NOT EXISTS properties_owner_update BEFORE UPDATE OF owner_id ON properties
+    WHEN NEW.owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE id = NEW.owner_id)
+    BEGIN SELECT RAISE(ABORT, 'Proprietário não encontrado.'); END;
+    CREATE TRIGGER IF NOT EXISTS owners_property_delete BEFORE DELETE ON owners
+    WHEN EXISTS (SELECT 1 FROM properties WHERE owner_id = OLD.id)
+    BEGIN SELECT RAISE(ABORT, 'Desvincule o proprietário dos imóveis antes de excluí-lo.'); END;
+  `);
 
   // Also repair databases where the migration already added the column.
   const result = await client.execute("SELECT id, title, address, neighborhood FROM properties WHERE search_normalized IS NULL");

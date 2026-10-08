@@ -27,6 +27,8 @@ export class UpdateProperty {
       throw new Error("Bedrooms must be a non-negative integer");
     }
 
+    if (dto.price !== undefined && (!Number.isFinite(dto.price) || dto.price < 0)) throw new Error("Price must be a finite non-negative number");
+    if (dto.iptu !== undefined && dto.iptu !== null && (!Number.isFinite(dto.iptu) || dto.iptu < 0)) throw new Error("IPTU must be a finite non-negative number");
     const property = await this.propertyRepository.findById(dto.id);
     if (!property) {
       throw new Error(`Property with id ${dto.id} not found`);

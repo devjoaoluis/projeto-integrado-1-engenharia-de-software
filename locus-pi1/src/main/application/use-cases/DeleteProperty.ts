@@ -44,6 +44,11 @@ export class DeleteProperty {
 
     const medias = await this.propertyMediaRepository.findByPropertyId(id);
 
+    // The database's foreign keys must accept deletion before any media is removed.
+    // This also protects against a rental being created after the initial checks.
+    await this.propertyRepository.delete(id);
+    await this.propertyMediaRepository.deleteByPropertyId(id);
+
     // Remove files
     for (const media of medias) {
       try {
@@ -54,10 +59,5 @@ export class DeleteProperty {
       }
     }
 
-    // Records in property_media will be removed automatically via DB cascade,
-    // or we can remove them explicitly to be safe
-    await this.propertyMediaRepository.deleteByPropertyId(id);
-
-    await this.propertyRepository.delete(id);
   }
 }
