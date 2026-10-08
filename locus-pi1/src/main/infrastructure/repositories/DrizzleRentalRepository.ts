@@ -80,8 +80,8 @@ export class DrizzleRentalRepository implements IRentalRepository {
       }
       for (const contract of contracts) {
         await tx.update(propertyContracts).set({ rentalId: null,
-          status: cancelledAt > contract.startDate ? "ENDED" : "CANCELLED",
-          endDate: cancelledAt > contract.startDate ? cancelledAt : null,
+          status: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? "ENDED" : "CANCELLED") : contract.status,
+          endDate: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? cancelledAt : null) : contract.endDate,
         }).where(eq(propertyContracts.id, contract.id)).run();
       }
       if (rental.parentRentalId === null) {
