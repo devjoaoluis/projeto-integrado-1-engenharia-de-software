@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
-    const paginas = Array.from({ length: totalPaginas }, (_, i) => i + 1);
+    const inicio = Math.max(1, Math.min(paginaAtual - 2, totalPaginas - 4));
+    const paginas = Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => inicio + i);
 
     return (
         <>

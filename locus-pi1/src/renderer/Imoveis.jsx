@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "./Button";
 import CardImovel from "./components/CardImovel";
 import Paginacao from "./components/Paginacao";
 import { mensagemErro } from "./utils/mensagemErro";
+import { mediaFileUrl } from "./propertyOverview.mjs";
 
 const ITENS_POR_PAGINA = 4;
 
@@ -11,6 +12,8 @@ function Imoveis() {
     const navigate = useNavigate();
     const [pagina, setPagina] = useState(1);
     const [imoveis, setImoveis] = useState([]);
+    const [total, setTotal] = useState(0);
+    const requisicao = useRef(0);
     const [filtros, setFiltros] = useState({
         q: "",
         priceMin: "",
@@ -26,10 +29,13 @@ function Imoveis() {
 
     useEffect(() => {
         carregarImoveis();
-    }, [filtrosAplicados]);
+        return () => { requisicao.current++; };
+    }, [filtrosAplicados, pagina]);
 
     async function carregarImoveis() {
+        const numeroRequisicao = ++requisicao.current;
         setCarregando(true);
+        setImoveis([]);
         setErro("");
         try {
             const dadosBusca = {
@@ -38,23 +44,31 @@ function Imoveis() {
                 priceMax: filtrosAplicados.priceMax === "" ? undefined : Number(filtrosAplicados.priceMax),
                 bedrooms: filtrosAplicados.bedrooms === "" ? undefined : Number(filtrosAplicados.bedrooms),
                 status: filtrosAplicados.status || undefined,
-                page: 1,
-                limit: 100,
+                page: pagina,
+                limit: ITENS_POR_PAGINA,
             };
             const resultado = await window.api.properties.search(dadosBusca);
+            if (resultado?.error) {
+                const detalhe = resultado.details?.find((item) => item.path?.[0] === "priceMax");
+                throw new Error(detalhe?.message || "Confira os valores informados nos filtros.");
+            }
+            if (numeroRequisicao !== requisicao.current) return;
             const propriedades = resultado?.items || [];
+            const quantidade = resultado?.total || 0;
+            setTotal(quantidade);
+            const ultimaPagina = Math.max(1, Math.ceil(quantidade / ITENS_POR_PAGINA));
+            if (pagina > ultimaPagina) {
+                setPagina(ultimaPagina);
+                return;
+            }
 
             const imoveisComFoto = await Promise.all(
                 propriedades.map(async (imovel) => {
                     let foto = "";
                     try {
                         const midias = await window.api.propertyMedia.list(imovel.id);
-                        if (midias && midias.length > 0) {
-                            const rawPath = midias[0].filePath.replace(/\\/g, '/');
-                            foto = rawPath.startsWith('http') 
-                                ? rawPath 
-                                : `file:///${encodeURI(rawPath)}`;
-                        }
+                        const imagem = midias?.find((midia) => midia.type === "IMAGE");
+                        if (imagem) foto = mediaFileUrl(imagem.filePath);
                     } catch (err) {
                         console.error("Erro ao carregar mídia para", imovel.id, err);
                     }
@@ -62,12 +76,15 @@ function Imoveis() {
                 })
             );
 
-            setImoveis(imoveisComFoto);
+            if (numeroRequisicao === requisicao.current) setImoveis(imoveisComFoto);
         } catch (error) {
             console.error("Erro ao listar imóveis:", error);
-            setErro(error.message || "Não foi possível carregar os imóveis.");
+            if (numeroRequisicao === requisicao.current) {
+                setErro(error.message || "Não foi possível carregar os imóveis.");
+                setTotal(0);
+            }
         } finally {
-            setCarregando(false);
+            if (numeroRequisicao === requisicao.current) setCarregando(false);
         }
     }
 
@@ -97,7 +114,7 @@ function Imoveis() {
         try {
             setErro("");
             await window.api.properties.delete(imovelId);
-            setImoveis((prev) => prev.filter((imovel) => imovel.id !== imovelId));
+            await carregarImoveis();
         } catch (error) {
             console.error("Erro ao remover:", error);
             setErro(mensagemErro(error, "Não foi possível excluir o imóvel."));
@@ -115,21 +132,20 @@ function Imoveis() {
             });
     }
 
-    const totalPaginas = Math.ceil(imoveis.length / ITENS_POR_PAGINA) || 1;
-
-    useEffect(() => {
-        if (pagina > totalPaginas) {
-            setPagina(totalPaginas);
-        }
-    }, [imoveis.length, pagina, totalPaginas]);
-
-    const inicio = (pagina - 1) * ITENS_POR_PAGINA;
-    const imoveisPaginados = imoveis.slice(inicio, inicio + ITENS_POR_PAGINA);
+    const totalPaginas = Math.max(1, Math.ceil(total / ITENS_POR_PAGINA));
 
     return (
         <>
             <style>
                 {`
+                    .principal { min-width: 0; }
+                    .imoveis-grade .card-imovel { min-width: 0; overflow-wrap: anywhere; }
+                    .paginacao { flex-wrap: wrap; }
+                    @media (max-width: 1100px) {
+                        .imoveis-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                        .imoveis-filtros label:first-child { grid-column: span 2; }
+                    }
+
                     .imoveis-topo {
                         display: flex;
                         justify-content: space-between;
@@ -143,13 +159,13 @@ function Imoveis() {
 
                     .imoveis-grade {
                         display: grid;
-                        grid-template-columns: repeat(2, 1fr);
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
                         gap: 24px;
                     }
 
                     .imoveis-filtros {
                         display: grid;
-                        grid-template-columns: 2fr repeat(4, 1fr) auto auto;
+                        grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) auto auto;
                         gap: 10px;
                         align-items: end;
                         margin-bottom: 24px;
@@ -159,6 +175,7 @@ function Imoveis() {
                     }
 
                     .imoveis-filtros label {
+                        min-width: 0;
                         display: flex;
                         flex-direction: column;
                         gap: 6px;
@@ -168,6 +185,9 @@ function Imoveis() {
                     }
 
                     .imoveis-filtros input, .imoveis-filtros select {
+                        width: 100%;
+                        min-width: 0;
+                        box-sizing: border-box;
                         min-height: 38px;
                         padding: 0 10px;
                         border: 1px solid #c8cdd2;
@@ -294,7 +314,7 @@ function Imoveis() {
                 <div className="imoveis-erro" role="alert">
                     <span aria-hidden="true">!</span>
                     <div>
-                        <strong>Não foi possível excluir o imóvel</strong>
+                        <strong>Não foi possível concluir a operação</strong>
                         <span>{erro}</span>
                     </div>
                 </div>
@@ -304,7 +324,7 @@ function Imoveis() {
             {!carregando && !erro && imoveis.length === 0 && <p>Nenhum imóvel encontrado.</p>}
 
             <div className="imoveis-grade">
-                {imoveisPaginados.map((imovel) => (
+                {imoveis.map((imovel) => (
                     <CardImovel 
                         key={imovel.id} 
                         id={imovel.id} 
@@ -337,7 +357,7 @@ function Imoveis() {
                 </div>
             )}
 
-            {imoveis.length > ITENS_POR_PAGINA && (
+            {!carregando && !erro && totalPaginas > 1 && (
                 <Paginacao 
                     paginaAtual={pagina} 
                     totalPaginas={totalPaginas} 
