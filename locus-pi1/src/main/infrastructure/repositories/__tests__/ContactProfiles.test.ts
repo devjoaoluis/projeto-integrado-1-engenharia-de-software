@@ -127,7 +127,7 @@ describe("HU02 client, owner and guarantor profiles", () => {
   it("validates required fields, document format and runtime types", async () => {
     const create = new CreateContact(ownerRepo);
     await assert.rejects(create.execute({ ...data, name: " " }), /Name/);
-    await assert.rejects(create.execute({ ...data, phone: " " }), /Phone/);
+    assert.equal((await create.execute({ ...data, phone: " " })).phone, "");
     for (const cpfCnpj of ["123", "abc52998224725", "52998224725x"]) await assert.rejects(create.execute({ ...data, cpfCnpj }), /CPF/);
     await assert.rejects(create.execute({ ...data, email: 12 as unknown as string }), /Email/);
     await assert.rejects(new GetContact(ownerRepo).execute("missing"), /not found/);

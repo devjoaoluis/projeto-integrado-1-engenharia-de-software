@@ -25,7 +25,7 @@ export class DrizzleRentalRepository implements IRentalRepository {
       await tx.insert(propertyContracts).values({
         id: randomUUID(), propertyId: rental.propertyId, tenantId: rental.tenantId, rentalId: rental.id,
         reference: `LOC-${rental.id}`, monthlyRent: rental.monthlyRent, startDate: rental.startDate,
-        endDate: null, status: "ACTIVE", createdAt: rental.createdAt,
+        endDate: rental.endDate, status: "ACTIVE", createdAt: rental.createdAt,
       }).run();
       return rental;
     });

@@ -1,5 +1,5 @@
 import { IGuarantorRepository } from "../../domain/repositories/IGuarantorRepository";
-import { requiredText, contactDocument, optionalEmail } from "./contactValidation";
+import { requiredText, optionalContactDocument, optionalText, optionalEmail } from "./contactValidation";
 import { randomUUID } from "crypto";
 import { Client, ClientType } from "../../domain/entities/Client";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
@@ -8,8 +8,8 @@ export interface CreateClientDTO {
   type?: ClientType;
   guarantorId?: string | null;
   name: string;
-  cpfCnpj: string;
-  phone: string;
+  cpfCnpj?: string | null;
+  phone?: string | null;
   email?: string | null;
 }
 
@@ -19,8 +19,8 @@ export class CreateClient {
   async execute(dto: CreateClientDTO): Promise<Client> {
     if (!dto) throw new Error("Client data is required");
     const name = requiredText(dto.name, "Name");
-    const cleanCpfCnpj = contactDocument(dto.cpfCnpj);
-    const phone = requiredText(dto.phone, "Phone");
+    const cleanCpfCnpj = optionalContactDocument(dto.cpfCnpj);
+    const phone = optionalText(dto.phone, "Phone");
     const email = optionalEmail(dto.email);
     const type = "TENANT" as const;
     if (dto.type !== undefined && dto.type !== "TENANT") throw new Error("Invalid client type");
@@ -30,7 +30,7 @@ export class CreateClient {
       if (!this.guarantorRepository || !await this.guarantorRepository.findById(guarantorId)) throw new Error("Guarantor not found");
     }
 
-    const existing = await this.clientRepository.findByCpfCnpj(cleanCpfCnpj);
+    const existing = cleanCpfCnpj ? await this.clientRepository.findByCpfCnpj(cleanCpfCnpj) : null;
     if (existing) {
       throw new Error("A client with this CPF/CNPJ already exists");
     }
@@ -40,8 +40,8 @@ export class CreateClient {
       name,
       type,
       guarantorId,
-      cpfCnpj: cleanCpfCnpj,
-      phone,
+      cpfCnpj: cleanCpfCnpj ?? "",
+      phone: phone ?? "",
       email,
       createdAt: Date.now(),
       updatedAt: Date.now(),

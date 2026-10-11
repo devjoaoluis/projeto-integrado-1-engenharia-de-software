@@ -10,6 +10,7 @@ export interface CreateRentalDTO {
   tenantId: string;
   monthlyRent: number;
   startDate: number;
+  endDate?: number | null;
   dueDay: number;
   parentRentalId?: string;
   // Reference to the document recording formal consent (RN02).
@@ -36,6 +37,10 @@ export class CreateRental {
     }
     if (!Number.isSafeInteger(dto.startDate) || dto.startDate < 0 || dto.startDate > 8640000000000000) {
       throw new Error("Start date must be a valid timestamp");
+    }
+    if (dto.endDate !== undefined && dto.endDate !== null &&
+        (!Number.isSafeInteger(dto.endDate) || dto.endDate <= dto.startDate || dto.endDate > 8640000000000000)) {
+      throw new Error("End date must be after start date");
     }
     if (!Number.isInteger(dto.dueDay) || dto.dueDay < 1 || dto.dueDay > 31) {
       throw new Error("Due day must be between 1 and 31");
@@ -71,7 +76,7 @@ export class CreateRental {
     const now = Date.now();
     return this.rentalRepository.create({
       id: randomUUID(), propertyId: dto.propertyId, tenantId: dto.tenantId,
-      monthlyRent: dto.monthlyRent, startDate: dto.startDate, dueDay: dto.dueDay,
+      monthlyRent: dto.monthlyRent, startDate: dto.startDate, endDate: dto.endDate ?? null, dueDay: dto.dueDay,
       parentRentalId, formalConsent,
       contractSigned: dto.contractSigned ?? false,
       signaturesNotarized: dto.signaturesNotarized ?? false,

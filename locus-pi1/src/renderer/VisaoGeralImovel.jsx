@@ -11,13 +11,11 @@ function VisaoGeralImovel() {
   const [midiaAtiva, setMidiaAtiva] = useState(0);
   const [locatarios, setLocatarios] = useState([]);
   const [proprietarios, setProprietarios] = useState([]);
-  const [proprietarioId, setProprietarioId] = useState("");
-  const [salvandoProprietario, setSalvandoProprietario] = useState(false);
-  const [erroProprietario, setErroProprietario] = useState("");
   const [locacao, setLocacao] = useState({
     tenantId: "",
     monthlyRent: "",
     startDate: new Date().toISOString().slice(0, 10),
+    endDate: "",
     dueDay: "10",
   });
   const [salvandoLocacao, setSalvandoLocacao] = useState(false);
@@ -37,7 +35,6 @@ function VisaoGeralImovel() {
       })
     ));
     const modelo = adaptPropertyOverview(overview, tenantNames);
-    setProprietarioId(modelo.ownerId || "");
     setResult({ id, imovel: modelo, erro: "" });
     setMidiaAtiva(0);
   }
@@ -96,6 +93,7 @@ function VisaoGeralImovel() {
         tenantId: locacao.tenantId,
         monthlyRent: imovel.valor,
         startDate: new Date(`${locacao.startDate}T00:00:00`).getTime(),
+        endDate: locacao.endDate ? new Date(`${locacao.endDate}T00:00:00`).getTime() : null,
         dueDay: Number(locacao.dueDay),
       });
       await carregarOverview();
@@ -109,28 +107,13 @@ function VisaoGeralImovel() {
     }
   }
 
-  async function salvarProprietario(event) {
-    event.preventDefault();
-    setErroProprietario("");
-    setSalvandoProprietario(true);
-    try {
-      await window.api.properties.update(imovel.id, { ownerId: proprietarioId || null });
-      await carregarOverview();
-    } catch (error) {
-      console.error("Erro ao associar proprietário:", error);
-      setErroProprietario(error.message || "Não foi possível associar o proprietário.");
-    } finally {
-      setSalvandoProprietario(false);
-    }
-  }
-
   async function desassociarLocatario() {
     if (!contratoAssociado) return;
     setConfirmarDesassociacao(false);
     try {
       await window.api.rentals.cancel(contratoAssociado.rentalId);
       await carregarOverview();
-      setSucessoLocacao("Locatário desassociado com sucesso.");
+      setSucessoLocacao("Imóvel disponível para alugar.");
     } catch (error) {
       setErroLocacao(error.message || "Não foi possível desassociar o locatário.");
     }
@@ -289,6 +272,18 @@ function VisaoGeralImovel() {
           font-weight: 600;
         }
 
+        .botao-desassociar {
+          align-self: flex-start;
+          min-height: 40px;
+          padding: 0 14px;
+          border: none;
+          border-radius: 4px;
+          background: #1976d2;
+          color: white;
+          cursor: pointer;
+          font-weight: 600;
+        }
+
         .form-locacao-valor {
           display: flex;
           flex-direction: column;
@@ -346,15 +341,6 @@ function VisaoGeralImovel() {
         }
 
         .locatario-atual {
-          background: #eef8f1;
-          border: 1px solid #b7dfc1;
-          border-radius: 8px;
-          padding: 12px;
-          color: #245b32;
-          margin: 0;
-        }
-
-        .proprietario-atual {
           background: #eef8f1;
           border: 1px solid #b7dfc1;
           border-radius: 8px;
@@ -502,6 +488,9 @@ function VisaoGeralImovel() {
             <h2 className="imovel-titulo">{imovel.titulo}</h2>
             <p className="imovel-endereco">{imovel.endereco}</p>
             <p className="imovel-descricao">{imovel.descricao || "Nenhuma descrição cadastrada."}</p>
+            <p className="imovel-descricao">
+              <strong>Proprietário:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
+            </p>
             <p className="imovel-detalhes">
               <span><strong>Quartos:</strong> {imovel.quartos ?? "Não informado"}</span>
               <span><strong>Tipo:</strong> {imovel.tipo || "Não informado"}</span>
@@ -552,20 +541,15 @@ function VisaoGeralImovel() {
                   ›
                 </button>
               </div>
-              <p className="galeria-legenda">
-                {midiaAtiva + 1} de {imovel.midias.length}
-                {imovel.midias[midiaAtiva].nome ? ` — ${imovel.midias[midiaAtiva].nome}` : ""}
-              </p>
+              <p className="galeria-legenda">{midiaAtiva + 1} de {imovel.midias.length}</p>
             </>
           )}
         </section>
 
         <section className="associacao-locacao" aria-label="Associar locatário">
-          <h3>Associar locatário</h3>
+          <h3>Locatário</h3>
           {contratoAssociado && (
-            <p className="locatario-atual">
-              <strong>Locatário associado:</strong> {contratoAssociado.locatario}
-            </p>
+            <p><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
             <label>
@@ -577,13 +561,13 @@ function VisaoGeralImovel() {
                 ))}
               </select>
             </label>
-            <div className="form-locacao-valor">
-              <strong>Valor do aluguel</strong>
-              <span>{valorFormatado}</span>
-            </div>
             <label>
               Início
               <input name="startDate" type="date" value={locacao.startDate} onChange={atualizarLocacao} required />
+            </label>
+            <label>
+              Fim do contrato
+              <input name="endDate" type="date" value={locacao.endDate} onChange={atualizarLocacao} />
             </label>
             <label>
               Dia de vencimento
@@ -597,51 +581,11 @@ function VisaoGeralImovel() {
           {erroLocacao && <p role="alert">{erroLocacao}</p>}
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
           {contratoAssociado && (
-            <button type="button" className="voltar-btn" onClick={() => setConfirmarDesassociacao(true)}>
+            <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
               Desassociar locatário
             </button>
           )}
         </section>
-
-        <section className="associacao-locacao" aria-label="Associar proprietário">
-          <h3>Associar proprietário</h3>
-          <p className="proprietario-atual">
-            <strong>Proprietário atual:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
-          </p>
-          <form className="form-locacao" onSubmit={salvarProprietario}>
-            <label>
-              Proprietário cadastrado
-              <select value={proprietarioId} onChange={(event) => setProprietarioId(event.target.value)}>
-                <option value="">Nenhum proprietário</option>
-                {proprietarios.map((proprietario) => (
-                  <option key={proprietario.id} value={proprietario.id}>{proprietario.name}</option>
-                ))}
-              </select>
-            </label>
-            <button type="submit" disabled={salvandoProprietario}>
-              {salvandoProprietario ? "Salvando..." : "Salvar proprietário"}
-            </button>
-          </form>
-          {erroProprietario && <p role="alert">{erroProprietario}</p>}
-        </section>
-
-        <section className="historico-locacao" aria-label="Histórico de ligamento e desligamento">
-          <h3>Histórico de ligamento e desligamento</h3>
-          {historicoLocacoes.length === 0 ? (
-            <p>Nenhum ligamento ou desligamento registrado.</p>
-          ) : (
-            <ul className="historico-locacao-lista">
-              {historicoLocacoes.map((contrato) => (
-                  <li className="historico-locacao-item" key={`historico-${contrato.id}`}>
-                    <span><strong>Locatário:</strong> {contrato.locatario}</span>
-                    <span><strong>Ligamento:</strong> {contrato.inicio}</span>
-                    <span><strong>Desligamento:</strong> {contrato.fim}</span>
-                  </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
 
         <div className="abas-container">
           <button
@@ -661,6 +605,12 @@ function VisaoGeralImovel() {
             onClick={() => setAbaAtiva("vistorias")}
           >
             Vistorias & Manutenções ({imovel.vistorias.length})
+          </button>
+          <button
+            className={`aba-btn ${abaAtiva === "historico" ? "ativa" : ""}`}
+            onClick={() => setAbaAtiva("historico")}
+          >
+            Histórico ({historicoLocacoes.length})
           </button>
 
         </div>
@@ -684,7 +634,6 @@ function VisaoGeralImovel() {
             <table className="tabela-custom">
               <thead>
                 <tr>
-                  <th>Código</th>
                   <th>Locatário</th>
                   <th>Período</th>
                   <th>Valor</th>
@@ -694,7 +643,6 @@ function VisaoGeralImovel() {
               <tbody>
                 {imovel.contratos.map((item) => (
                   <tr key={item.id}>
-                    <td><strong>{item.codigo}</strong></td>
                     <td>{item.locatario}</td>
                     <td>{item.inicio} até {item.fim}</td>
                     <td>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
@@ -751,6 +699,25 @@ function VisaoGeralImovel() {
                 ))}
               </tbody>
             </table>
+          )}
+
+          {abaAtiva === "historico" && (
+            <>
+              <h3>Histórico de ligamento e desligamento</h3>
+              {historicoLocacoes.length === 0 ? (
+                <p>Nenhum ligamento ou desligamento registrado.</p>
+              ) : (
+                <ul className="historico-locacao-lista">
+                  {historicoLocacoes.map((contrato) => (
+                    <li className="historico-locacao-item" key={`historico-${contrato.id}`}>
+                      <span><strong>Locatário:</strong> {contrato.locatario}</span>
+                      <span><strong>Ligamento:</strong> {contrato.inicio}</span>
+                      <span><strong>Desligamento:</strong> {contrato.fim}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
 
 
