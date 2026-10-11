@@ -5,6 +5,7 @@ import Badge from "./Badge";
 function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onRemover }) {
     const [erroImagem, setErroImagem] = useState(false);
     const corStatus = status === "Disponível" ? "verde" : "vermelho";
+    const alugado = status === "ALUGADO" || status === "Alugado";
 
     const valorNumerico = Number(valor) || 0;
     const valorFormatado = valorNumerico.toLocaleString("pt-BR", {
@@ -95,6 +96,12 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                     .card-btn-remover:hover {
                         background-color: #ffdddd;
                     }
+
+                    .card-btn-remover:disabled {
+                        background-color: #e0e0e0;
+                        color: #888888;
+                        cursor: not-allowed;
+                    }
                 `}
             </style>
 
@@ -135,6 +142,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         <button 
                             className="card-btn-remover"
                             onClick={() => onRemover && onRemover(id)}
+                            disabled={alugado}
                             title="Remover imóvel"
                         >
                             Remover

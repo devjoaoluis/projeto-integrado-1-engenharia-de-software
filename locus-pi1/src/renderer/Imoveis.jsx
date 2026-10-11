@@ -5,6 +5,7 @@ import CardImovel from "./components/CardImovel";
 import Paginacao from "./components/Paginacao";
 import { mensagemErro } from "./utils/mensagemErro";
 import { mediaFileUrl } from "./propertyOverview.mjs";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 const ITENS_POR_PAGINA = 4;
 
@@ -136,6 +137,7 @@ function Imoveis() {
 
     return (
         <>
+            <BotaoVoltar destino="/home" texto="Voltar" />
             <style>
                 {`
                     .principal { min-width: 0; }

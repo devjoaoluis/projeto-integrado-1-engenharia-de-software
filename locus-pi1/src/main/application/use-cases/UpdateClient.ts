@@ -1,5 +1,5 @@
 import { IGuarantorRepository } from "../../domain/repositories/IGuarantorRepository";
-import { requiredText, contactDocument, optionalEmail } from "./contactValidation";
+import { requiredText, optionalContactDocument, optionalText, optionalEmail } from "./contactValidation";
 import { Client, ClientType } from "../../domain/entities/Client";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 
@@ -8,8 +8,8 @@ export interface UpdateClientDTO {
   type?: ClientType;
   guarantorId?: string | null;
   name?: string;
-  cpfCnpj?: string;
-  phone?: string;
+  cpfCnpj?: string | null;
+  phone?: string | null;
   email?: string | null;
 }
 
@@ -29,19 +29,18 @@ export class UpdateClient {
     }
 
     if (dto.cpfCnpj !== undefined) {
-      const cleanCpfCnpj = contactDocument(dto.cpfCnpj);
-      if (cleanCpfCnpj === "") throw new Error("CPF/CNPJ cannot be empty");
+      const cleanCpfCnpj = optionalContactDocument(dto.cpfCnpj);
       if (cleanCpfCnpj !== client.cpfCnpj) {
         const existing = await this.clientRepository.findByCpfCnpj(cleanCpfCnpj);
         if (existing && existing.id !== client.id) {
           throw new Error("A client with this CPF/CNPJ already exists");
         }
       }
-      client.cpfCnpj = cleanCpfCnpj;
+      client.cpfCnpj = cleanCpfCnpj ?? "";
     }
 
     if (dto.phone !== undefined) {
-      client.phone = requiredText(dto.phone, "Phone");
+      client.phone = optionalText(dto.phone, "Phone") ?? "";
     }
 
     if (dto.email !== undefined) {
@@ -49,7 +48,7 @@ export class UpdateClient {
     }
 
     if (dto.type !== undefined) {
-      if (!["TENANT", "INTERESTED"].includes(dto.type)) throw new Error("Invalid client type");
+      if (dto.type !== "TENANT") throw new Error("Invalid client type");
       client.type = dto.type;
     }
     if (dto.guarantorId !== undefined) {

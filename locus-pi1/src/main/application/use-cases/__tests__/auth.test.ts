@@ -50,4 +50,15 @@ describe("RegisterUser Use Case", () => {
     assert.equal(hashed.length, 0);
     assert.equal(created.length, 0);
   });
+
+  it("deve exigir senha com pelo menos 6 caracteres", async () => {
+    const { register, hashed, created } = setup();
+
+    await assert.rejects(
+      register.execute({ ...dto, senha: "12345" }),
+      /A senha deve ter pelo menos 6 caracteres/
+    );
+    assert.equal(hashed.length, 0);
+    assert.equal(created.length, 0);
+  });
 });
