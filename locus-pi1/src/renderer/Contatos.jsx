@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { mensagemErro } from "./utils/mensagemErro";
+import BotaoVoltar from "./components/BotaoVoltar";
 
-const vazio = { name: "", cpfCnpj: "", phone: "", email: "", type: "TENANT", guarantorId: "" };
+const vazio = { name: "", cpfCnpj: "", phone: "", email: "", guarantorId: "" };
 
 function Contatos() {
   const [aba, setAba] = useState("clients");
@@ -47,7 +48,6 @@ function Contatos() {
       cpfCnpj: contato.cpfCnpj || "",
       phone: contato.phone || "",
       email: contato.email || "",
-      type: contato.type || "TENANT",
       guarantorId: contato.guarantorId || "",
     });
   }
@@ -68,7 +68,7 @@ function Contatos() {
         email: formulario.email || null,
       };
       if (aba === "clients") {
-        dados.type = formulario.type;
+        dados.type = "TENANT";
         dados.guarantorId = formulario.guarantorId || null;
       }
       if (editando) await api.update({ id: editando, ...dados });
@@ -103,6 +103,7 @@ function Contatos() {
 
   return (
     <>
+      <BotaoVoltar destino="/home" texto="Voltar" />
       <style>{`
         .contatos { display: flex; flex-direction: column; gap: 20px; }
         .contatos-abas { display: flex; gap: 8px; border-bottom: 2px solid #e5e7eb; }
@@ -151,12 +152,6 @@ function Contatos() {
             <label>E-mail<input name="email" type="email" value={formulario.email} onChange={mudar} /></label>
             {aba === "clients" && (
               <>
-                <label>Perfil
-                  <select name="type" value={formulario.type} onChange={mudar}>
-                    <option value="TENANT">Locatário</option>
-                    <option value="INTERESTED">Interessado</option>
-                  </select>
-                </label>
                 <label>Fiador
                   <select name="guarantorId" value={formulario.guarantorId} onChange={mudar}>
                     <option value="">Sem fiador</option>
@@ -176,12 +171,12 @@ function Contatos() {
           <h2>{rotulo} cadastrados</h2>
           {registros.length === 0 ? <p>Nenhum contato cadastrado.</p> : (
             <table className="contatos-tabela">
-              <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th>{aba === "clients" && <><th>Perfil</th><th>Fiador</th></>}<th>Ações</th></tr></thead>
+              <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th>{aba === "clients" && <th>Fiador</th>}<th>Ações</th></tr></thead>
               <tbody>
                 {registros.map((contato) => (
                   <tr key={contato.id}>
                     <td>{contato.name}</td><td>{contato.cpfCnpj}</td><td>{contato.phone}</td><td>{contato.email || "—"}</td>
-                    {aba === "clients" && <><td>{contato.type === "TENANT" ? "Locatário" : "Interessado"}</td><td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td></>}
+                    {aba === "clients" && <td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td>}
                     <td className="contato-acoes">
                       <button className="contato-acao" onClick={() => editar(contato)}>Editar</button>
                       <button className="contato-acao excluir" disabled={removendo} onClick={() => remover(contato.id)}>Excluir</button>

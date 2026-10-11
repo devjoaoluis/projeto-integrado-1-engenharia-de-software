@@ -84,9 +84,9 @@ describe("HU02 client, owner and guarantor profiles", () => {
     assert.equal(result.client.guarantorId, guarantor.id);
     assert.equal(result.guarantor?.name, "Fiador");
   });
-  it("defaults to interested and supports changing or clearing the guarantor", async () => {
+  it("defaults to tenant and supports changing or clearing the guarantor", async () => {
     const client = await createClientUseCase.execute(data);
-    assert.equal(client.type, "INTERESTED");
+    assert.equal(client.type, "TENANT");
     assert.equal(client.guarantorId, null);
     const first = await new CreateContact(guarantorRepo).execute(data);
     const second = await new CreateContact(guarantorRepo).execute({ ...data, cpfCnpj: "12.345.678/0001-90" });
@@ -161,7 +161,7 @@ describe("HU02 client, owner and guarantor profiles", () => {
       assert.equal(result.id, "legacy");
       assert.equal(result.name, "Cliente antigo");
       assert.equal(result.cpf_cnpj, "52998224725");
-      assert.equal(result.type, "INTERESTED");
+      assert.equal(result.type, "TENANT");
       assert.equal(result.guarantor_id, null);
     } finally { old.close(); }
   });

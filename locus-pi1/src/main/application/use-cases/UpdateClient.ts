@@ -49,7 +49,7 @@ export class UpdateClient {
     }
 
     if (dto.type !== undefined) {
-      if (!["TENANT", "INTERESTED"].includes(dto.type)) throw new Error("Invalid client type");
+      if (dto.type !== "TENANT") throw new Error("Invalid client type");
       client.type = dto.type;
     }
     if (dto.guarantorId !== undefined) {

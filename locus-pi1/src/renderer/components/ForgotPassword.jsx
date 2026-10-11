@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import BotaoVoltar from "./BotaoVoltar";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -53,6 +54,7 @@ export default function ForgotPassword() {
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "#1976d2", fontFamily: "Arial, sans-serif" }}>
+      <BotaoVoltar destino="/login" texto="Voltar para o login" />
       <div style={{ width: "400px", padding: "32px", backgroundColor: "white", borderRadius: "8px", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}>
         <h2 style={{ marginTop: 0, marginBottom: "24px", fontSize: "20px" }}>Recuperar Senha</h2>
 

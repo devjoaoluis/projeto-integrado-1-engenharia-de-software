@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adaptPropertyOverview } from "./propertyOverview.mjs";
 import Badge from "./components/Badge";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 function VisaoGeralImovel() {
   const { id } = useParams();
@@ -492,9 +493,7 @@ function VisaoGeralImovel() {
       `}</style>
 
       <div className="visao-geral-container">
-        <button className="voltar-btn" onClick={() => navigate("/imoveis")}>
-          ← Voltar para Imóveis
-        </button>
+        <BotaoVoltar destino="/imoveis" texto="Voltar para imóveis" />
 
 
         <div className="imovel-header-card">

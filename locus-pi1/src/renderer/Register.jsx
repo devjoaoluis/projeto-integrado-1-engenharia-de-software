@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "./Input";
 import Button from "./Button";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 export default function Register({ onSuccess }) {
   const [nome, setNome] = useState("");
@@ -120,6 +121,7 @@ export default function Register({ onSuccess }) {
       </style>
 
       <div className="register-container">
+        <BotaoVoltar destino="/login" texto="Voltar para o login" />
         <h1 className="register-title">Bem-vindo à Locus Marismar</h1>
 
         <div className="register-card">

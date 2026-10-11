@@ -22,8 +22,8 @@ export class CreateClient {
     const cleanCpfCnpj = contactDocument(dto.cpfCnpj);
     const phone = requiredText(dto.phone, "Phone");
     const email = optionalEmail(dto.email);
-    const type = dto.type ?? "INTERESTED";
-    if (!["TENANT", "INTERESTED"].includes(type)) throw new Error("Invalid client type");
+    const type = "TENANT" as const;
+    if (dto.type !== undefined && dto.type !== "TENANT") throw new Error("Invalid client type");
     const guarantorId = dto.guarantorId ?? null;
     if (guarantorId !== null) {
       requiredText(guarantorId, "Guarantor id");

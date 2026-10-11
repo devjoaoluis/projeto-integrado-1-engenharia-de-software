@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS "owners" (
 CREATE UNIQUE INDEX IF NOT EXISTS "owners_cpf_cnpj_unique" ON "owners" ("cpf_cnpj");
 `);
   const columns = new Set((await client.execute("PRAGMA table_info(clients)")).rows.map(row => row.name));
-  if (!columns.has("type")) await client.execute("ALTER TABLE clients ADD COLUMN type TEXT NOT NULL DEFAULT 'INTERESTED'");
+  if (!columns.has("type")) await client.execute("ALTER TABLE clients ADD COLUMN type TEXT NOT NULL DEFAULT 'TENANT'");
+  await client.execute("UPDATE clients SET type = 'TENANT' WHERE type IS NULL OR type = 'INTERESTED'");
   if (!columns.has("guarantor_id")) await client.execute("ALTER TABLE clients ADD COLUMN guarantor_id TEXT REFERENCES guarantors(id) ON DELETE RESTRICT");
   await client.execute("UPDATE clients SET cpf_cnpj = replace(replace(replace(replace(trim(cpf_cnpj), '.', ''), '-', ''), '/', ''), ' ', '');");
 }
