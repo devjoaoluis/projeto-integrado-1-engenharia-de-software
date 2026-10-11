@@ -71,6 +71,7 @@ function VisaoGeralImovel() {
   if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
   const imovel = result.imovel;
   const contratoAssociado = imovel.contratos.find((contrato) => ["Vigente", "Agendado"].includes(contrato.status) && contrato.rentalId);
+  const historicoLocacoes = imovel.contratos.filter((contrato) => contrato.status !== "Agendado");
   const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
@@ -361,6 +362,38 @@ function VisaoGeralImovel() {
           margin: 0;
         }
 
+        .historico-locacao {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          padding: 20px;
+        }
+
+        .historico-locacao h3 {
+          margin: 0 0 16px;
+          color: #1976d2;
+        }
+
+        .historico-locacao-lista {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .historico-locacao-item {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+          padding: 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          color: #444;
+          font-size: 14px;
+        }
+
         .associacao-locacao > p[role="alert"],
         .associacao-locacao > p[role="status"] {
           margin: 0;
@@ -591,6 +624,23 @@ function VisaoGeralImovel() {
             </button>
           </form>
           {erroProprietario && <p role="alert">{erroProprietario}</p>}
+        </section>
+
+        <section className="historico-locacao" aria-label="Histórico de ligamento e desligamento">
+          <h3>Histórico de ligamento e desligamento</h3>
+          {historicoLocacoes.length === 0 ? (
+            <p>Nenhum ligamento ou desligamento registrado.</p>
+          ) : (
+            <ul className="historico-locacao-lista">
+              {historicoLocacoes.map((contrato) => (
+                  <li className="historico-locacao-item" key={`historico-${contrato.id}`}>
+                    <span><strong>Locatário:</strong> {contrato.locatario}</span>
+                    <span><strong>Ligamento:</strong> {contrato.inicio}</span>
+                    <span><strong>Desligamento:</strong> {contrato.fim}</span>
+                  </li>
+              ))}
+            </ul>
+          )}
         </section>
 
 

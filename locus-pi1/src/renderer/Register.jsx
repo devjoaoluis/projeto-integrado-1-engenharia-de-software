@@ -24,6 +24,11 @@ export default function Register({ onSuccess }) {
       return;
     }
 
+    if (senha.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -146,8 +151,12 @@ export default function Register({ onSuccess }) {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Senha"
+                minLength={6}
                 required
               />
+              <span style={{ color: "#666", fontSize: "12px", marginTop: "-8px" }}>
+                A senha deve ter pelo menos 6 caracteres.
+              </span>
 
               <Input
                 type="password"
