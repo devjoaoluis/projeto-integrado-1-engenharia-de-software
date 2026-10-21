@@ -1,3 +1,4 @@
+import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
 import { registerInspectionsIpc } from "./ipc/inspections.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
@@ -54,6 +55,7 @@ app.on('ready', async () => {
   registerRentalsIpc();
   registerPropertyOverviewIpc();
   registerInspectionsIpc();
+  registerInspectionEntryIpc();
   createWindow();
 });
 

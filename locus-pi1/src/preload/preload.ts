@@ -5,6 +5,8 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
   inspections: {
+    recordEntry: (data: import("../main/application/use-cases/RecordEntryInspection").RecordEntryInspectionDTO) =>
+      ipcRenderer.invoke("inspections:record-entry", data),
     get: (id: string) => ipcRenderer.invoke("inspections:get", id),
     list: (data: import("../main/application/use-cases/ListInspections").ListInspectionsDTO) =>
       ipcRenderer.invoke("inspections:list", data),
