@@ -4,6 +4,13 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
+  inspections: {
+    get: (id: string) => ipcRenderer.invoke("inspections:get", id),
+    list: (data: import("../main/application/use-cases/ListInspections").ListInspectionsDTO) =>
+      ipcRenderer.invoke("inspections:list", data),
+  },
+
+
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 
   auth: {
