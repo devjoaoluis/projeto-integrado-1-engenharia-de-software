@@ -1,3 +1,4 @@
+import { contractTemplateTables } from "./contractTemplateTables";
 import { initializeContacts } from "./initializeContacts";
 import { propertyHistoryTables } from "./propertyHistoryTables";
 import { Client } from "@libsql/client";
@@ -91,6 +92,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   }
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
+  await client.executeMultiple(contractTemplateTables);
 
 
   const tableInfo = await client.execute("PRAGMA table_info(properties)");

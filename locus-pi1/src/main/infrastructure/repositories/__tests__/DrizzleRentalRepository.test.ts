@@ -55,7 +55,7 @@ describe("Rental SQLite persistence", () => {
       await initializeDatabase(bootstrap);
       assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
       assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
-      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 12);
+      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 13);
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {

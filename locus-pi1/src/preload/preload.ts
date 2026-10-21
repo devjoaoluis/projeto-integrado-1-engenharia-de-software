@@ -4,6 +4,13 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
+  contractTemplates: {
+    create: (data: import("../main/application/use-cases/CreateContractTemplate").CreateContractTemplateDTO) =>
+      ipcRenderer.invoke("contract-templates:create", data),
+    get: (id: string) => ipcRenderer.invoke("contract-templates:get", id),
+    list: () => ipcRenderer.invoke("contract-templates:list"),
+  },
+
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 
   auth: {

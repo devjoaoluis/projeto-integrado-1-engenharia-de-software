@@ -50,6 +50,13 @@
       "when": 1791385200000,
       "tag": "0006_search_filters",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792603480264,
+      "tag": "0008_contract_templates",
+      "breakpoints": true
     }
   ]
 }
