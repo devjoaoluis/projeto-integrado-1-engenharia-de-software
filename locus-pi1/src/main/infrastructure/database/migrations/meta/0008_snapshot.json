@@ -2,7 +2,7 @@
   "version": "6",
   "dialect": "sqlite",
   "id": "4e83d0f7-0c07-4eef-baaa-2b5e28eb5887",
-  "prevId": "e0a00ec3-65e1-4f1f-a32b-573f0b221ad8",
+  "prevId": "ae33c9f4-4b65-4a63-8f4b-8b5ed924b4f7",
   "tables": {
     "clients": {
       "name": "clients",
@@ -596,6 +596,20 @@
           "notNull": true,
           "autoincrement": false
         },
+        "contract_id": {
+          "name": "contract_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "inspection_type": {
+          "name": "inspection_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "inspected_at": {
           "name": "inspected_at",
           "type": "integer",
@@ -633,6 +647,14 @@
             "inspected_at"
           ],
           "isUnique": false
+        },
+        "property_inspections_contract_date_idx": {
+          "name": "property_inspections_contract_date_idx",
+          "columns": [
+            "contract_id",
+            "inspected_at"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {
@@ -642,6 +664,19 @@
           "tableTo": "properties",
           "columnsFrom": [
             "property_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "property_inspections_contract_id_property_contracts_id_fk": {
+          "name": "property_inspections_contract_id_property_contracts_id_fk",
+          "tableFrom": "property_inspections",
+          "tableTo": "property_contracts",
+          "columnsFrom": [
+            "contract_id"
           ],
           "columnsTo": [
             "id"
@@ -1168,6 +1203,103 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
+    },
+    "inspection_media": {
+      "name": "inspection_media",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "inspection_id": {
+          "name": "inspection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "inspection_media_inspection_idx": {
+          "name": "inspection_media_inspection_idx",
+          "columns": [
+            "inspection_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "inspection_media_inspection_id_property_inspections_id_fk": {
+          "name": "inspection_media_inspection_id_property_inspections_id_fk",
+          "tableFrom": "inspection_media",
+          "tableTo": "property_inspections",
+          "columnsFrom": [
+            "inspection_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "inspection_media_type_check": {
+          "name": "inspection_media_type_check",
+          "value": "\"inspection_media\".\"type\" IN ('IMAGE', 'VIDEO')"
+        },
+        "inspection_media_size_check": {
+          "name": "inspection_media_size_check",
+          "value": "\"inspection_media\".\"size\" >= 0"
+        }
+      }
     },
     "contract_templates": {
       "name": "contract_templates",

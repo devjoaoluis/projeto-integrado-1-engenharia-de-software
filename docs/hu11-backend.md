@@ -22,4 +22,4 @@ O parceiro fica responsável pelo preenchimento com dados do imóvel, proprietá
 
 ## Banco e testes
 
-Migration: `0008_contract_templates`. O inicializador cria a tabela sem inserir textos jurídicos. Execute `npm test`, `npm run typecheck` e `npm run lint` em `locus-pi1`. Esta branch parte diretamente da develop e não depende da HU08. Ao integrar as duas HUs, confira o journal e os snapshots das migrations na versão combinada.
+Migration: `0008_contract_templates`. O inicializador cria a tabela sem inserir textos jurídicos. Execute `npm test`, `npm run typecheck` e `npm run lint` em `locus-pi1`. A branch está integrada à develop com a HU08: o journal preserva as migrations 0007 e 0008, e o snapshot 0008 inclui as duas estruturas e referencia o snapshot 0007. A integração foi testada em bancos que já possuíam somente vistorias ou somente templates.
