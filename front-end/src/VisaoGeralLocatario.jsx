@@ -221,7 +221,7 @@ export default function VisaoGeralLocatario() {
 
       {/* Seção do Dossiê de Documentos [HU-13] */}
       <div className="dossie-section">
-        <h2>Documentos do Locatário</h2>
+        <h2>📂 Dossiê de Documentos do Locatário</h2>
 
         {/* Formulário de Upload */}
         <form onSubmit={handleUpload} className="upload-form">
