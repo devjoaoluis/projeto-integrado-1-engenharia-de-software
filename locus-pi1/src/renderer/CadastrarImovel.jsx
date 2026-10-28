@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Campo from "./components/Campo";
 import UploadMidia from "./components/UploadMidia";
 import { mensagemErro } from "./utils/mensagemErro";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 const TIPOS = ["Residencial", "Comercial"];
 const SITUACOES_FISCAIS = ["Regular", "Pendente"];
@@ -19,21 +20,9 @@ const dadosVazios = {
     situacaoSaneamento: "",
     valorIptu: "",
     situacaoFiscal: "",
-    dataCadastro: "",
     descricao: "",
+    ownerId: "",
 };
-
-function formatarDataCadastro(value) {
-    if (!value) return "";
-    if (typeof value === "number" || /^\d+$/.test(String(value))) {
-        const data = new Date(Number(value));
-        if (!Number.isNaN(data.getTime())) {
-            return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`;
-        }
-    }
-    const texto = String(value);
-    return texto.length >= 7 ? texto.substring(0, 7) : texto;
-}
 
 function CadastrarImovel() {
     const navigate = useNavigate();
@@ -45,6 +34,7 @@ function CadastrarImovel() {
     const [fotos, setFotos] = useState([]);
     const [videos, setVideos] = useState([]);
     const [midiasExistentes, setMidiasExistentes] = useState([]);
+    const [proprietarios, setProprietarios] = useState([]);
     const [erro, setErro] = useState("");
 
     useEffect(() => {
@@ -65,12 +55,6 @@ function CadastrarImovel() {
                 if (partes.length > 2) bairroExt = partes[2];
             }
 
-            const dataCadFormatada = formatarDataCadastro(
-                imovelEditar.registrationDate ||
-                imovelEditar.dataCadastro ||
-                imovelEditar.createdAt
-            );
-
             setDados({
                 rua: ruaExt,
                 bairro: bairroExt,
@@ -83,7 +67,7 @@ function CadastrarImovel() {
                 tipo: imovelEditar.tipo ?? imovelEditar.type ?? "",
                 situacaoFiscal: imovelEditar.situacaoFiscal ?? imovelEditar.fiscalStatus ?? "",
                 situacaoSaneamento: imovelEditar.situacaoSaneamento ?? imovelEditar.sanitationStatus ?? "",
-                dataCadastro: dataCadFormatada,
+                ownerId: imovelEditar.ownerId || "",
             });
 
             async function carregarMidias() {
@@ -114,6 +98,17 @@ function CadastrarImovel() {
             setDados(dadosVazios);
             setMidiasExistentes([]);
         }
+
+        let ativo = true;
+        window.api.owners.list()
+            .then((lista) => {
+                if (ativo) setProprietarios(lista || []);
+            })
+            .catch((error) => {
+                console.error("Erro ao carregar proprietários:", error);
+                if (ativo) setErro("Não foi possível carregar os proprietários.");
+            });
+        return () => { ativo = false; };
     }, [imovelEditar]);
 
     function mudar(e) {
@@ -141,6 +136,11 @@ function CadastrarImovel() {
         e.preventDefault();
 
         try {
+            if (!dados.ownerId) {
+                setErro("Selecione um proprietário para salvar o imóvel.");
+                return;
+            }
+
             const enderecoFormatado = `${dados.rua}, ${dados.numero}${dados.complemento ? ' - ' + dados.complemento : ''}, ${dados.bairro}`;
             
             const payloadImovel = {
@@ -162,8 +162,8 @@ function CadastrarImovel() {
                 situacaoFiscal: dados.situacaoFiscal,
                 sanitationStatus: dados.situacaoSaneamento,
                 situacaoSaneamento: dados.situacaoSaneamento,
-                registrationDate: dados.dataCadastro,
-                dataCadastro: dados.dataCadastro,
+                registrationDate: imovelEditar?.registrationDate || new Date().toLocaleDateString("pt-BR"),
+                ownerId: dados.ownerId,
             };
 
             let imovelId;
@@ -201,6 +201,7 @@ function CadastrarImovel() {
 
     return (
         <>
+            <BotaoVoltar destino="/imoveis" texto="Voltar para imóveis" />
             <style>
                 {`
                     .cadastro-fundo {
@@ -314,7 +315,6 @@ function CadastrarImovel() {
             <form className="cadastro-fundo" onSubmit={handleSubmit}>
                 <div className="cadastro-card">
                     <h2 className="cadastro-titulo">{tituloPagina}</h2>
-
                     <div className="cadastro-grade">
                         <Campo label="Rua" name="rua" value={dados.rua} onChange={mudar} required />
                         <Campo
@@ -348,6 +348,17 @@ function CadastrarImovel() {
 
                         <Campo label="Bairro" name="bairro" value={dados.bairro} onChange={mudar} required />
                         <Campo
+                            label="Proprietário"
+                            name="ownerId"
+                            opcoes={proprietarios.map((proprietario) => ({
+                                value: proprietario.id,
+                                label: `${proprietario.name} - ${proprietario.cpfCnpj}`,
+                            }))}
+                            value={dados.ownerId}
+                            onChange={mudar}
+                            required
+                        />
+                        <Campo
                             label="Tipo do imóvel"
                             name="tipo"
                             opcoes={TIPOS}
@@ -370,14 +381,6 @@ function CadastrarImovel() {
                             value={dados.situacaoSaneamento}
                             onChange={mudar}
                         />
-                        <Campo
-                            label="Data de cadastro"
-                            name="dataCadastro"
-                            type="month"
-                            value={dados.dataCadastro}
-                            onChange={mudar}
-                        />
-
                         <Campo
                             label="Complemento"
                             name="complemento"

@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 
 function FormLogin() {
     const navigate = useNavigate();
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(() => localStorage.getItem("locus:login-email") || "");
     const [senha, setSenha] = useState("");
+    const [lembrarEmail, setLembrarEmail] = useState(() => Boolean(localStorage.getItem("locus:login-email")));
     const [erro, setErro] = useState("");
 
     async function handleSubmit(e) {
@@ -31,6 +32,11 @@ function FormLogin() {
             }
         }
 
+        if (lembrarEmail) {
+            localStorage.setItem("locus:login-email", email.trim());
+        } else {
+            localStorage.removeItem("locus:login-email");
+        }
         navigate("/home");
     }
 
@@ -103,6 +109,20 @@ function FormLogin() {
                         font-size: 14px;
                         margin-bottom: 14px;
                     }
+
+                    .lembrar-email {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin: 4px 0 14px;
+                        color: #555;
+                        font-size: 14px;
+                    }
+
+                    .lembrar-email input {
+                        width: 16px;
+                        height: 16px;
+                    }
                 `}
             </style>
 
@@ -136,6 +156,15 @@ function FormLogin() {
                                 required
                             />
                         </div>
+
+                        <label className="lembrar-email">
+                            <input
+                                type="checkbox"
+                                checked={lembrarEmail}
+                                onChange={(e) => setLembrarEmail(e.target.checked)}
+                            />
+                            Lembrar do email
+                        </label>
 
                         <a
                             className="esqueci-senha"

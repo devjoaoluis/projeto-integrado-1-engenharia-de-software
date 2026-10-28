@@ -11,6 +11,17 @@ export function contactDocument(value: unknown): string {
   return document.replace(/\D/g, "");
 }
 
+export function optionalContactDocument(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  return contactDocument(value);
+}
+
+export function optionalText(value: unknown, field: string): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string") throw new Error(`${field} must be text`);
+  return value.trim() || null;
+}
+
 export function optionalEmail(value: unknown): string | null {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string") throw new Error("Email must be text");

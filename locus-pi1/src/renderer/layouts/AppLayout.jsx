@@ -57,6 +57,21 @@ function AppLayout() {
                         background-color: #ffffff;
                         padding: 24px;
                     }
+
+                    .botao-voltar-padrao {
+                        align-self: flex-start;
+                        margin-bottom: 16px;
+                        padding: 8px 0;
+                        border: none;
+                        background: transparent;
+                        color: #1976d2;
+                        font-weight: 700;
+                        cursor: pointer;
+                    }
+
+                    .botao-voltar-padrao:hover {
+                        text-decoration: underline;
+                    }
                 `}
             </style>
 
