@@ -10,6 +10,7 @@ import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Contatos from "./Contatos";
 import Contratos from "./Contratos";
+import Vistorias from "./Vistorias";
 
 export default function App() {
   const [hasUsers, setHasUsers] = useState(null);
@@ -60,7 +61,7 @@ export default function App() {
             <Route path="/contratos" element={<Contratos />} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
             <Route path="/visitas" element={<div>Visitas</div>} />
-            <Route path="/vistorias" element={<div>Vistorias</div>} />
+            <Route path="/vistorias" element={<Vistorias />} />
             <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
           </Route>
 

@@ -587,6 +587,22 @@ function VisaoGeralImovel() {
               </button>
               <button
                 type="button"
+                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                style={{
+                  backgroundColor: "#ea580c",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Vistoria de Saída (RN03)
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
                 style={{
                   backgroundColor: "#1877f2",
@@ -637,9 +653,42 @@ function VisaoGeralImovel() {
             <div className="confirmacao-exclusao-conteudo">
               <h2>Desassociar locatário?</h2>
               <p>O imóvel ficará disponível novamente para uma nova locação.</p>
+              <div
+                style={{
+                  backgroundColor: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  margin: "12px 0",
+                  fontSize: "13px",
+                  color: "#9a3412",
+                  textAlign: "left",
+                }}
+              >
+                <strong>Regra de Negócio RN03:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
+              </div>
               <div className="confirmacao-exclusao-acoes">
-                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>Cancelar</button>
-                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>Desassociar</button>
+                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    backgroundColor: "#ea580c",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "8px 14px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                >
+                  Registrar Vistoria de Saída
+                </button>
+                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>
+                  Confirmar Desassociação
+                </button>
               </div>
             </div>
           </div>
@@ -718,28 +767,92 @@ function VisaoGeralImovel() {
             </table>
           )}
 
-          {abaAtiva === "vistorias" && imovel.vistorias.length === 0 && <p>Nenhum registro encontrado.</p>}
-          {abaAtiva === "vistorias" && imovel.vistorias.length > 0 && (
-            <table className="tabela-custom">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Situação / Laudo</th>
-                  <th>Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imovel.vistorias.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.data}</td>
-                    <td>{item.tipo}</td>
-                    <td>{item.responsavel}</td>
-                    <td>{item.observacao}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {abaAtiva === "vistorias" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                <span style={{ fontSize: "14px", color: "#64748b" }}>
+                  Vistorias de entrada e saída com fotos e vídeos (RN03)
+                </span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "8px 14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                    }}
+                  >
+                    + Vistoria de Entrada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                    style={{
+                      backgroundColor: "#ea580c",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "8px 14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                    }}
+                  >
+                    + Vistoria de Saída
+                  </button>
+                </div>
+              </div>
+
+              {imovel.vistorias.length === 0 ? (
+                <p>Nenhuma vistoria ou manutenção registrada para este imóvel.</p>
+              ) : (
+                <table className="tabela-custom">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>Situação / Laudo</th>
+                      <th>Observação</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {imovel.vistorias.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.data}</td>
+                        <td>{item.tipo}</td>
+                        <td>{item.responsavel}</td>
+                        <td>{item.observacao}</td>
+                        <td>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/vistorias?imovelId=${imovel.id}`)}
+                            style={{
+                              backgroundColor: "#f1f5f9",
+                              color: "#1877f2",
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "4px",
+                              padding: "4px 8px",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Ver Mídias
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           )}
 
           {abaAtiva === "historico" && (
