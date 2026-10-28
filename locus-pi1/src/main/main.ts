@@ -1,5 +1,7 @@
 import { registerContractTemplatesIpc } from "./ipc/contract-templates.ipc";
+import { registerContractsIpc } from "./ipc/contracts.ipc";
 import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
+import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
 import { registerInspectionsIpc } from "./ipc/inspections.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
@@ -56,8 +58,10 @@ app.on('ready', async () => {
   registerRentalsIpc();
   registerPropertyOverviewIpc();
   registerContractTemplatesIpc();
+  registerContractsIpc();
   registerInspectionsIpc();
   registerInspectionEntryIpc();
+  registerInspectionExitIpc();
   createWindow();
 });
 
