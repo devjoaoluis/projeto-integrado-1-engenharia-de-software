@@ -1,7 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Trash2 } from "lucide-react";
-import Button from "./Button";
-import Paginacao from "./components/Paginacao";
 
 const AZUL = "#1877f2";
 const POR_PAGINA = 6;
@@ -29,14 +28,14 @@ const locatariosIniciais = [
 const formVazio = { nome: "", cpf: "", telefone: "", email: "", imovel: "", status: "Em dia" };
 
 function iniciais(nome) {
-  const partes = nome.trim().split(/\s+/);
+  const partes = (nome || "").trim().split(/\s+/);
   const primeira = partes[0]?.[0] ?? "";
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
   return (primeira + ultima).toUpperCase();
 }
 
 function corAvatar(nome) {
-  const soma = [...nome].reduce((total, letra) => total + letra.charCodeAt(0), 0);
+  const soma = [...(nome || "")].reduce((total, letra) => total + letra.charCodeAt(0), 0);
   return CORES_AVATAR[soma % CORES_AVATAR.length];
 }
 
@@ -51,39 +50,16 @@ const estiloCampo = {
   backgroundColor: "#ffffff",
 };
 
-function Campo({ id, label, children }) {
-  return (
-    <div style={{ position: "relative", flex: 1, minWidth: "180px" }}>
-      <label
-        htmlFor={id}
-        style={{
-          position: "absolute",
-          top: "-8px",
-          left: "10px",
-          padding: "0 4px",
-          backgroundColor: "#ffffff",
-          fontSize: "11px",
-          color: "#667085",
-          zIndex: 1,
-        }}
-      >
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
 function Avatar({ nome }) {
   return (
     <span
       style={{
-        width: "30px",
-        height: "30px",
+        width: "36px",
+        height: "36px",
         borderRadius: "50%",
         backgroundColor: corAvatar(nome),
         color: "#ffffff",
-        fontSize: "11px",
+        fontSize: "12px",
         fontWeight: "bold",
         display: "inline-flex",
         alignItems: "center",
@@ -97,7 +73,7 @@ function Avatar({ nome }) {
 }
 
 function Pilula({ status }) {
-  const estilo = ESTILO_STATUS[status];
+  const estilo = ESTILO_STATUS[status] || { fundo: "#f3f4f6", cor: "#374151" };
   return (
     <span
       style={{
@@ -114,7 +90,43 @@ function Pilula({ status }) {
   );
 }
 
-function Locatarios() {
+function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
+  if (totalPaginas <= 1) return null;
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", marginTop: "20px" }}>
+      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((num) => {
+        const ativo = num === paginaAtual;
+        return (
+          <button
+            key={num}
+            onClick={() => onMudar(num)}
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "50%",
+              border: "none",
+              backgroundColor: ativo ? AZUL : "#e5e7eb",
+              color: ativo ? "#ffffff" : "#374151",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "background 0.2s",
+            }}
+          >
+            {num}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function Locatarios() {
+  const navigate = useNavigate();
   const [locatarios, setLocatarios] = useState(locatariosIniciais);
   const [rascunho, setRascunho] = useState({ busca: "", status: "" });
   const [filtros, setFiltros] = useState({ busca: "", status: "" });
@@ -158,42 +170,44 @@ function Locatarios() {
     setPagina(1);
   }
 
-  function remover(id) {
+  function remover(id, e) {
+    e.stopPropagation();
     setLocatarios((atual) => atual.filter((l) => l.id !== id));
   }
 
   return (
-    <>
-      {/* Topo: igual ao de Imóveis */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h2 style={{ fontSize: "32px", fontWeight: "bold", color: "#1976d2" }}>Locatários</h2>
-
-        <div style={{ width: "200px" }}>
-          <Button
-            texto="Novo locatário"
-            type="button"
-            onClick={() => setMostrarForm((aberto) => !aberto)}
-          />
-        </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Cabeçalho */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1d2939", margin: 0 }}>Locatários</h1>
+        <button
+          onClick={() => setMostrarForm(true)}
+          style={{ backgroundColor: AZUL, color: "#fff", border: "none", padding: "10px 16px", borderRadius: "6px", fontWeight: "600", cursor: "pointer" }}
+        >
+          Novo locatário
+        </button>
       </div>
 
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap", padding: "8px 0", marginBottom: "24px" }}>
-        <Campo id="filtro-busca" label="Procurar">
+      {/* Filtros de Busca */}
+      <div style={{ display: "flex", gap: "12px", alignItems: "center", width: "100%" }}>
+        <div style={{ flex: 1, position: "relative" }}>
+          <label style={{ position: "absolute", top: "-8px", left: "10px", background: "#f5f6f8", padding: "0 4px", fontSize: "11px", color: "#667085", zIndex: 1 }}>
+            Procurar
+          </label>
           <input
-            id="filtro-busca"
             type="text"
+            placeholder="Nome, CPF, e-mail ou imóvel"
             value={rascunho.busca}
             onChange={(e) => setRascunho({ ...rascunho, busca: e.target.value })}
-            onKeyDown={(e) => e.key === "Enter" && buscar()}
-            placeholder="Nome, CPF, e-mail ou imóvel"
             style={estiloCampo}
           />
-        </Campo>
+        </div>
 
-        <Campo id="filtro-status" label="Status">
+        <div style={{ width: "220px", position: "relative" }}>
+          <label style={{ position: "absolute", top: "-8px", left: "10px", background: "#f5f6f8", padding: "0 4px", fontSize: "11px", color: "#667085", zIndex: 1 }}>
+            Status
+          </label>
           <select
-            id="filtro-status"
             value={rascunho.status}
             onChange={(e) => setRascunho({ ...rascunho, status: e.target.value })}
             style={estiloCampo}
@@ -203,123 +217,62 @@ function Locatarios() {
             <option value="Pendente">Pendente</option>
             <option value="Inadimplente">Inadimplente</option>
           </select>
-        </Campo>
+        </div>
 
-        <button
-          onClick={buscar}
-          style={{
-            height: "36px",
-            padding: "0 18px",
-            backgroundColor: "#1976d2",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "12px",
-            fontWeight: "bold",
-            letterSpacing: "0.5px",
-            cursor: "pointer",
-          }}
-        >
-          BUSCAR
-        </button>
-        <button
-          onClick={limpar}
-          style={{
-            height: "36px",
-            padding: "0 18px",
-            backgroundColor: "#ffffff",
-            color: "#101828",
-            border: "1px solid #101828",
-            borderRadius: "4px",
-            fontSize: "12px",
-            fontWeight: "bold",
-            letterSpacing: "0.5px",
-            cursor: "pointer",
-          }}
-        >
-          LIMPAR
-        </button>
+        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+          <button
+            onClick={buscar}
+            style={{ backgroundColor: AZUL, color: "#fff", border: "none", padding: "0 16px", height: "44px", borderRadius: "4px", fontWeight: "600", cursor: "pointer" }}
+          >
+            BUSCAR
+          </button>
+          <button
+            onClick={limpar}
+            style={{ backgroundColor: "#e5e7eb", color: "#374151", border: "none", padding: "0 16px", height: "44px", borderRadius: "4px", fontWeight: "600", cursor: "pointer" }}
+          >
+            LIMPAR
+          </button>
+        </div>
       </div>
 
-      {/* Formulário */}
+      {/* Modal / Formulário de Cadastro */}
       {mostrarForm && (
-        <form
-          onSubmit={salvar}
-          style={{
-            backgroundColor: "#f5f6f8",
-            borderRadius: "12px",
-            padding: "20px",
-            marginBottom: "24px",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: "bold", margin: 0 }}>Cadastrar locatário</h3>
-            <button
-              type="button"
-              onClick={() => setMostrarForm(false)}
-              aria-label="Fechar formulário"
-              style={{ background: "none", border: "none", cursor: "pointer" }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px 16px" }}>
-            <Campo id="f-nome" label="Nome completo *">
-              <input id="f-nome" style={estiloCampo} value={form.nome} onChange={(e) => atualizarForm("nome", e.target.value)} />
-            </Campo>
-            <Campo id="f-cpf" label="CPF *">
-              <input id="f-cpf" style={estiloCampo} value={form.cpf} onChange={(e) => atualizarForm("cpf", e.target.value)} />
-            </Campo>
-            <Campo id="f-tel" label="Telefone">
-              <input id="f-tel" style={estiloCampo} value={form.telefone} onChange={(e) => atualizarForm("telefone", e.target.value)} />
-            </Campo>
-            <Campo id="f-email" label="E-mail">
-              <input id="f-email" type="email" style={estiloCampo} value={form.email} onChange={(e) => atualizarForm("email", e.target.value)} />
-            </Campo>
-            <Campo id="f-imovel" label="Imóvel alugado">
-              <input id="f-imovel" style={estiloCampo} value={form.imovel} onChange={(e) => atualizarForm("imovel", e.target.value)} />
-            </Campo>
-            <Campo id="f-status" label="Status">
-              <select id="f-status" style={estiloCampo} value={form.status} onChange={(e) => atualizarForm("status", e.target.value)}>
-                <option>Em dia</option>
-                <option>Pendente</option>
-                <option>Inadimplente</option>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
+          <div style={{ background: "#ffffff", padding: "24px", borderRadius: "8px", width: "400px", maxWidth: "90%", display: "flex", flexDirection: "column", gap: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, color: "#111827" }}>Cadastrar Novo Locatário</h3>
+              <button onClick={() => setMostrarForm(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280" }}><X size={20} /></button>
+            </div>
+            <form onSubmit={salvar} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <input type="text" placeholder="Nome completo" value={form.nome} onChange={(e) => atualizarForm("nome", e.target.value)} style={estiloCampo} required />
+              <input type="text" placeholder="CPF" value={form.cpf} onChange={(e) => atualizarForm("cpf", e.target.value)} style={estiloCampo} required />
+              <input type="text" placeholder="Telefone" value={form.telefone} onChange={(e) => atualizarForm("telefone", e.target.value)} style={estiloCampo} />
+              <input type="email" placeholder="E-mail" value={form.email} onChange={(e) => atualizarForm("email", e.target.value)} style={estiloCampo} />
+              <input type="text" placeholder="Imóvel vinculado" value={form.imovel} onChange={(e) => atualizarForm("imovel", e.target.value)} style={estiloCampo} />
+              <select value={form.status} onChange={(e) => atualizarForm("status", e.target.value)} style={estiloCampo}>
+                <option value="Em dia">Em dia</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Inadimplente">Inadimplente</option>
               </select>
-            </Campo>
+              <button type="submit" style={{ backgroundColor: AZUL, color: "#fff", border: "none", height: "44px", borderRadius: "4px", fontWeight: "600", cursor: "pointer" }}>Salvar Locatário</button>
+            </form>
           </div>
-
-          <button
-            type="submit"
-            style={{
-              marginTop: "20px",
-              height: "36px",
-              padding: "0 22px",
-              backgroundColor: "#1976d2",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "13px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            Salvar locatário
-          </button>
-        </form>
+        </div>
       )}
 
-      {/* Lista */}
-      <div style={{ overflowX: "auto" }}>
+      {/* Tabela de Listagem */}
+      <div style={{ background: "#ffffff", borderRadius: "8px", padding: "16px", border: "1px solid #e5e7eb" }}>
         <div style={{ minWidth: "720px" }}>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: COLUNAS,
               gap: "12px",
-              padding: "0 16px 10px",
-              fontSize: "12px",
+              padding: "0 16px 12px",
+              fontSize: "13px",
               color: AZUL,
+              fontWeight: "600",
+              borderBottom: "1px solid #f3f4f6"
             }}
           >
             <span>Locatário</span>
@@ -330,39 +283,45 @@ function Locatarios() {
           </div>
 
           {visiveis.length === 0 ? (
-            <p style={{ color: "#667085", padding: "24px 16px" }}>
-              Nenhum locatário encontrado. Ajuste a busca ou clique em "Novo locatário" para cadastrar.
+            <p style={{ color: "#667085", padding: "24px 16px", textAlign: "center" }}>
+              Nenhum locatário encontrado.
             </p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              {visiveis.map((l, i) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+              {visiveis.map((l) => (
                 <div
                   key={l.id}
+                  onClick={() => navigate(`/locatarios/${l.id}`)}
                   style={{
                     display: "grid",
                     gridTemplateColumns: COLUNAS,
                     gap: "12px",
                     alignItems: "center",
-                    padding: "12px 16px",
+                    padding: "14px 16px",
                     borderRadius: "8px",
-                    backgroundColor: i % 2 === 0 ? "#f5f6f8" : "#ffffff",
+                    backgroundColor: "#f9fafb",
                     fontSize: "14px",
                     color: "#101828",
+                    cursor: "pointer",
+                    border: "1px solid transparent",
+                    transition: "background 0.2s"
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "12px", fontWeight: "500", color: AZUL }}>
                     <Avatar nome={l.nome} />
                     {l.nome}
                   </span>
-                  <span>{l.imovel || "—"}</span>
-                  <span>{l.telefone || "—"}</span>
+                  <span style={{ color: "#4b5563" }}>{l.imovel || "—"}</span>
+                  <span style={{ color: "#4b5563" }}>{l.telefone || "—"}</span>
                   <span>
                     <Pilula status={l.status} />
                   </span>
                   <button
-                    onClick={() => remover(l.id)}
+                    onClick={(e) => remover(l.id, e)}
                     aria-label={`Remover ${l.nome}`}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#98a2b3" }}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex", justifyContent: "center" }}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -373,9 +332,8 @@ function Locatarios() {
         </div>
       </div>
 
+      {/* Paginação */}
       <Paginacao paginaAtual={paginaAtual} totalPaginas={totalPaginas} onMudar={setPagina} />
-    </>
+    </div>
   );
 }
-
-export default Locatarios;

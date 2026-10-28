@@ -51,8 +51,6 @@ function Imoveis() {
                     />
                 </div>
             </div>
-
-            <p>Dados de demonstração.</p>
             <div className="imoveis-grade">
                 {imoveisDemo.map((imovel) => (
                     <CardImovel key={imovel.id} {...imovel} />
