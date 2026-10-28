@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld("api", {
   inspections: {
     recordEntry: (data: import("../main/application/use-cases/RecordEntryInspection").RecordEntryInspectionDTO) =>
       ipcRenderer.invoke("inspections:record-entry", data),
+    recordExit: (data: import("../main/application/use-cases/RecordExitInspection").RecordExitInspectionDTO) =>
+      ipcRenderer.invoke("inspections:record-exit", data),
     get: (id: string) => ipcRenderer.invoke("inspections:get", id),
     list: (data: import("../main/application/use-cases/ListInspections").ListInspectionsDTO) =>
       ipcRenderer.invoke("inspections:list", data),

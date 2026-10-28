@@ -7,16 +7,20 @@ import { ReleaseRentalKeys } from "../application/use-cases/ReleaseRentalKeys";
 import { DrizzleRentalRepository } from "../infrastructure/repositories/DrizzleRentalRepository";
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
 import { DrizzleClientRepository } from "../infrastructure/repositories/DrizzleClientRepository";
+import { DrizzleInspectionRepository } from "../infrastructure/repositories/DrizzleInspectionRepository";
+import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
 import { CancelRental } from "../application/use-cases/CancelRental";
 
 export function registerRentalsIpc() {
   const rentalRepo = new DrizzleRentalRepository();
+  const inspectionRepo = new DrizzleInspectionRepository();
+  const historyRepo = new DrizzlePropertyHistoryRepository();
   const createRental = new CreateRental(rentalRepo, new DrizzlePropertyRepository(), new DrizzleClientRepository());
   const getRental = new GetRental(rentalRepo);
   const listRentals = new ListRentals(rentalRepo);
   const updatePrerequisites = new UpdateRentalPrerequisites(rentalRepo);
-  const releaseKeys = new ReleaseRentalKeys(rentalRepo);
-  const cancelRental = new CancelRental(rentalRepo);
+  const releaseKeys = new ReleaseRentalKeys(rentalRepo, inspectionRepo, historyRepo);
+  const cancelRental = new CancelRental(rentalRepo, inspectionRepo, historyRepo);
 
   ipcMain.handle("rentals:create", async (_, data: CreateRentalDTO) => createRental.execute(data));
   ipcMain.handle("rentals:get", async (_, id: string) => getRental.execute(id));
