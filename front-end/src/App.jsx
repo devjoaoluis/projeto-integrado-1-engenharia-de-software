@@ -6,7 +6,7 @@ import Imoveis from "./Imoveis";
 import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Locatarios from "./Locatarios";
-
+import VisaoGeralLocatario from "./VisaoGeralLocatario";
 
 export default function App() {
     return (
@@ -23,6 +23,8 @@ export default function App() {
                 <Route path="/vistorias" element={<div>Vistorias</div>} />
                 <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
                 <Route path="/locatarios" element={<Locatarios />} />  
+                {/* Adicione esta linha abaixo para abrir o Dossiê de Documentos do Locatário */}
+                <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/login" replace />} />
