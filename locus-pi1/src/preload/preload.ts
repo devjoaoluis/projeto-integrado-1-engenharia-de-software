@@ -11,6 +11,19 @@ contextBridge.exposeInMainWorld("api", {
     list: () => ipcRenderer.invoke("contract-templates:list"),
   },
 
+  contracts: {
+    assembleData: (params: import("../main/application/use-cases/AssembleContractData").AssembleContractDataInput) =>
+      ipcRenderer.invoke("contracts:assemble-data", params),
+    fillTemplate: (data: import("../main/application/use-cases/FillContractTemplate").FillContractTemplateInput) =>
+      ipcRenderer.invoke("contracts:fill-template", data),
+    generatePdf: (params: import("../main/application/use-cases/GenerateContractPdf").GenerateContractPdfInput) =>
+      ipcRenderer.invoke("contracts:generate-pdf", params),
+    exportPdf: (params: import("../main/ipc/contracts.ipc").ExportContractPdfParams) =>
+      ipcRenderer.invoke("contracts:export-pdf", params),
+    getDefaultTemplate: () =>
+      ipcRenderer.invoke("contracts:get-default-template"),
+  },
+
   inspections: {
     recordEntry: (data: import("../main/application/use-cases/RecordEntryInspection").RecordEntryInspectionDTO) =>
       ipcRenderer.invoke("inspections:record-entry", data),
