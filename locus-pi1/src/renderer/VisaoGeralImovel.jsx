@@ -581,9 +581,27 @@ function VisaoGeralImovel() {
           {erroLocacao && <p role="alert">{erroLocacao}</p>}
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
           {contratoAssociado && (
-            <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
-              Desassociar locatário
-            </button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
+              <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
+                Desassociar locatário
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                style={{
+                  backgroundColor: "#1877f2",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Gerar Contrato em PDF
+              </button>
+            </div>
           )}
         </section>
 
@@ -629,6 +647,29 @@ function VisaoGeralImovel() {
 
 
         <div className="aba-conteudo">
+          {abaAtiva === "contratos" && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <span style={{ fontSize: "14px", color: "#64748b" }}>
+                Histórico de locações e contratos do imóvel
+              </span>
+              <button
+                type="button"
+                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                style={{
+                  backgroundColor: "#1877f2",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "6px 14px",
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                + Gerar Contrato em PDF
+              </button>
+            </div>
+          )}
           {abaAtiva === "contratos" && imovel.contratos.length === 0 && <p>Nenhum registro encontrado.</p>}
           {abaAtiva === "contratos" && imovel.contratos.length > 0 && (
             <table className="tabela-custom">
