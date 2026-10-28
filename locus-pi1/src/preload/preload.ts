@@ -34,6 +34,22 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("inspections:list", data),
   },
 
+  documentos: {
+    upload: (
+      data: import("../main/application/use-cases/tenant-documents/UploadTenantDocument").UploadTenantDocumentDTO
+    ) => ipcRenderer.invoke("documentos:upload", data),
+    listar: (data: { locatarioId: string }) =>
+      ipcRenderer.invoke("documentos:listar", data),
+    obter: (data: { id: string }) =>
+      ipcRenderer.invoke("documentos:obter", data),
+    baixar: (data: { id: string }) =>
+      ipcRenderer.invoke("documentos:baixar", data),
+    atualizarCategoria: (data: {
+      id: string;
+      categoria: import("../main/domain/entities/TenantDocument").DocumentCategory;
+    }) => ipcRenderer.invoke("documentos:atualizar-categoria", data),
+  },
+
 
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 

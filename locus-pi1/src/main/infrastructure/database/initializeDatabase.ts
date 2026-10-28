@@ -2,6 +2,7 @@ import { contractTemplateTables } from "./contractTemplateTables";
 import { initializeInspectionModule } from "./inspectionModuleTables";
 import { initializeContacts } from "./initializeContacts";
 import { propertyHistoryTables } from "./propertyHistoryTables";
+import { tenantDocumentTables } from "./tenantDocumentTables";
 import { Client } from "@libsql/client";
 
 export async function initializeDatabase(client: Client): Promise<void> {
@@ -95,6 +96,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   await initializeContacts(client);
   await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);
+  await client.executeMultiple(tenantDocumentTables);
 
 
   const tableInfo = await client.execute("PRAGMA table_info(properties)");
