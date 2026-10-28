@@ -1,3 +1,4 @@
+import { contractTemplateTables } from "./contractTemplateTables";
 import { initializeInspectionModule } from "./inspectionModuleTables";
 import { initializeContacts } from "./initializeContacts";
 import { propertyHistoryTables } from "./propertyHistoryTables";
@@ -92,6 +93,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   }
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
+  await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);
 
 
