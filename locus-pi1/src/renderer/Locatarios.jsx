@@ -11,7 +11,6 @@ const formVazio = {
   cpfCnpj: "",
   telefone: "",
   email: "",
-  imovel: "",
   status: "Em dia"
 };
 
@@ -194,7 +193,6 @@ export default function Locatarios() {
         phone: telefoneValor,
         email: form.email || null,
         type: "TENANT",
-        imovel: form.imovel || "",
         status: form.status || "Em dia"
       };
 
@@ -205,7 +203,7 @@ export default function Locatarios() {
         nome: respostaServidor.name || respostaServidor.nome,
         telefone: respostaServidor.phone || respostaServidor.telefone,
         cpf: respostaServidor.cpfCnpj || respostaServidor.cpf,
-        imovel: respostaServidor.imovel || respostaServidor.property || form.imovel || "—",
+        imovel: respostaServidor.imovel || respostaServidor.property || "—",
         status: respostaServidor.status || form.status || "Em dia"
       };
 
@@ -296,16 +294,6 @@ export default function Locatarios() {
                 type="email"
                 value={form.email}
                 onChange={(e) => atualizarForm("email", e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Imóvel alugado</label>
-              <input
-                type="text"
-                value={form.imovel}
-                onChange={(e) => atualizarForm("imovel", e.target.value)}
-                placeholder="Ex: Apartamento 101"
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
               />
             </div>
