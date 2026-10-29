@@ -529,7 +529,25 @@ export default function VisaoGeralLocatario() {
                   </button>
                 </p>
               ) : (
-                <p style={{ margin: 0 }}><strong>Imóvel:</strong> Nenhum vinculado</p>
+                <p style={{ margin: 0 }}>
+                  <strong>Imóvel:</strong> Nenhum vinculado{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/imoveis")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#2563eb",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      textDecoration: "underline",
+                      padding: 0,
+                    }}
+                    title="Selecione um imóvel para associar este locatário"
+                  >
+                    (vincular a um imóvel)
+                  </button>
+                </p>
               )}
             </div>
           </div>

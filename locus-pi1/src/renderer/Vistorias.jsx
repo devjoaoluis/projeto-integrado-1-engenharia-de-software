@@ -276,7 +276,7 @@ export default function Vistorias() {
     try {
       const payload = {
         propertyId: imovelId,
-        contractId,
+        contractId: contratoId,
         inspectedAt: timestampData,
         description: description.trim(),
         reportReference: reportReference.trim() || null,
@@ -502,6 +502,43 @@ export default function Vistorias() {
                   </option>
                 ))}
               </select>
+              {imovelId && contratos.length === 0 && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    padding: "10px 12px",
+                    backgroundColor: "#fffbeb",
+                    border: "1px solid #fde68a",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    color: "#92400e",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <span>
+                    <strong>Atenção:</strong> Este imóvel não possui locação/contrato ativo registrado. O dossiê de documentos armazena os arquivos pessoais do locatário, mas para habilitar a vistoria é necessário formalizar a locação associando o locatário ao imóvel.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/imoveis/${imovelId}`)}
+                    style={{
+                      alignSelf: "flex-start",
+                      background: "#d97706",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "4px",
+                      padding: "5px 12px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Ir para Visão Geral do Imóvel para Associar Locatário &rarr;
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

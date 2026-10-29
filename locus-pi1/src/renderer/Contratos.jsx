@@ -421,27 +421,55 @@ export default function Contratos() {
                     <ClipboardCheck size={16} />
                     <span>Vistoria Obrigatória</span>
                   </div>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
-                    Após assinar o contrato, realize a vistoria de entrada com fotos para liberar as chaves.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`)}
-                    style={{
-                      marginTop: "4px",
-                      backgroundColor: "#16a34a",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "6px",
-                      padding: "6px 12px",
-                      fontWeight: "bold",
-                      fontSize: "12px",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    Ir para Vistoria de Entrada &rarr;
-                  </button>
+                  {dadosMontados?.rental ? (
+                    <>
+                      <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
+                        Após assinar o contrato, realize a vistoria de entrada com fotos para liberar as chaves.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`)}
+                        style={{
+                          marginTop: "4px",
+                          backgroundColor: "#16a34a",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "6px 12px",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        Ir para Vistoria de Entrada &rarr;
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
+                        O locatário ainda não foi associado formalmente a este imóvel no sistema. Associe-o na tela do imóvel para que o contrato fique ativo e habilitado para vistorias.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/imoveis/${imovelSelecionadoId}`)}
+                        style={{
+                          marginTop: "4px",
+                          backgroundColor: "#2563eb",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                          padding: "6px 12px",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          cursor: "pointer",
+                          textAlign: "center",
+                        }}
+                      >
+                        Ir para Imóvel e Associar Locatário &rarr;
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
