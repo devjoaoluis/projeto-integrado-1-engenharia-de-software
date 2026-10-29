@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   FileText,
   Download,
@@ -12,6 +12,7 @@ import {
   Calendar,
   DollarSign,
   FileDown,
+  ClipboardCheck,
 } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
 
@@ -39,6 +40,7 @@ const TAGS_DISPONIVEIS = [
 
 export default function Contratos() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const imovelIdParam = searchParams.get("imovelId");
 
   const [abaAtiva, setAbaAtiva] = useState("gerar"); // "gerar" | "modelos"
@@ -485,6 +487,47 @@ export default function Contratos() {
                 <Plus size={16} />
                 Criar Novo Modelo Personalizado
               </button>
+
+              {imovelSelecionadoId && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    borderRadius: "8px",
+                    padding: "12px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: "600", fontSize: "13px" }}>
+                    <ClipboardCheck size={16} />
+                    <span>Vistoria Obrigatória (RN03)</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
+                    Após assinar o contrato, realize a vistoria de entrada com fotos para liberar as chaves.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`)}
+                    style={{
+                      marginTop: "4px",
+                      backgroundColor: "#16a34a",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "6px 12px",
+                      fontWeight: "bold",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    Ir para Vistoria de Entrada &rarr;
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

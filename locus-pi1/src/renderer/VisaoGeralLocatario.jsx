@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Loader2,
   ExternalLink,
+  ClipboardCheck,
 } from "lucide-react";
 
 const CATEGORIAS = [
@@ -534,10 +535,32 @@ export default function VisaoGeralLocatario() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {imovelAssociado && (
+            <button
+              type="button"
+              onClick={() => navigate(`/vistorias?imovelId=${imovelAssociado.id}`)}
+              style={{
+                padding: "8px 14px",
+                borderRadius: "6px",
+                border: "1px solid #bbf7d0",
+                backgroundColor: "#f0fdf4",
+                color: "#166534",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <ClipboardCheck size={16} color="#16a34a" />
+              Vistorias (RN03)
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => navigate("/contratos")}
+            onClick={() => navigate(imovelAssociado ? `/contratos?imovelId=${imovelAssociado.id}` : "/contratos")}
             style={{
               padding: "8px 14px",
               borderRadius: "6px",

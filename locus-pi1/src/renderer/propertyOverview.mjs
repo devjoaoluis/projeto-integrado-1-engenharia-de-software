@@ -42,7 +42,7 @@ export function adaptPropertyOverview(overview, tenantNames = {}) {
     })),
     vistorias: [
       ...inspections.map(item => ({
-        id: `inspection-${item.id}`, timestamp: item.inspectedAt, data: date(item.inspectedAt), tipo: "Vistoria",
+        id: `inspection-${item.id}`, inspectionId: item.id, timestamp: item.inspectedAt, data: date(item.inspectedAt), tipo: "Vistoria", tipoVistoria: item.type,
         responsavel: item.reportReference ?? "—", observacao: item.description,
       })),
       ...maintenances.map(item => ({
