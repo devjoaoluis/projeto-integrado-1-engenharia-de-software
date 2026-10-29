@@ -619,7 +619,7 @@ function VisaoGeralImovel() {
                   fontSize: "14px",
                 }}
               >
-                Vistoria de Entrada (RN03)
+                Vistoria de Entrada
               </button>
               <button
                 type="button"
@@ -635,7 +635,7 @@ function VisaoGeralImovel() {
                   fontSize: "14px",
                 }}
               >
-                Vistoria de Saída (RN03)
+                Vistoria de Saída
               </button>
               <button
                 type="button"
@@ -701,7 +701,7 @@ function VisaoGeralImovel() {
                   textAlign: "left",
                 }}
               >
-                <strong>Regra de Negócio RN03:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
+                <strong>Atenção:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
               </div>
               <div className="confirmacao-exclusao-acoes">
                 <button type="button" onClick={() => setConfirmarDesassociacao(false)}>
@@ -807,7 +807,7 @@ function VisaoGeralImovel() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
                 <span style={{ fontSize: "14px", color: "#64748b" }}>
-                  Vistorias de entrada e saída com fotos e vídeos (RN03)
+                  Vistorias de entrada e saída com fotos e vídeos
                 </span>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
