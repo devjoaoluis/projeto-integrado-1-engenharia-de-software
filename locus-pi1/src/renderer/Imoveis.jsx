@@ -25,7 +25,7 @@ function Imoveis() {
     const [filtrosAplicados, setFiltrosAplicados] = useState(filtros);
     const [carregando, setCarregando] = useState(false);
     const [erro, setErro] = useState("");
-    const [imovelParaRemover, setImovelParaRemover] = useState(null);
+    const [imovelParaExcluir, setImovelParaExcluir] = useState(null);
     const [removendo, setRemovendo] = useState(false);
 
     useEffect(() => {
@@ -107,17 +107,17 @@ function Imoveis() {
         setPagina(1);
     }
 
-    async function confirmarRemocao() {
-        if (!imovelParaRemover) return;
-        const imovelId = imovelParaRemover.id;
-        setImovelParaRemover(null);
+    async function excluirConfirmado() {
+        if (!imovelParaExcluir) return;
+        const imovelId = imovelParaExcluir.id;
+        setImovelParaExcluir(null);
         setRemovendo(true);
         try {
             setErro("");
             await window.api.properties.delete(imovelId);
             await carregarImoveis();
         } catch (error) {
-            console.error("Erro ao remover:", error);
+            console.error("Erro ao excluir:", error);
             setErro(mensagemErro(error, "Não foi possível excluir o imóvel."));
         } finally {
             setRemovendo(false);
@@ -281,23 +281,23 @@ function Imoveis() {
             </div>
 
             <form className="imoveis-filtros" onSubmit={aplicarFiltros}>
-                <label>
+                <label className="ui-label ui-label-optional">
                     Buscar por endereço ou bairro
                     <input name="q" value={filtros.q} onChange={atualizarFiltro} placeholder="Ex.: Centro ou Rua A" />
                 </label>
-                <label>
+                <label className="ui-label ui-label-optional">
                     Preço mínimo
                     <input name="priceMin" type="number" min="0" step="0.01" value={filtros.priceMin} onChange={atualizarFiltro} />
                 </label>
-                <label>
+                <label className="ui-label ui-label-optional">
                     Preço máximo
                     <input name="priceMax" type="number" min="0" step="0.01" value={filtros.priceMax} onChange={atualizarFiltro} />
                 </label>
-                <label>
+                <label className="ui-label ui-label-optional">
                     Quartos (mínimo)
                     <input name="bedrooms" type="number" min="0" step="1" value={filtros.bedrooms} onChange={atualizarFiltro} />
                 </label>
-                <label>
+                <label className="ui-label ui-label-optional">
                     Situação
                     <select name="status" value={filtros.status} onChange={atualizarFiltro}>
                         <option value="">Todas</option>
@@ -337,23 +337,23 @@ function Imoveis() {
                         status={imovel.status} 
                         foto={imovel.foto} 
                         onEditar={() => handleEditar(imovel)}
-                        onRemover={() => {
+                        onExcluir={() => {
                             if (removendo) return;
                             setErro("");
-                            setImovelParaRemover(imovel);
+                            setImovelParaExcluir(imovel);
                         }}
                     />
                 ))}
             </div>
 
-            {imovelParaRemover && (
+            {imovelParaExcluir && (
                 <div className="confirmacao-exclusao" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacao-exclusao">
                     <div className="confirmacao-exclusao-conteudo">
                         <h2 id="titulo-confirmacao-exclusao">Excluir imóvel?</h2>
-                        <p>Tem certeza que deseja excluir “{imovelParaRemover.title}”?</p>
+                        <p>Tem certeza que deseja excluir “{imovelParaExcluir.title}”?</p>
                         <div className="confirmacao-exclusao-acoes">
-                            <button type="button" onClick={() => setImovelParaRemover(null)}>Cancelar</button>
-                            <button type="button" className="confirmacao-excluir" onClick={confirmarRemocao}>Excluir</button>
+                            <button type="button" onClick={() => setImovelParaExcluir(null)}>Cancelar</button>
+                            <button type="button" className="confirmacao-excluir" onClick={excluirConfirmado}>Excluir</button>
                         </div>
                     </div>
                 </div>

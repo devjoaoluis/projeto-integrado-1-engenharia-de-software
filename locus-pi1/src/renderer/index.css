@@ -9,3 +9,108 @@ body {
   background-color: #f4f6f8;
   min-height: 100vh;
 }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.ui-control {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+}
+
+.ui-control:focus {
+  outline: 2px solid #bfdbfe;
+  outline-offset: 1px;
+  border-color: #2563eb;
+}
+
+.ui-button {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.ui-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.ui-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ui-label-required::after {
+  content: " *";
+  color: #dc2626;
+}
+
+.ui-label-optional::after {
+  content: " (Opcional)";
+  color: #64748b;
+  font-weight: 400;
+}
+
+.contatos-form input,
+.contatos-form select,
+.contatos-filtro input,
+.form-locacao input,
+.form-locacao select,
+.imoveis-filtros input,
+.imoveis-filtros select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.contatos-acoes button,
+.contato-acao,
+.form-locacao button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+}
+
+.abas-padrao {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.aba-padrao {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aba-padrao.ativa {
+  border-bottom-color: #2563eb;
+  color: #2563eb;
+}

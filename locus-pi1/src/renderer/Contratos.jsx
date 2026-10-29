@@ -164,22 +164,10 @@ export default function Contratos() {
       </header>
 
       {/* Navegação por Abas */}
-      <div style={{ display: "flex", gap: "10px", borderBottom: "2px solid #e2e8f0", marginBottom: "20px" }}>
+      <div className="abas-padrao" style={{ marginBottom: "20px" }}>
         <button
+          className={`aba-padrao ${abaAtiva === "gerar" ? "ativa" : ""}`}
           onClick={() => setAbaAtiva("gerar")}
-          style={{
-            padding: "10px 18px",
-            border: "none",
-            background: "none",
-            borderBottom: abaAtiva === "gerar" ? "3px solid #1877f2" : "3px solid transparent",
-            color: abaAtiva === "gerar" ? "#1877f2" : "#64748b",
-            fontWeight: abaAtiva === "gerar" ? "bold" : "500",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "15px",
-          }}
         >
           <FileText size={18} />
           Gerar Contrato (Preenchimento Automático)
@@ -332,10 +320,11 @@ export default function Contratos() {
                 </div>
               ) : null}
 
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>
+              <label className="ui-label ui-label-required">
                 Locatário:
               </label>
               <select
+                className="ui-control"
                 value={locatarioSelecionadoId}
                 onChange={(e) => setLocatarioSelecionadoId(e.target.value)}
                 style={{
@@ -386,7 +375,7 @@ export default function Contratos() {
                 Utilizando o <strong>Modelo Padrão de Locação Residencial</strong> do sistema.
               </p>
               {/* Seleção de modelo personalizado comentada temporariamente:
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>
+              <label className="ui-label ui-label-optional">
                 Selecione o Modelo:
               </label>
               <select
@@ -426,7 +415,7 @@ export default function Contratos() {
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: "600", fontSize: "13px" }}>
                     <ClipboardCheck size={16} />
-                    <span>Vistoria Obrigatória</span>
+                    <span>Vistoria *</span>
                   </div>
                   {dadosMontados?.rental ? (
                     <>

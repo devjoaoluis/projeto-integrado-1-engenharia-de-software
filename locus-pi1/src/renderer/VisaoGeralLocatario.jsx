@@ -622,7 +622,7 @@ export default function VisaoGeralLocatario() {
           <p style={{ fontSize: "16px", fontWeight: "bold", color: temIdentificacao ? "#15803d" : "#b45309", margin: "4px 0" }}>
             {temIdentificacao ? "Entregue e Validado" : "Pendente de Envio"}
           </p>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Obrigatório para locação</span>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>Necessário para locação</span>
         </div>
 
         <div style={{ background: "#ffffff", padding: "16px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
@@ -633,7 +633,7 @@ export default function VisaoGeralLocatario() {
           <p style={{ fontSize: "16px", fontWeight: "bold", color: temRenda ? "#15803d" : "#b45309", margin: "4px 0" }}>
             {temRenda ? "Entregue e Validado" : "Pendente de Envio"}
           </p>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Obrigatório para análise de crédito</span>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>Necessário para análise de crédito</span>
         </div>
       </div>
 

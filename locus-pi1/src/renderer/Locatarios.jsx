@@ -212,19 +212,19 @@ export default function Locatarios() {
       setMostrarForm(false);
       setPagina(1);
     } catch (err) {
-      console.error("Erro ao guardar locatário:", err);
-      alert("Erro ao guardar o locatário na base de dados.");
+      console.error("Erro ao salvar locatário:", err);
+      alert("Erro ao salvar o locatário na base de dados.");
     }
   }
 
-  async function remover(id) {
-    if (confirm("Tens a certeza que pretendes remover este locatário?")) {
+  async function excluir(id) {
+    if (confirm("Tens a certeza que pretendes excluir este locatário?")) {
       try {
         await window.api.clients.delete(id);
         setLocatarios((atual) => atual.filter((l) => l.id !== id));
       } catch (err) {
-        console.error("Erro ao remover locatário:", err);
-        alert("Erro ao remover o locatário da base de dados.");
+        console.error("Erro ao excluir locatário:", err);
+        alert("Erro ao excluir o locatário da base de dados.");
       }
     }
   }
@@ -260,8 +260,9 @@ export default function Locatarios() {
           <h2 style={{ fontSize: "18px", marginBottom: "16px", color: "#334155" }}>Cadastrar novo locatário</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Nome completo *</label>
+              <label className="ui-label ui-label-required">Nome completo</label>
               <input
+                className="ui-control"
                 type="text"
                 value={form.nome}
                 onChange={(e) => atualizarForm("nome", e.target.value)}
@@ -270,8 +271,9 @@ export default function Locatarios() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>CPF/CNPJ *</label>
+              <label className="ui-label ui-label-required">CPF/CNPJ</label>
               <input
+                className="ui-control"
                 type="text"
                 value={form.cpfCnpj}
                 onChange={(e) => atualizarForm("cpfCnpj", e.target.value)}
@@ -280,8 +282,9 @@ export default function Locatarios() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Telefone</label>
+              <label className="ui-label ui-label-optional">Telefone</label>
               <input
+                className="ui-control"
                 type="text"
                 value={form.telefone}
                 onChange={(e) => atualizarForm("telefone", e.target.value)}
@@ -289,8 +292,9 @@ export default function Locatarios() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>E-mail</label>
+              <label className="ui-label ui-label-optional">E-mail</label>
               <input
+                className="ui-control"
                 type="email"
                 value={form.email}
                 onChange={(e) => atualizarForm("email", e.target.value)}
@@ -298,8 +302,9 @@ export default function Locatarios() {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "500", marginBottom: "6px" }}>Status</label>
+              <label className="ui-label ui-label-optional">Status</label>
               <select
+                className="ui-control"
                 value={form.status}
                 onChange={(e) => atualizarForm("status", e.target.value)}
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#fff" }}
@@ -425,9 +430,9 @@ export default function Locatarios() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      remover(l.id);
+                      excluir(l.id);
                     }}
-                    aria-label={`Remover ${l.nome}`}
+                    aria-label={`Excluir ${l.nome}`}
                     style={{ background: "none", border: "none", cursor: "pointer", color: "#98a2b3", padding: "4px" }}
                   >
                     <Trash2 size={16} />

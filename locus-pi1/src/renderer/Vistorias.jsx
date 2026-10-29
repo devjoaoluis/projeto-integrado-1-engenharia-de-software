@@ -215,7 +215,7 @@ export default function Vistorias() {
     e.target.value = "";
   }
 
-  function removerArquivo(index) {
+  function excluirArquivo(index) {
     setArquivosSelecionados((prev) => {
       const item = prev[index];
       if (item?.preview) URL.revokeObjectURL(item.preview);
@@ -712,7 +712,7 @@ export default function Vistorias() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          removerArquivo(idx);
+                          excluirArquivo(idx);
                         }}
                         style={{
                           position: "absolute",
@@ -730,7 +730,7 @@ export default function Vistorias() {
                           cursor: "pointer",
                           zIndex: 2,
                         }}
-                        title="Remover anexo"
+                        title="Excluir anexo"
                       >
                         <X size={14} />
                       </button>

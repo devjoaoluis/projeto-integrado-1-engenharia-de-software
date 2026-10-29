@@ -21,7 +21,7 @@ function VisaoGeralImovel() {
   const [salvandoLocacao, setSalvandoLocacao] = useState(false);
   const [erroLocacao, setErroLocacao] = useState("");
   const [sucessoLocacao, setSucessoLocacao] = useState("");
-  const [confirmarDesassociacao, setConfirmarDesassociacao] = useState(false);
+  const [desassociacaoPendente, setDesassociacaoPendente] = useState(false);
 
   const [result, setResult] = useState({ id: null, imovel: null, erro: "" });
 
@@ -109,7 +109,7 @@ function VisaoGeralImovel() {
 
   async function desassociarLocatario() {
     if (!contratoAssociado) return;
-    setConfirmarDesassociacao(false);
+    setDesassociacaoPendente(false);
     try {
       await window.api.rentals.cancel(contratoAssociado.rentalId);
       await carregarOverview();
@@ -572,7 +572,7 @@ function VisaoGeralImovel() {
             </div>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
-            <label>
+            <label className="ui-label ui-label-required">
               Locatário cadastrado
               <select name="tenantId" value={locacao.tenantId} onChange={atualizarLocacao} required>
                 <option value="">Selecione</option>
@@ -581,15 +581,15 @@ function VisaoGeralImovel() {
                 ))}
               </select>
             </label>
-            <label>
+            <label className="ui-label ui-label-required">
               Início
               <input name="startDate" type="date" value={locacao.startDate} onChange={atualizarLocacao} required />
             </label>
-            <label>
+            <label className="ui-label ui-label-optional">
               Fim do contrato
               <input name="endDate" type="date" value={locacao.endDate} onChange={atualizarLocacao} />
             </label>
-            <label>
+            <label className="ui-label ui-label-required">
               Dia de vencimento
               <input name="dueDay" type="number" min="1" max="31" value={locacao.dueDay} onChange={atualizarLocacao} required />
             </label>
@@ -602,7 +602,7 @@ function VisaoGeralImovel() {
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
           {contratoAssociado && (
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
-              <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
+              <button type="button" className="botao-desassociar" onClick={() => setDesassociacaoPendente(true)}>
                 Desassociar locatário
               </button>
               <button
@@ -657,34 +657,34 @@ function VisaoGeralImovel() {
           )}
         </section>
 
-        <div className="abas-container">
+        <div className="abas-padrao">
           <button
-            className={`aba-btn ${abaAtiva === "contratos" ? "ativa" : ""}`}
+            className={`aba-padrao ${abaAtiva === "contratos" ? "ativa" : ""}`}
             onClick={() => setAbaAtiva("contratos")}
           >
             Contratos ({imovel.contratos.length})
           </button>
           <button
-            className={`aba-btn ${abaAtiva === "pagamentos" ? "ativa" : ""}`}
+            className={`aba-padrao ${abaAtiva === "pagamentos" ? "ativa" : ""}`}
             onClick={() => setAbaAtiva("pagamentos")}
           >
             Pagamentos ({imovel.pagamentos.length})
           </button>
           <button
-            className={`aba-btn ${abaAtiva === "vistorias" ? "ativa" : ""}`}
+            className={`aba-padrao ${abaAtiva === "vistorias" ? "ativa" : ""}`}
             onClick={() => setAbaAtiva("vistorias")}
           >
             Vistorias & Manutenções ({imovel.vistorias.length})
           </button>
           <button
-            className={`aba-btn ${abaAtiva === "historico" ? "ativa" : ""}`}
+            className={`aba-padrao ${abaAtiva === "historico" ? "ativa" : ""}`}
             onClick={() => setAbaAtiva("historico")}
           >
             Histórico ({historicoLocacoes.length})
           </button>
 
         </div>
-        {confirmarDesassociacao && (
+        {desassociacaoPendente && (
           <div className="confirmacao-exclusao" role="dialog" aria-modal="true">
             <div className="confirmacao-exclusao-conteudo">
               <h2>Desassociar locatário?</h2>
@@ -704,7 +704,7 @@ function VisaoGeralImovel() {
                 <strong>Atenção:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
               </div>
               <div className="confirmacao-exclusao-acoes">
-                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>
+                <button type="button" onClick={() => setDesassociacaoPendente(false)}>
                   Cancelar
                 </button>
                 <button
@@ -723,7 +723,7 @@ function VisaoGeralImovel() {
                   Registrar Vistoria de Saída
                 </button>
                 <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>
-                  Confirmar Desassociação
+                  Salvar Desassociação
                 </button>
               </div>
             </div>
