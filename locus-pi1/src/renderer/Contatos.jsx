@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { mensagemErro } from "./utils/mensagemErro";
 import BotaoVoltar from "./components/BotaoVoltar";
 
 const vazio = { name: "", cpfCnpj: "", phone: "", email: "", guarantorId: "" };
 
 function Contatos() {
+  const navigate = useNavigate();
   const [aba, setAba] = useState("clients");
   const [registros, setRegistros] = useState([]);
   const [fiadores, setFiadores] = useState([]);
@@ -193,6 +195,21 @@ function Contatos() {
                     <td>{contato.name}</td><td>{contato.cpfCnpj}</td><td>{contato.phone}</td><td>{contato.email || "—"}</td>
                     {aba === "clients" && <td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td>}
                     <td className="contato-acoes">
+                      {aba === "clients" && (
+                        <button
+                          type="button"
+                          className="contato-acao"
+                          onClick={() => navigate(`/locatarios/${contato.id}`)}
+                          style={{
+                            backgroundColor: "#e0f2fe",
+                            color: "#0369a1",
+                            borderColor: "#bae6fd",
+                            fontWeight: "600",
+                          }}
+                        >
+                          Dossiê
+                        </button>
+                      )}
                       <button className="contato-acao" onClick={() => editar(contato)}>Editar</button>
                       <button className="contato-acao excluir" disabled={removendo} onClick={() => remover(contato.id)}>Excluir</button>
                     </td>

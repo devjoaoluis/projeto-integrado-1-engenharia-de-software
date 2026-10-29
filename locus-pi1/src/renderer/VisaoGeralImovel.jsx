@@ -549,7 +549,27 @@ function VisaoGeralImovel() {
         <section className="associacao-locacao" aria-label="Associar locatário">
           <h3>Locatário</h3>
           {contratoAssociado && (
-            <p><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <p style={{ margin: 0 }}><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+              {contratoAssociado.tenantId && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/locatarios/${contratoAssociado.tenantId}`)}
+                  style={{
+                    backgroundColor: "#2563eb",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  Ver Dossiê do Locatário
+                </button>
+              )}
+            </div>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
             <label>

@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 
 const POR_PAGINA = 5;
 const AZUL = "#2563eb";
-const COLUNAS = "2fr 1.5fr 1fr 1fr 40px";
+const COLUNAS = "2fr 1.5fr 1fr 1fr 90px 40px";
 
 const formVazio = {
   nome: "",
@@ -106,23 +106,42 @@ export default function Locatarios() {
 
   // Carregar locatários da base de dados ao abrir o componente
   useEffect(() => {
-    window.api.clients.list()
-      .then((dados) => {
+    async function carregar() {
+      try {
+        const [dados, alugueis, imoveis] = await Promise.all([
+          window.api.clients.list(),
+          window.api.rentals ? window.api.rentals.list().catch(() => []) : [],
+          window.api.properties ? window.api.properties.list().catch(() => []) : [],
+        ]);
+
+        const imovelPorId = {};
+        (imoveis || []).forEach((im) => {
+          imovelPorId[im.id] = im.title || im.address || `Imóvel #${im.id.slice(0, 5)}`;
+        });
+
+        const imovelPorCliente = {};
+        (alugueis || []).forEach((aluguel) => {
+          if (aluguel.tenantId && aluguel.propertyId && (!aluguel.status || aluguel.status === "ACTIVE")) {
+            imovelPorCliente[aluguel.tenantId] = imovelPorId[aluguel.propertyId] || "Imóvel associado";
+          }
+        });
+
         const formatados = (dados || []).map((l) => ({
           ...l,
           nome: l.name || l.nome,
           telefone: l.phone || l.telefone,
           cpf: l.cpfCnpj || l.cpf,
-          imovel: l.imovel || l.property || "—",
+          imovel: imovelPorCliente[l.id] || l.imovel || l.property || "—",
           status: l.status || "Em dia"
         }));
         setLocatarios(formatados);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Erro ao carregar locatários:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    }
+    carregar();
   }, []);
 
   const filtrados = locatarios.filter((l) => {
@@ -174,6 +193,7 @@ export default function Locatarios() {
         cpfCnpj: documentoValor,
         phone: telefoneValor,
         email: form.email || null,
+        type: "TENANT",
         imovel: form.imovel || "",
         status: form.status || "Em dia"
       };
@@ -353,6 +373,7 @@ export default function Locatarios() {
             <span>Imóvel</span>
             <span>Telefone</span>
             <span>Status</span>
+            <span>Dossiê</span>
             <span />
           </div>
 
@@ -391,6 +412,27 @@ export default function Locatarios() {
                   <span style={{ color: "#475569" }}>{l.telefone || "—"}</span>
                   <span>
                     <Pilula status={l.status} />
+                  </span>
+                  <span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/locatarios/${l.id}`);
+                      }}
+                      style={{
+                        backgroundColor: "#eff6ff",
+                        color: "#2563eb",
+                        border: "1px solid #bfdbfe",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Dossiê
+                    </button>
                   </span>
                   <button
                     onClick={(e) => {
