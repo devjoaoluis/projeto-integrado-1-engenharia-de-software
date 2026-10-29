@@ -156,7 +156,7 @@ export default function VisaoGeralLocatario() {
         }
       }
 
-      // 3. Carregar documentos do dossiê (HU-13)
+      // 3. Carregar documentos do dossiê
       await carregarDocumentos();
     } catch (err) {
       console.error("Erro ao carregar dados do locatário:", err);
@@ -555,7 +555,7 @@ export default function VisaoGeralLocatario() {
               }}
             >
               <ClipboardCheck size={16} color="#16a34a" />
-              Vistorias (RN03)
+              Vistorias
             </button>
           )}
           <button
@@ -576,7 +576,7 @@ export default function VisaoGeralLocatario() {
             }}
           >
             <FileText size={16} />
-            Gerar Contrato (HU-11)
+            Gerar Contrato
           </button>
         </div>
       </div>
@@ -624,7 +624,7 @@ export default function VisaoGeralLocatario() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a", margin: "0 0 4px" }}>
-              Dossiê de Documentos (HU-13)
+              Dossiê de Documentos
             </h2>
             <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
               Faça upload, visualize em tela cheia e baixe os documentos originais do locatário.

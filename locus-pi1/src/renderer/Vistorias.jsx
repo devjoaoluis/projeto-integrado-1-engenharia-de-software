@@ -46,7 +46,7 @@ export default function Vistorias() {
     tipoParam === "EXIT" ? "EXIT" : "ENTRY"
   );
   const [inspectedAt, setInspectedAt] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA")
   );
   const [description, setDescription] = useState("");
   const [reportReference, setReportReference] = useState("");
@@ -244,11 +244,20 @@ export default function Vistorias() {
       return;
     }
 
-    const timestampData = new Date(`${inspectedAt}T12:00:00`).getTime();
-    if (timestampData > Date.now()) {
+    const now = new Date();
+    const [ano, mes, dia] = inspectedAt.split("-").map(Number);
+    const dataVistoria = new Date(ano, mes - 1, dia);
+    const dataHoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (dataVistoria > dataHoje) {
       setMensagemErro("A data da vistoria não pode estar no futuro.");
       return;
     }
+
+    const timestampData =
+      dataVistoria.getTime() === dataHoje.getTime()
+        ? Date.now()
+        : new Date(ano, mes - 1, dia, 12, 0, 0).getTime();
 
     const sourceFilePaths = arquivosSelecionados
       .map((a) => a.path)
@@ -352,7 +361,7 @@ export default function Vistorias() {
         <ShieldAlert size={26} color="#16a34a" style={{ flexShrink: 0, marginTop: "2px" }} />
         <div>
           <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#166534", margin: "0 0 4px" }}>
-            Módulo de Vistorias Obrigatórias (Regra de Negócio RN03)
+            Módulo de Vistorias Obrigatórias
           </h2>
           <p style={{ fontSize: "14px", color: "#15803d", margin: 0, lineHeight: 1.5 }}>
             A realização de vistorias com upload de fotos e vídeos é obrigatória em dois momentos cruciais:
@@ -518,7 +527,7 @@ export default function Vistorias() {
                 </option>
                 {contratos.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.reference || `CTR-${c.id.substring(0, 6)}`} | Locatário: {c.locatario} ({c.status})
+                    {c.codigo || c.reference || `CTR-${c.id.substring(0, 6)}`} | Locatário: {c.locatario} ({c.status})
                   </option>
                 ))}
               </select>
@@ -526,10 +535,10 @@ export default function Vistorias() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-            {/* Tipo de Vistoria (Momento RN03) */}
+            {/* Tipo de Vistoria */}
             <div>
               <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
-                Tipo de Vistoria (RN03) *
+                Tipo de Vistoria *
               </label>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button
@@ -578,7 +587,7 @@ export default function Vistorias() {
                 type="date"
                 value={inspectedAt}
                 onChange={(e) => setInspectedAt(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
+                max={new Date().toLocaleDateString("en-CA")}
                 required
                 style={{
                   width: "100%",

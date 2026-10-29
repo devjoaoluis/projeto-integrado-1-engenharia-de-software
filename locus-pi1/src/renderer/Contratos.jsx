@@ -503,7 +503,7 @@ export default function Contratos() {
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: "600", fontSize: "13px" }}>
                     <ClipboardCheck size={16} />
-                    <span>Vistoria Obrigatória (RN03)</span>
+                    <span>Vistoria Obrigatória</span>
                   </div>
                   <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
                     Após assinar o contrato, realize a vistoria de entrada com fotos para liberar as chaves.
