@@ -129,3 +129,41 @@ textarea {
   border-bottom-color: #2563eb;
   color: #2563eb;
 }
+
+.confirmacao-exclusao {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .35);
+  z-index: 10;
+}
+
+.confirmacao-exclusao-conteudo {
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+}
+
+.confirmacao-exclusao-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.confirmacao-exclusao-acoes button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirmacao-excluir {
+  color: #fff;
+  background: #d32f2f;
+}

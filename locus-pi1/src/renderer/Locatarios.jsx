@@ -104,6 +104,7 @@ export default function Locatarios() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(formVazio);
   const [editando, setEditando] = useState(null);
+  const [locatarioParaExcluir, setLocatarioParaExcluir] = useState(null);
 
   // Carregar locatários da base de dados ao abrir o componente
   useEffect(() => {
@@ -223,34 +224,41 @@ export default function Locatarios() {
       alert("Erro ao salvar o locatário na base de dados.");
     }
 
-    function editar(locatario) {
-      setEditando(locatario.id);
-      setForm({
-        nome: locatario.nome || locatario.name || "",
-        cpfCnpj: locatario.cpf || locatario.cpfCnpj || "",
-        telefone: locatario.telefone || locatario.phone || "",
-        email: locatario.email || "",
-        status: locatario.status || "Em dia",
-      });
-      setMostrarForm(true);
-    }
+  }
 
-    function cancelarEdicao() {
-      setEditando(null);
-      setForm(formVazio);
-      setMostrarForm(false);
-    }
+  function editar(locatario) {
+    setEditando(locatario.id);
+    setForm({
+      nome: locatario.nome || locatario.name || "",
+      cpfCnpj: locatario.cpf || locatario.cpfCnpj || "",
+      telefone: locatario.telefone || locatario.phone || "",
+      email: locatario.email || "",
+      status: locatario.status || "Em dia",
+    });
+    setMostrarForm(true);
+  }
+
+  function cancelarEdicao() {
+    setEditando(null);
+    setForm(formVazio);
+    setMostrarForm(false);
   }
 
   async function excluir(id) {
-    if (confirm("Tens a certeza que pretendes excluir este locatário?")) {
-      try {
-        await window.api.clients.delete(id);
-        setLocatarios((atual) => atual.filter((l) => l.id !== id));
-      } catch (err) {
-        console.error("Erro ao excluir locatário:", err);
-        alert("Erro ao excluir o locatário da base de dados.");
-      }
+    const locatario = locatarios.find((item) => item.id === id);
+    if (locatario) setLocatarioParaExcluir(locatario);
+  }
+
+  async function excluirConfirmado() {
+    if (!locatarioParaExcluir) return;
+
+    try {
+      await window.api.clients.delete(locatarioParaExcluir.id);
+      setLocatarios((atual) => atual.filter((l) => l.id !== locatarioParaExcluir.id));
+      setLocatarioParaExcluir(null);
+    } catch (err) {
+      console.error("Erro ao excluir locatário:", err);
+      alert("Erro ao excluir o locatário da base de dados.");
     }
   }
 
@@ -265,16 +273,16 @@ export default function Locatarios() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1d2939" }}>Locatários</h1>
         <button
-          className="ui-button"
+          className={mostrarForm ? "botao-voltar-padrao" : "ui-button"}
           onClick={() => {
             if (mostrarForm) cancelarEdicao();
             else setMostrarForm(true);
           }}
           style={{
-            width: "200px"
+            width: mostrarForm ? "auto" : "200px"
           }}
         >
-          {mostrarForm ? "Cancelar" : "Novo locatário"}
+          {mostrarForm ? "← Voltar" : "Novo locatário"}
         </button>
       </div>
 
@@ -499,6 +507,23 @@ export default function Locatarios() {
       </div>
 
       <Paginacao paginaAtual={paginaAtual} totalPaginas={totalPaginas} onMudar={setPagina} />
+
+      {locatarioParaExcluir && (
+        <div className="confirmacao-exclusao" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacao-exclusao-locatario">
+          <div className="confirmacao-exclusao-conteudo">
+            <h2 id="titulo-confirmacao-exclusao-locatario">Excluir locatário?</h2>
+            <p>Tem certeza que deseja excluir “{locatarioParaExcluir.nome}”?</p>
+            <div className="confirmacao-exclusao-acoes">
+              <button type="button" onClick={() => setLocatarioParaExcluir(null)}>
+                Cancelar
+              </button>
+              <button type="button" className="confirmacao-excluir" onClick={excluirConfirmado}>
+                Confirmar Exclusão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
