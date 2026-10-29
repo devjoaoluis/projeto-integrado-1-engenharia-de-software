@@ -1,5 +1,5 @@
 function Campo({ label, opcoes, multilinha = false, required = false, placeholder, ...props }) {
-    const textoPlaceholder = placeholder || (required ? "Obrigatório" : "Opcional");
+    const textoPlaceholder = placeholder || (required ? "" : "Opcional");
 
     return (
         <>
@@ -42,7 +42,7 @@ function Campo({ label, opcoes, multilinha = false, required = false, placeholde
 
             <div className="campo-form">
                 <label className="campo-form-label">
-                    {label}{required ? " *" : ""}
+                    {label}{required ? " *" : " (Opcional)"}
                 </label>
                 {opcoes ? (
                     <select

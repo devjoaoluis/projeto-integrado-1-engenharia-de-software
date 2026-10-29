@@ -90,7 +90,7 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
         setAviso(mensagens.join(" "));
     }
 
-    function remover(item) {
+    function excluir(item) {
         URL.revokeObjectURL(item.url);
         if (item.tipo === "foto") {
             setFotos(fotos.filter((m) => m.url !== item.url));
@@ -167,7 +167,7 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                         display: flex;
                     }
 
-                    .upload-remover {
+                    .upload-excluir {
                         position: absolute;
                         top: 3px;
                         right: 3px;
@@ -230,9 +230,9 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                             )}
                             <button
                                 type="button"
-                                className="upload-remover"
-                                onClick={() => remover(item)}
-                                aria-label="Remover"
+                                className="upload-excluir"
+                                onClick={() => excluir(item)}
+                                aria-label="Excluir"
                             >
                                 <X size={12} />
                             </button>

@@ -53,6 +53,17 @@ function AppLayout() {
                         margin: 0;
                     }
 
+                    .topo-identidade {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 16px;
+                    }
+
+                    .topo-marca {
+                        font-size: 22px;
+                        font-weight: 700;
+                    }
+
                     .topo-icones {
                         display: flex;
                         gap: 16px;
@@ -86,7 +97,10 @@ function AppLayout() {
 
                 <div className="principal">
                     <header className="topo">
-                        <h1>{titulo}</h1>
+                        <div className="topo-identidade">
+                            <span className="topo-marca">Locus</span>
+                            <h1>{titulo}</h1>
+                        </div>
                         <div className="topo-icones">
                             <User size={20} />
                             <Bell size={20} />

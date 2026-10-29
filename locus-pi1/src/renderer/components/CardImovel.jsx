@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Badge from "./Badge";
 
-function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onRemover }) {
+function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onExcluir }) {
     const [erroImagem, setErroImagem] = useState(false);
     const corStatus = status === "Disponível" ? "verde" : "vermelho";
     const alugado = status === "ALUGADO" || status === "Alugado";
@@ -69,7 +69,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         padding-top: 16px;
                     }
 
-                    .card-btn-editar, .card-btn-remover, .card-btn-vistorias {
+                    .card-btn-editar, .card-btn-excluir, .card-btn-vistorias {
                         flex: 1;
                         padding: 8px;
                         border: none;
@@ -102,16 +102,16 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         background-color: #e0e0e0;
                     }
 
-                    .card-btn-remover {
+                    .card-btn-excluir {
                         background-color: #ffeeee;
                         color: #d32f2f;
                     }
 
-                    .card-btn-remover:hover {
+                    .card-btn-excluir:hover {
                         background-color: #ffdddd;
                     }
 
-                    .card-btn-remover:disabled {
+                    .card-btn-excluir:disabled {
                         background-color: #e0e0e0;
                         color: #888888;
                         cursor: not-allowed;
@@ -161,12 +161,12 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                             Vistorias
                         </Link>
                         <button 
-                            className="card-btn-remover"
-                            onClick={() => onRemover && onRemover(id)}
+                            className="card-btn-excluir"
+                            onClick={() => onExcluir && onExcluir(id)}
                             disabled={alugado}
-                            title="Remover imóvel"
+                            title="Excluir imóvel"
                         >
-                            Remover
+                            Excluir
                         </button>
                     </div>
                 </div>
