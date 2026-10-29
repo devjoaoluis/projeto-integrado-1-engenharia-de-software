@@ -96,33 +96,6 @@ export default function ForgotPassword() {
             align-items: center;
           }
 
-          .voltar-topo {
-            width: 100%;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: flex-start;
-          }
-
-          .link-voltar-topo {
-            background: none;
-            border: none;
-            color: #ffffff;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 0;
-            opacity: 0.9;
-            transition: opacity 0.2s;
-          }
-
-          .link-voltar-topo:hover {
-            opacity: 1;
-            text-decoration: underline;
-          }
-
           .bem-vindo {
             font-size: 26px;
             font-weight: bold;
@@ -219,59 +192,27 @@ export default function ForgotPassword() {
             color: #0f172a;
           }
 
-          .rodape-card {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          }
-
-          .link-trocar-email {
-            background: none;
-            border: none;
-            color: #64748b;
-            cursor: pointer;
-            font-size: 13px;
+          .botao-voltar-recuperacao {
+            display: block;
+            margin: 20px auto 0;
             padding: 0;
-            transition: color 0.2s;
-          }
-
-          .link-trocar-email:hover {
-            color: #0f172a;
-            text-decoration: underline;
-          }
-
-          .link-voltar-login {
-            background: none;
             border: none;
+            background: none;
             color: #1976d2;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            padding: 0;
-            text-decoration: none;
-          }
-
-          .link-voltar-login:hover {
             text-decoration: underline;
           }
+
+          .botao-voltar-recuperacao:hover {
+            color: #125aa3;
+          }
+
         `}
       </style>
 
       <div className="forgot-page">
         <div className="forgot-container">
-          <div className="voltar-topo">
-            <button
-              type="button"
-              className="link-voltar-topo"
-              onClick={() => navigate("/login")}
-            >
-              ← Voltar para o login
-            </button>
-          </div>
-
           <h1 className="bem-vindo">Locus Marismar</h1>
 
           <div className="card-forgot">
@@ -345,29 +286,13 @@ export default function ForgotPassword() {
               </form>
             )}
 
-            <div className="rodape-card" style={{ justifyContent: step === 2 ? "space-between" : "center" }}>
-              {step === 2 && (
-                <button
-                  type="button"
-                  className="link-trocar-email"
-                  onClick={() => {
-                    setStep(1);
-                    setErro("");
-                  }}
-                  disabled={loading}
-                >
-                  ← Alterar e-mail
-                </button>
-              )}
-
-              <button
-                type="button"
-                className="link-voltar-login"
-                onClick={() => navigate("/login")}
-              >
-                Ir para Login
-              </button>
-            </div>
+            <button
+              type="button"
+              className="botao-voltar-recuperacao"
+              onClick={() => navigate("/login")}
+            >
+              Voltar para o login
+            </button>
           </div>
         </div>
       </div>
