@@ -5,6 +5,7 @@ import Badge from "./Badge";
 function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onRemover }) {
     const [erroImagem, setErroImagem] = useState(false);
     const corStatus = status === "Disponível" ? "verde" : "vermelho";
+    const alugado = status === "ALUGADO" || status === "Alugado";
 
     const valorNumerico = Number(valor) || 0;
     const valorFormatado = valorNumerico.toLocaleString("pt-BR", {
@@ -68,7 +69,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         padding-top: 16px;
                     }
 
-                    .card-btn-editar, .card-btn-remover {
+                    .card-btn-editar, .card-btn-remover, .card-btn-vistorias {
                         flex: 1;
                         padding: 8px;
                         border: none;
@@ -76,6 +77,20 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         cursor: pointer;
                         font-weight: 500;
                         transition: background-color 0.2s;
+                        font-size: 13px;
+                        text-decoration: none;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .card-btn-vistorias {
+                        background-color: #f0fdf4;
+                        color: #166534;
+                    }
+
+                    .card-btn-vistorias:hover {
+                        background-color: #dcfce7;
                     }
 
                     .card-btn-editar {
@@ -94,6 +109,12 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
 
                     .card-btn-remover:hover {
                         background-color: #ffdddd;
+                    }
+
+                    .card-btn-remover:disabled {
+                        background-color: #e0e0e0;
+                        color: #888888;
+                        cursor: not-allowed;
                     }
                 `}
             </style>
@@ -132,9 +153,17 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         >
                             Editar
                         </button>
+                        <Link 
+                            to={`/vistorias?imovelId=${encodeURIComponent(id)}`}
+                            className="card-btn-vistorias"
+                            title="Ver ou registrar vistorias deste imóvel"
+                        >
+                            Vistorias
+                        </Link>
                         <button 
                             className="card-btn-remover"
                             onClick={() => onRemover && onRemover(id)}
+                            disabled={alugado}
                             title="Remover imóvel"
                         >
                             Remover

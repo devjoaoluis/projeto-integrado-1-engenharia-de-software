@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adaptPropertyOverview } from "./propertyOverview.mjs";
 import Badge from "./components/Badge";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 function VisaoGeralImovel() {
   const { id } = useParams();
@@ -10,13 +11,11 @@ function VisaoGeralImovel() {
   const [midiaAtiva, setMidiaAtiva] = useState(0);
   const [locatarios, setLocatarios] = useState([]);
   const [proprietarios, setProprietarios] = useState([]);
-  const [proprietarioId, setProprietarioId] = useState("");
-  const [salvandoProprietario, setSalvandoProprietario] = useState(false);
-  const [erroProprietario, setErroProprietario] = useState("");
   const [locacao, setLocacao] = useState({
     tenantId: "",
     monthlyRent: "",
     startDate: new Date().toISOString().slice(0, 10),
+    endDate: "",
     dueDay: "10",
   });
   const [salvandoLocacao, setSalvandoLocacao] = useState(false);
@@ -36,7 +35,6 @@ function VisaoGeralImovel() {
       })
     ));
     const modelo = adaptPropertyOverview(overview, tenantNames);
-    setProprietarioId(modelo.ownerId || "");
     setResult({ id, imovel: modelo, erro: "" });
     setMidiaAtiva(0);
   }
@@ -71,6 +69,7 @@ function VisaoGeralImovel() {
   if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
   const imovel = result.imovel;
   const contratoAssociado = imovel.contratos.find((contrato) => ["Vigente", "Agendado"].includes(contrato.status) && contrato.rentalId);
+  const historicoLocacoes = imovel.contratos.filter((contrato) => contrato.status !== "Agendado");
   const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
@@ -94,6 +93,7 @@ function VisaoGeralImovel() {
         tenantId: locacao.tenantId,
         monthlyRent: imovel.valor,
         startDate: new Date(`${locacao.startDate}T00:00:00`).getTime(),
+        endDate: locacao.endDate ? new Date(`${locacao.endDate}T00:00:00`).getTime() : null,
         dueDay: Number(locacao.dueDay),
       });
       await carregarOverview();
@@ -107,28 +107,13 @@ function VisaoGeralImovel() {
     }
   }
 
-  async function salvarProprietario(event) {
-    event.preventDefault();
-    setErroProprietario("");
-    setSalvandoProprietario(true);
-    try {
-      await window.api.properties.update(imovel.id, { ownerId: proprietarioId || null });
-      await carregarOverview();
-    } catch (error) {
-      console.error("Erro ao associar proprietário:", error);
-      setErroProprietario(error.message || "Não foi possível associar o proprietário.");
-    } finally {
-      setSalvandoProprietario(false);
-    }
-  }
-
   async function desassociarLocatario() {
     if (!contratoAssociado) return;
     setConfirmarDesassociacao(false);
     try {
       await window.api.rentals.cancel(contratoAssociado.rentalId);
       await carregarOverview();
-      setSucessoLocacao("Locatário desassociado com sucesso.");
+      setSucessoLocacao("Imóvel disponível para alugar.");
     } catch (error) {
       setErroLocacao(error.message || "Não foi possível desassociar o locatário.");
     }
@@ -287,6 +272,18 @@ function VisaoGeralImovel() {
           font-weight: 600;
         }
 
+        .botao-desassociar {
+          align-self: flex-start;
+          min-height: 40px;
+          padding: 0 14px;
+          border: none;
+          border-radius: 4px;
+          background: #1976d2;
+          color: white;
+          cursor: pointer;
+          font-weight: 600;
+        }
+
         .form-locacao-valor {
           display: flex;
           flex-direction: column;
@@ -352,13 +349,36 @@ function VisaoGeralImovel() {
           margin: 0;
         }
 
-        .proprietario-atual {
-          background: #eef8f1;
-          border: 1px solid #b7dfc1;
-          border-radius: 8px;
-          padding: 12px;
-          color: #245b32;
+        .historico-locacao {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          padding: 20px;
+        }
+
+        .historico-locacao h3 {
+          margin: 0 0 16px;
+          color: #1976d2;
+        }
+
+        .historico-locacao-lista {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
           margin: 0;
+          padding: 0;
+          list-style: none;
+        }
+
+        .historico-locacao-item {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+          padding: 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          color: #444;
+          font-size: 14px;
         }
 
         .associacao-locacao > p[role="alert"],
@@ -459,9 +479,7 @@ function VisaoGeralImovel() {
       `}</style>
 
       <div className="visao-geral-container">
-        <button className="voltar-btn" onClick={() => navigate("/imoveis")}>
-          ← Voltar para Imóveis
-        </button>
+        <BotaoVoltar destino="/imoveis" texto="Voltar para imóveis" />
 
 
         <div className="imovel-header-card">
@@ -470,6 +488,9 @@ function VisaoGeralImovel() {
             <h2 className="imovel-titulo">{imovel.titulo}</h2>
             <p className="imovel-endereco">{imovel.endereco}</p>
             <p className="imovel-descricao">{imovel.descricao || "Nenhuma descrição cadastrada."}</p>
+            <p className="imovel-descricao">
+              <strong>Proprietário:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
+            </p>
             <p className="imovel-detalhes">
               <span><strong>Quartos:</strong> {imovel.quartos ?? "Não informado"}</span>
               <span><strong>Tipo:</strong> {imovel.tipo || "Não informado"}</span>
@@ -520,20 +541,35 @@ function VisaoGeralImovel() {
                   ›
                 </button>
               </div>
-              <p className="galeria-legenda">
-                {midiaAtiva + 1} de {imovel.midias.length}
-                {imovel.midias[midiaAtiva].nome ? ` — ${imovel.midias[midiaAtiva].nome}` : ""}
-              </p>
+              <p className="galeria-legenda">{midiaAtiva + 1} de {imovel.midias.length}</p>
             </>
           )}
         </section>
 
         <section className="associacao-locacao" aria-label="Associar locatário">
-          <h3>Associar locatário</h3>
+          <h3>Locatário</h3>
           {contratoAssociado && (
-            <p className="locatario-atual">
-              <strong>Locatário associado:</strong> {contratoAssociado.locatario}
-            </p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <p style={{ margin: 0 }}><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+              {contratoAssociado.tenantId && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/locatarios/${contratoAssociado.tenantId}`)}
+                  style={{
+                    backgroundColor: "#2563eb",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  Ver Dossiê do Locatário
+                </button>
+              )}
+            </div>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
             <label>
@@ -545,13 +581,13 @@ function VisaoGeralImovel() {
                 ))}
               </select>
             </label>
-            <div className="form-locacao-valor">
-              <strong>Valor do aluguel</strong>
-              <span>{valorFormatado}</span>
-            </div>
             <label>
               Início
               <input name="startDate" type="date" value={locacao.startDate} onChange={atualizarLocacao} required />
+            </label>
+            <label>
+              Fim do contrato
+              <input name="endDate" type="date" value={locacao.endDate} onChange={atualizarLocacao} />
             </label>
             <label>
               Dia de vencimento
@@ -565,34 +601,61 @@ function VisaoGeralImovel() {
           {erroLocacao && <p role="alert">{erroLocacao}</p>}
           {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
           {contratoAssociado && (
-            <button type="button" className="voltar-btn" onClick={() => setConfirmarDesassociacao(true)}>
-              Desassociar locatário
-            </button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
+              <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
+                Desassociar locatário
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                style={{
+                  backgroundColor: "#16a34a",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Vistoria de Entrada (RN03)
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                style={{
+                  backgroundColor: "#ea580c",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Vistoria de Saída (RN03)
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                style={{
+                  backgroundColor: "#1877f2",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Gerar Contrato em PDF
+              </button>
+            </div>
           )}
         </section>
-
-        <section className="associacao-locacao" aria-label="Associar proprietário">
-          <h3>Associar proprietário</h3>
-          <p className="proprietario-atual">
-            <strong>Proprietário atual:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
-          </p>
-          <form className="form-locacao" onSubmit={salvarProprietario}>
-            <label>
-              Proprietário cadastrado
-              <select value={proprietarioId} onChange={(event) => setProprietarioId(event.target.value)}>
-                <option value="">Nenhum proprietário</option>
-                {proprietarios.map((proprietario) => (
-                  <option key={proprietario.id} value={proprietario.id}>{proprietario.name}</option>
-                ))}
-              </select>
-            </label>
-            <button type="submit" disabled={salvandoProprietario}>
-              {salvandoProprietario ? "Salvando..." : "Salvar proprietário"}
-            </button>
-          </form>
-          {erroProprietario && <p role="alert">{erroProprietario}</p>}
-        </section>
-
 
         <div className="abas-container">
           <button
@@ -613,6 +676,12 @@ function VisaoGeralImovel() {
           >
             Vistorias & Manutenções ({imovel.vistorias.length})
           </button>
+          <button
+            className={`aba-btn ${abaAtiva === "historico" ? "ativa" : ""}`}
+            onClick={() => setAbaAtiva("historico")}
+          >
+            Histórico ({historicoLocacoes.length})
+          </button>
 
         </div>
         {confirmarDesassociacao && (
@@ -620,9 +689,42 @@ function VisaoGeralImovel() {
             <div className="confirmacao-exclusao-conteudo">
               <h2>Desassociar locatário?</h2>
               <p>O imóvel ficará disponível novamente para uma nova locação.</p>
+              <div
+                style={{
+                  backgroundColor: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                  padding: "10px 14px",
+                  borderRadius: "6px",
+                  margin: "12px 0",
+                  fontSize: "13px",
+                  color: "#9a3412",
+                  textAlign: "left",
+                }}
+              >
+                <strong>Regra de Negócio RN03:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
+              </div>
               <div className="confirmacao-exclusao-acoes">
-                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>Cancelar</button>
-                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>Desassociar</button>
+                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    backgroundColor: "#ea580c",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "8px 14px",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                >
+                  Registrar Vistoria de Saída
+                </button>
+                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>
+                  Confirmar Desassociação
+                </button>
               </div>
             </div>
           </div>
@@ -630,12 +732,34 @@ function VisaoGeralImovel() {
 
 
         <div className="aba-conteudo">
+          {abaAtiva === "contratos" && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+              <span style={{ fontSize: "14px", color: "#64748b" }}>
+                Histórico de locações e contratos do imóvel
+              </span>
+              <button
+                type="button"
+                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                style={{
+                  backgroundColor: "#1877f2",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "6px 14px",
+                  fontWeight: "bold",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                + Gerar Contrato em PDF
+              </button>
+            </div>
+          )}
           {abaAtiva === "contratos" && imovel.contratos.length === 0 && <p>Nenhum registro encontrado.</p>}
           {abaAtiva === "contratos" && imovel.contratos.length > 0 && (
             <table className="tabela-custom">
               <thead>
                 <tr>
-                  <th>Código</th>
                   <th>Locatário</th>
                   <th>Período</th>
                   <th>Valor</th>
@@ -645,7 +769,6 @@ function VisaoGeralImovel() {
               <tbody>
                 {imovel.contratos.map((item) => (
                   <tr key={item.id}>
-                    <td><strong>{item.codigo}</strong></td>
                     <td>{item.locatario}</td>
                     <td>{item.inicio} até {item.fim}</td>
                     <td>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
@@ -680,28 +803,136 @@ function VisaoGeralImovel() {
             </table>
           )}
 
-          {abaAtiva === "vistorias" && imovel.vistorias.length === 0 && <p>Nenhum registro encontrado.</p>}
-          {abaAtiva === "vistorias" && imovel.vistorias.length > 0 && (
-            <table className="tabela-custom">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Situação / Laudo</th>
-                  <th>Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imovel.vistorias.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.data}</td>
-                    <td>{item.tipo}</td>
-                    <td>{item.responsavel}</td>
-                    <td>{item.observacao}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {abaAtiva === "vistorias" && (
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                <span style={{ fontSize: "14px", color: "#64748b" }}>
+                  Vistorias de entrada e saída com fotos e vídeos (RN03)
+                </span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "8px 14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                    }}
+                  >
+                    + Vistoria de Entrada
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                    style={{
+                      backgroundColor: "#ea580c",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "8px 14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                    }}
+                  >
+                    + Vistoria de Saída
+                  </button>
+                </div>
+              </div>
+
+              {imovel.vistorias.length === 0 ? (
+                <p>Nenhuma vistoria ou manutenção registrada para este imóvel.</p>
+              ) : (
+                <table className="tabela-custom">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>Situação / Laudo</th>
+                      <th>Observação</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {imovel.vistorias.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.data}</td>
+                        <td>
+                          {item.tipo === "Vistoria" && item.tipoVistoria ? (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "2px 8px",
+                                borderRadius: "10px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                backgroundColor: item.tipoVistoria === "EXIT" ? "#ffedd5" : "#dcfce7",
+                                color: item.tipoVistoria === "EXIT" ? "#c2410c" : "#15803d",
+                              }}
+                            >
+                              {item.tipoVistoria === "EXIT" ? "Vistoria de Saída" : "Vistoria de Entrada"}
+                            </span>
+                          ) : (
+                            item.tipo
+                          )}
+                        </td>
+                        <td>{item.responsavel}</td>
+                        <td>{item.observacao}</td>
+                        <td>
+                          {item.tipo === "Vistoria" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const qVistoria = item.inspectionId ? `&vistoriaId=${item.inspectionId}` : "";
+                                navigate(`/vistorias?imovelId=${imovel.id}&aba=consultar${qVistoria}`);
+                              }}
+                              style={{
+                                backgroundColor: "#f1f5f9",
+                                color: "#1877f2",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "4px",
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Ver Mídias
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === "historico" && (
+            <>
+              <h3>Histórico de ligamento e desligamento</h3>
+              {historicoLocacoes.length === 0 ? (
+                <p>Nenhum ligamento ou desligamento registrado.</p>
+              ) : (
+                <ul className="historico-locacao-lista">
+                  {historicoLocacoes.map((contrato) => (
+                    <li className="historico-locacao-item" key={`historico-${contrato.id}`}>
+                      <span><strong>Locatário:</strong> {contrato.locatario}</span>
+                      <span><strong>Ligamento:</strong> {contrato.inicio}</span>
+                      <span><strong>Desligamento:</strong> {contrato.fim}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
 
 

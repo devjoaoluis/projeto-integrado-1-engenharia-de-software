@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { mensagemErro } from "./utils/mensagemErro";
+import BotaoVoltar from "./components/BotaoVoltar";
 
-const vazio = { name: "", cpfCnpj: "", phone: "", email: "", type: "TENANT", guarantorId: "" };
+const vazio = { name: "", cpfCnpj: "", phone: "", email: "", guarantorId: "" };
 
 function Contatos() {
+  const navigate = useNavigate();
   const [aba, setAba] = useState("clients");
   const [registros, setRegistros] = useState([]);
   const [fiadores, setFiadores] = useState([]);
@@ -13,6 +16,7 @@ function Contatos() {
   const [erro, setErro] = useState("");
   const [contatoParaRemover, setContatoParaRemover] = useState(null);
   const [removendo, setRemovendo] = useState(false);
+  const [busca, setBusca] = useState("");
 
   const api = aba === "clients" ? window.api.clients : window.api[aba];
   const rotulo = { clients: "Clientes / Locatários", owners: "Proprietários", guarantors: "Fiadores" }[aba];
@@ -47,7 +51,6 @@ function Contatos() {
       cpfCnpj: contato.cpfCnpj || "",
       phone: contato.phone || "",
       email: contato.email || "",
-      type: contato.type || "TENANT",
       guarantorId: contato.guarantorId || "",
     });
   }
@@ -62,13 +65,13 @@ function Contatos() {
     try {
       setErro("");
       const dados = {
-        name: formulario.name,
-        cpfCnpj: formulario.cpfCnpj,
-        phone: formulario.phone,
+        name: formulario.name.trim(),
+        cpfCnpj: formulario.cpfCnpj || null,
+        phone: formulario.phone || null,
         email: formulario.email || null,
       };
       if (aba === "clients") {
-        dados.type = formulario.type;
+        dados.type = "TENANT";
         dados.guarantorId = formulario.guarantorId || null;
       }
       if (editando) await api.update({ id: editando, ...dados });
@@ -103,6 +106,7 @@ function Contatos() {
 
   return (
     <>
+      <BotaoVoltar destino="/home" texto="Voltar" />
       <style>{`
         .contatos { display: flex; flex-direction: column; gap: 20px; }
         .contatos-abas { display: flex; gap: 8px; border-bottom: 2px solid #e5e7eb; }
@@ -113,6 +117,9 @@ function Contatos() {
         .contatos-form label { display: flex; flex-direction: column; gap: 6px; color: #555; font-size: 12px; font-weight: 600; }
         .contatos-form input, .contatos-form select { min-height: 40px; padding: 0 10px; border: 1px solid #c8cdd2; border-radius: 4px; }
         .contatos-form .campo-largo { grid-column: span 2; }
+        .contatos-filtro { margin-bottom: 16px; }
+        .contatos-filtro label { display: flex; flex-direction: column; gap: 6px; color: #555; font-size: 12px; font-weight: 600; }
+        .contatos-filtro input { width: 100%; box-sizing: border-box; min-height: 38px; padding: 0 10px; border: 1px solid #c8cdd2; border-radius: 4px; }
         .contatos-acoes { display: flex; gap: 8px; }
         .contatos-acoes button, .contato-acao { min-height: 38px; padding: 0 14px; border: none; border-radius: 4px; cursor: pointer; background: #1976d2; color: white; font-weight: 600; }
         .contatos-acoes .cancelar, .contato-acao.excluir { background: #e5e7eb; color: #333; }
@@ -146,17 +153,11 @@ function Contatos() {
           <h2>{editando ? `Editar ${rotulo.slice(0, -1)}` : `Cadastrar ${rotulo.slice(0, -1)}`}</h2>
           <form className="contatos-form" onSubmit={salvar}>
             <label className="campo-largo">Nome<input name="name" value={formulario.name} onChange={mudar} required /></label>
-            <label>CPF/CNPJ<input name="cpfCnpj" value={formulario.cpfCnpj} onChange={mudar} required /></label>
-            <label>Telefone<input name="phone" value={formulario.phone} onChange={mudar} required /></label>
+            <label>CPF/CNPJ<input name="cpfCnpj" value={formulario.cpfCnpj} onChange={mudar} /></label>
+            <label>Telefone<input name="phone" value={formulario.phone} onChange={mudar} /></label>
             <label>E-mail<input name="email" type="email" value={formulario.email} onChange={mudar} /></label>
             {aba === "clients" && (
               <>
-                <label>Perfil
-                  <select name="type" value={formulario.type} onChange={mudar}>
-                    <option value="TENANT">Locatário</option>
-                    <option value="INTERESTED">Interessado</option>
-                  </select>
-                </label>
                 <label>Fiador
                   <select name="guarantorId" value={formulario.guarantorId} onChange={mudar}>
                     <option value="">Sem fiador</option>
@@ -174,15 +175,41 @@ function Contatos() {
         </section>
         <section className="contatos-card">
           <h2>{rotulo} cadastrados</h2>
-          {registros.length === 0 ? <p>Nenhum contato cadastrado.</p> : (
+          <form className="contatos-filtro" onSubmit={(event) => event.preventDefault()}>
+            <label>Pesquisar por nome, e-mail ou telefone
+              <input value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Digite para pesquisar" />
+            </label>
+          </form>
+          {registros.filter((contato) => {
+            const termo = busca.trim().toLocaleLowerCase();
+            return !termo || [contato.name, contato.email, contato.phone].some((valor) => String(valor || "").toLocaleLowerCase().includes(termo));
+          }).length === 0 ? <p>Nenhum contato encontrado.</p> : (
             <table className="contatos-tabela">
-              <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th>{aba === "clients" && <><th>Perfil</th><th>Fiador</th></>}<th>Ações</th></tr></thead>
+              <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>E-mail</th>{aba === "clients" && <th>Fiador</th>}<th>Ações</th></tr></thead>
               <tbody>
-                {registros.map((contato) => (
+                {registros.filter((contato) => {
+                  const termo = busca.trim().toLocaleLowerCase();
+                  return !termo || [contato.name, contato.email, contato.phone].some((valor) => String(valor || "").toLocaleLowerCase().includes(termo));
+                }).map((contato) => (
                   <tr key={contato.id}>
                     <td>{contato.name}</td><td>{contato.cpfCnpj}</td><td>{contato.phone}</td><td>{contato.email || "—"}</td>
-                    {aba === "clients" && <><td>{contato.type === "TENANT" ? "Locatário" : "Interessado"}</td><td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td></>}
+                    {aba === "clients" && <td>{contato.guarantorId ? (fiadorPorId[contato.guarantorId] || "Fiador não encontrado") : "Sem fiador"}</td>}
                     <td className="contato-acoes">
+                      {aba === "clients" && (
+                        <button
+                          type="button"
+                          className="contato-acao"
+                          onClick={() => navigate(`/locatarios/${contato.id}`)}
+                          style={{
+                            backgroundColor: "#e0f2fe",
+                            color: "#0369a1",
+                            borderColor: "#bae6fd",
+                            fontWeight: "600",
+                          }}
+                        >
+                          Dossiê
+                        </button>
+                      )}
                       <button className="contato-acao" onClick={() => editar(contato)}>Editar</button>
                       <button className="contato-acao excluir" disabled={removendo} onClick={() => remover(contato.id)}>Excluir</button>
                     </td>

@@ -1,3 +1,9 @@
+import { registerContractTemplatesIpc } from "./ipc/contract-templates.ipc";
+import { registerContractsIpc } from "./ipc/contracts.ipc";
+import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
+import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
+import { registerInspectionsIpc } from "./ipc/inspections.ipc";
+import { registerTenantDocumentsIpc } from "./ipc/tenant-documents.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -52,6 +58,12 @@ app.on('ready', async () => {
   registerContactsIpc();
   registerRentalsIpc();
   registerPropertyOverviewIpc();
+  registerContractTemplatesIpc();
+  registerContractsIpc();
+  registerInspectionsIpc();
+  registerInspectionEntryIpc();
+  registerInspectionExitIpc();
+  registerTenantDocumentsIpc();
   createWindow();
 });
 

@@ -11,11 +11,17 @@ const titulos = {
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
+    "/locatarios": "Locatários",
 };
 
 function AppLayout() {
     const { pathname } = useLocation();
-    const titulo = titulos[pathname] ?? (pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" : pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" : "Locus");
+    const titulo = titulos[pathname] ?? (
+        pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" :
+        pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
+        pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
+        "Locus"
+    );
 
     return (
         <>
@@ -56,6 +62,21 @@ function AppLayout() {
                         flex: 1;
                         background-color: #ffffff;
                         padding: 24px;
+                    }
+
+                    .botao-voltar-padrao {
+                        align-self: flex-start;
+                        margin-bottom: 16px;
+                        padding: 8px 0;
+                        border: none;
+                        background: transparent;
+                        color: #1976d2;
+                        font-weight: 700;
+                        cursor: pointer;
+                    }
+
+                    .botao-voltar-padrao:hover {
+                        text-decoration: underline;
                     }
                 `}
             </style>

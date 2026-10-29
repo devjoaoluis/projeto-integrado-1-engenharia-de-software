@@ -158,7 +158,6 @@ function VisaoGeralImovel() {
       `}</style>
 
       <div className="visao-geral-container">
-        <p>Dados de demonstração.</p>
         <button className="voltar-btn" onClick={() => navigate("/imoveis")}>
           ← Voltar para Imóveis
         </button>

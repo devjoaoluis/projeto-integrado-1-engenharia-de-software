@@ -4,6 +4,53 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 contextBridge.exposeInMainWorld("api", {
+  contractTemplates: {
+    create: (data: import("../main/application/use-cases/CreateContractTemplate").CreateContractTemplateDTO) =>
+      ipcRenderer.invoke("contract-templates:create", data),
+    get: (id: string) => ipcRenderer.invoke("contract-templates:get", id),
+    list: () => ipcRenderer.invoke("contract-templates:list"),
+  },
+
+  contracts: {
+    assembleData: (params: import("../main/application/use-cases/AssembleContractData").AssembleContractDataInput) =>
+      ipcRenderer.invoke("contracts:assemble-data", params),
+    fillTemplate: (data: import("../main/application/use-cases/FillContractTemplate").FillContractTemplateInput) =>
+      ipcRenderer.invoke("contracts:fill-template", data),
+    generatePdf: (params: import("../main/application/use-cases/GenerateContractPdf").GenerateContractPdfInput) =>
+      ipcRenderer.invoke("contracts:generate-pdf", params),
+    exportPdf: (params: import("../main/ipc/contracts.ipc").ExportContractPdfParams) =>
+      ipcRenderer.invoke("contracts:export-pdf", params),
+    getDefaultTemplate: () =>
+      ipcRenderer.invoke("contracts:get-default-template"),
+  },
+
+  inspections: {
+    recordEntry: (data: import("../main/application/use-cases/RecordEntryInspection").RecordEntryInspectionDTO) =>
+      ipcRenderer.invoke("inspections:record-entry", data),
+    recordExit: (data: import("../main/application/use-cases/RecordExitInspection").RecordExitInspectionDTO) =>
+      ipcRenderer.invoke("inspections:record-exit", data),
+    get: (id: string) => ipcRenderer.invoke("inspections:get", id),
+    list: (data: import("../main/application/use-cases/ListInspections").ListInspectionsDTO) =>
+      ipcRenderer.invoke("inspections:list", data),
+  },
+
+  documentos: {
+    upload: (
+      data: import("../main/application/use-cases/tenant-documents/UploadTenantDocument").UploadTenantDocumentDTO
+    ) => ipcRenderer.invoke("documentos:upload", data),
+    listar: (data: { locatarioId: string }) =>
+      ipcRenderer.invoke("documentos:listar", data),
+    obter: (data: { id: string }) =>
+      ipcRenderer.invoke("documentos:obter", data),
+    baixar: (data: { id: string }) =>
+      ipcRenderer.invoke("documentos:baixar", data),
+    atualizarCategoria: (data: {
+      id: string;
+      categoria: import("../main/domain/entities/TenantDocument").DocumentCategory;
+    }) => ipcRenderer.invoke("documentos:atualizar-categoria", data),
+  },
+
+
   getPathForFile: (file: File) => webUtils.getPathForFile(file),
 
   auth: {

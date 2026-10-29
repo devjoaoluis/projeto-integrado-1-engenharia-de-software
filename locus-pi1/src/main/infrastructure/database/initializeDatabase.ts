@@ -1,5 +1,8 @@
+import { contractTemplateTables } from "./contractTemplateTables";
+import { initializeInspectionModule } from "./inspectionModuleTables";
 import { initializeContacts } from "./initializeContacts";
 import { propertyHistoryTables } from "./propertyHistoryTables";
+import { tenantDocumentTables } from "./tenantDocumentTables";
 import { Client } from "@libsql/client";
 
 export async function initializeDatabase(client: Client): Promise<void> {
@@ -34,8 +37,8 @@ export async function initializeDatabase(client: Client): Promise<void> {
   CREATE TABLE IF NOT EXISTS clients (
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
-    cpf_cnpj TEXT NOT NULL UNIQUE,
-    phone TEXT NOT NULL,
+    cpf_cnpj TEXT UNIQUE,
+    phone TEXT,
     email TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
@@ -91,6 +94,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   }
   await client.executeMultiple(propertyHistoryTables);
   await initializeContacts(client);
+  await client.executeMultiple(contractTemplateTables);
+  await initializeInspectionModule(client);
+  await client.executeMultiple(tenantDocumentTables);
+
 
   const tableInfo = await client.execute("PRAGMA table_info(properties)");
   const columns = tableInfo.rows.map((row) => row.name);

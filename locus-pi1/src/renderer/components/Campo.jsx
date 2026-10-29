@@ -1,20 +1,20 @@
-function Campo({ label, opcoes, multilinha = false, ...props }) {
+function Campo({ label, opcoes, multilinha = false, required = false, placeholder, ...props }) {
+    const textoPlaceholder = placeholder || (required ? "Obrigatório" : "Opcional");
+
     return (
         <>
             <style>
                 {`
                     .campo-form {
-                        position: relative;
+                        width: 100%;
                     }
 
                     .campo-form-label {
-                        position: absolute;
-                        top: -8px;
-                        left: 12px;
-                        padding: 0 4px;
-                        background-color: white;
-                        font-size: 12px;
-                        color: #666666;
+                        display: block;
+                        margin: 0 0 6px;
+                        color: #555;
+                        font-size: 13px;
+                        font-weight: 600;
                     }
 
                     .campo-form-controle {
@@ -37,28 +37,49 @@ function Campo({ label, opcoes, multilinha = false, ...props }) {
                         border: 2px solid #1976d2;
                     }
 
-                    .campo-form:focus-within .campo-form-label {
-                        color: #1976d2;
-                    }
                 `}
             </style>
 
             <div className="campo-form">
-                <label className="campo-form-label">{label}</label>
-
+                <label className="campo-form-label">
+                    {label}{required ? " *" : ""}
+                </label>
                 {opcoes ? (
-                    <select className="campo-form-controle" {...props}>
-                        <option value=""></option>
+                    <select
+                        className="campo-form-controle"
+                        required={required}
+                        aria-label={label}
+                        {...props}
+                    >
+                        <option value="" disabled={required}>
+                            {textoPlaceholder}
+                        </option>
                         {opcoes.map((opcao) => (
-                            <option key={opcao} value={opcao}>
-                                {opcao}
+                            <option
+                                key={typeof opcao === "string" ? opcao : opcao.value}
+                                value={typeof opcao === "string" ? opcao : opcao.value}
+                            >
+                                {typeof opcao === "string" ? opcao : opcao.label}
                             </option>
                         ))}
                     </select>
                 ) : multilinha ? (
-                    <textarea className="campo-form-controle" rows={1} {...props} />
+                    <textarea
+                        className="campo-form-controle"
+                        rows={1}
+                        required={required}
+                        aria-label={label}
+                        placeholder={textoPlaceholder}
+                        {...props}
+                    />
                 ) : (
-                    <input className="campo-form-controle" {...props} />
+                    <input
+                        className="campo-form-controle"
+                        required={required}
+                        aria-label={label}
+                        placeholder={textoPlaceholder}
+                        {...props}
+                    />
                 )}
             </div>
         </>
