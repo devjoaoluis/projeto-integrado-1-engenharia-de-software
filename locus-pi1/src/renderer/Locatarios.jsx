@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 const POR_PAGINA = 5;
 const AZUL = "#2563eb";
-const COLUNAS = "2fr 1.5fr 1fr 1fr 90px 40px";
+const COLUNAS = "2fr 1.5fr 1fr 1fr 90px 220px";
 
 const formVazio = {
   nome: "",
@@ -102,6 +103,7 @@ export default function Locatarios() {
   const [pagina, setPagina] = useState(1);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(formVazio);
+  const [editando, setEditando] = useState(null);
 
   // Carregar locatários da base de dados ao abrir o componente
   useEffect(() => {
@@ -196,7 +198,9 @@ export default function Locatarios() {
         status: form.status || "Em dia"
       };
 
-      const respostaServidor = await window.api.clients.create(dadosParaEnviar);
+      const respostaServidor = editando
+        ? await window.api.clients.update({ id: editando, ...dadosParaEnviar })
+        : await window.api.clients.create(dadosParaEnviar);
 
       const novoLocatario = {
         ...respostaServidor,
@@ -207,13 +211,34 @@ export default function Locatarios() {
         status: respostaServidor.status || form.status || "Em dia"
       };
 
-      setLocatarios((atual) => [novoLocatario, ...atual]);
+      setLocatarios((atual) => editando
+        ? atual.map((locatario) => locatario.id === editando ? novoLocatario : locatario)
+        : [novoLocatario, ...atual]);
       setForm(formVazio);
+      setEditando(null);
       setMostrarForm(false);
       setPagina(1);
     } catch (err) {
       console.error("Erro ao salvar locatário:", err);
       alert("Erro ao salvar o locatário na base de dados.");
+    }
+
+    function editar(locatario) {
+      setEditando(locatario.id);
+      setForm({
+        nome: locatario.nome || locatario.name || "",
+        cpfCnpj: locatario.cpf || locatario.cpfCnpj || "",
+        telefone: locatario.telefone || locatario.phone || "",
+        email: locatario.email || "",
+        status: locatario.status || "Em dia",
+      });
+      setMostrarForm(true);
+    }
+
+    function cancelarEdicao() {
+      setEditando(null);
+      setForm(formVazio);
+      setMostrarForm(false);
     }
   }
 
@@ -235,29 +260,30 @@ export default function Locatarios() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+      <BotaoVoltar destino="/home" texto="Voltar" />
       {/* Cabeçalho */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1d2939" }}>Locatários</h1>
         <button
-          onClick={() => setMostrarForm(!mostrarForm)}
+          className="ui-button"
+          onClick={() => {
+            if (mostrarForm) cancelarEdicao();
+            else setMostrarForm(true);
+          }}
           style={{
-            backgroundColor: "#2563eb",
-            color: "#fff",
-            padding: "10px 16px",
-            borderRadius: "6px",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "600"
+            width: "200px"
           }}
         >
-          {mostrarForm ? "Fechar formulário" : "Novo locatário"}
+          {mostrarForm ? "Cancelar" : "Novo locatário"}
         </button>
       </div>
 
       {/* Formulário de Cadastro */}
       {mostrarForm && (
         <form onSubmit={salvar} style={{ background: "#f8fafc", padding: "20px", borderRadius: "8px", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "18px", marginBottom: "16px", color: "#334155" }}>Cadastrar novo locatário</h2>
+          <h2 style={{ fontSize: "18px", marginBottom: "16px", color: "#334155" }}>
+            {editando ? "Editar locatário" : "Cadastrar novo locatário"}
+          </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
             <div>
               <label className="ui-label ui-label-required">Nome completo</label>
@@ -316,10 +342,10 @@ export default function Locatarios() {
             </div>
           </div>
           <button
+            className="ui-button"
             type="submit"
-            style={{ backgroundColor: "#16a34a", color: "#fff", padding: "10px 16px", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: "600" }}
           >
-            Salvar locatário
+            {editando ? "Salvar" : "Cadastrar"}
           </button>
         </form>
       )}
@@ -367,7 +393,7 @@ export default function Locatarios() {
             <span>Telefone</span>
             <span>Status</span>
             <span>Dossiê</span>
-            <span />
+            <span>Ações</span>
           </div>
 
           {visiveis.length === 0 ? (
@@ -427,16 +453,44 @@ export default function Locatarios() {
                       Dossiê
                     </button>
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      excluir(l.id);
-                    }}
-                    aria-label={`Excluir ${l.nome}`}
-                    style={{ background: "none", border: "none", cursor: "pointer", color: "#98a2b3", padding: "4px" }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <span style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      className="ui-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        editar(l);
+                      }}
+                      style={{ minHeight: "32px", padding: "0 12px", fontSize: "12px" }}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        excluir(l.id);
+                      }}
+                      aria-label={`Excluir ${l.nome}`}
+                      style={{
+                        minHeight: "32px",
+                        padding: "0 10px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: "#e5e7eb",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        color: "#b42318",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      Excluir
+                    </button>
+                  </span>
                 </div>
               ))}
             </div>

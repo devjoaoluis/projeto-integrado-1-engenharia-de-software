@@ -53,12 +53,27 @@ textarea {
 }
 
 .ui-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 4px;
+  align-items: baseline;
   color: #475569;
   font-size: 13px;
   font-weight: 600;
+}
+
+.ui-label input,
+.ui-label select,
+.ui-label textarea {
+  grid-column: 1 / -1;
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.ui-label::after {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .ui-label-required::after {
