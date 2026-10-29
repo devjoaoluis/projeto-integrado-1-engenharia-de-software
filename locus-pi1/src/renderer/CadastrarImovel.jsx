@@ -346,18 +346,39 @@ function CadastrarImovel() {
                             onChange={mudar}
                         />
 
-                        <Campo label="Bairro" name="bairro" value={dados.bairro} onChange={mudar} required />
-                        <Campo
-                            label="Proprietário"
-                            name="ownerId"
-                            opcoes={proprietarios.map((proprietario) => ({
-                                value: proprietario.id,
-                                label: `${proprietario.name} - ${proprietario.cpfCnpj}`,
-                            }))}
-                            value={dados.ownerId}
-                            onChange={mudar}
-                            required
-                        />
+                        <div>
+                            <Campo
+                                label="Proprietário"
+                                name="ownerId"
+                                opcoes={proprietarios.map((proprietario) => ({
+                                    value: proprietario.id,
+                                    label: `${proprietario.name} - ${proprietario.cpfCnpj}`,
+                                }))}
+                                value={dados.ownerId}
+                                onChange={mudar}
+                                required
+                            />
+                            {proprietarios.length === 0 && (
+                                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#b45309" }}>
+                                    Nenhum proprietário cadastrado.{" "}
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate("/contatos")}
+                                        style={{
+                                            background: "none",
+                                            border: "none",
+                                            color: "#2563eb",
+                                            textDecoration: "underline",
+                                            cursor: "pointer",
+                                            padding: 0,
+                                            fontWeight: "600",
+                                        }}
+                                    >
+                                        Cadastrar em Contatos
+                                    </button>
+                                </p>
+                            )}
+                        </div>
                         <Campo
                             label="Tipo do imóvel"
                             name="tipo"

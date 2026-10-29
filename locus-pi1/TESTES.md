@@ -127,3 +127,40 @@ console.log("Mídia adicionada:", novaMidia);
 const midias = await window.api.propertyMedia.list("ID_DO_IMOVEL_AQUI");
 console.table(midias);
 ```
+
+---
+
+## 👥 4. Testando Proprietários e Contatos
+
+Os proprietários são gerenciados pelo módulo de contatos.
+
+**Teste 1: Cadastrar um Proprietário**
+```javascript
+const novoProprietario = await window.api.owners.create({
+  name: "Carlos Ferreira (Proprietário)",
+  cpfCnpj: "12345678901", // CPF válido de 11 dígitos ou CNPJ de 14 dígitos
+  phone: "(11) 98765-4321",
+  email: "carlos.proprietario@email.com"
+});
+
+console.log("Proprietário cadastrado:", novoProprietario);
+// Esse proprietário agora aparecerá automaticamente na lista suspensa do "Cadastrar Imóvel"!
+```
+
+**Teste 2: Listar Proprietários**
+```javascript
+const proprietarios = await window.api.owners.list();
+console.table(proprietarios);
+```
+
+---
+
+## 📁 5. Testando Dossiê de Documentos do Locatário (HU-13)
+
+**Teste 1: Listar documentos de um locatário**
+```javascript
+// Substitua pelo ID de um cliente/locatário existente
+const docs = await window.api.documentos.listar({ locatarioId: "ID_DO_LOCATARIO" });
+console.table(docs);
+```
+
