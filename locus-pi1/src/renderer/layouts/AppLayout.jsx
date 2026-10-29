@@ -11,11 +11,17 @@ const titulos = {
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
+    "/locatarios": "Locatários",
 };
 
 function AppLayout() {
     const { pathname } = useLocation();
-    const titulo = titulos[pathname] ?? (pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" : pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" : "Locus");
+    const titulo = titulos[pathname] ?? (
+        pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" :
+        pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
+        pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
+        "Locus"
+    );
 
     return (
         <>

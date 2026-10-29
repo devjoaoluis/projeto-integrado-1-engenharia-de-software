@@ -69,7 +69,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         padding-top: 16px;
                     }
 
-                    .card-btn-editar, .card-btn-remover {
+                    .card-btn-editar, .card-btn-remover, .card-btn-vistorias {
                         flex: 1;
                         padding: 8px;
                         border: none;
@@ -77,6 +77,20 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         cursor: pointer;
                         font-weight: 500;
                         transition: background-color 0.2s;
+                        font-size: 13px;
+                        text-decoration: none;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .card-btn-vistorias {
+                        background-color: #f0fdf4;
+                        color: #166534;
+                    }
+
+                    .card-btn-vistorias:hover {
+                        background-color: #dcfce7;
                     }
 
                     .card-btn-editar {
@@ -139,6 +153,13 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         >
                             Editar
                         </button>
+                        <Link 
+                            to={`/vistorias?imovelId=${encodeURIComponent(id)}`}
+                            className="card-btn-vistorias"
+                            title="Ver ou registrar vistorias deste imóvel"
+                        >
+                            Vistorias
+                        </Link>
                         <button 
                             className="card-btn-remover"
                             onClick={() => onRemover && onRemover(id)}

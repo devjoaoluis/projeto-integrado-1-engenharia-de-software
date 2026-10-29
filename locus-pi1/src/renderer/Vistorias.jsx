@@ -18,6 +18,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
+import { adaptPropertyOverview, mediaFileUrl } from "./propertyOverview.mjs";
 
 export default function Vistorias() {
   const [searchParams] = useSearchParams();
@@ -25,15 +26,22 @@ export default function Vistorias() {
 
   const imovelIdParam = searchParams.get("imovelId");
   const tipoParam = searchParams.get("tipo"); // "ENTRY" | "EXIT"
+  const abaParam = searchParams.get("aba"); // "registrar" | "consultar"
+  const vistoriaIdParam = searchParams.get("vistoriaId");
+  const contratoIdParam = searchParams.get("contratoId");
 
-  const [abaAtiva, setAbaAtiva] = useState("registrar"); // "registrar" | "consultar"
+  const [abaAtiva, setAbaAtiva] = useState(
+    abaParam === "consultar" || (!tipoParam && imovelIdParam && abaParam !== "registrar")
+      ? "consultar"
+      : "registrar"
+  );
   const [imoveis, setImoveis] = useState([]);
   const [carregandoImoveis, setCarregandoImoveis] = useState(true);
 
   // Form states
   const [imovelId, setImovelId] = useState(imovelIdParam || "");
   const [contratos, setContratos] = useState([]);
-  const [contratoId, setContratoId] = useState("");
+  const [contratoId, setContratoId] = useState(contratoIdParam || "");
   const [tipoVistoria, setTipoVistoria] = useState(
     tipoParam === "EXIT" ? "EXIT" : "ENTRY"
   );
@@ -55,6 +63,13 @@ export default function Vistorias() {
   const [carregandoLista, setCarregandoLista] = useState(false);
   const [vistoriaDetalhe, setVistoriaDetalhe] = useState(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+
+  // Auto-open inspection details modal if requested by URL query param
+  useEffect(() => {
+    if (vistoriaIdParam) {
+      abrirDetalhesVistoria(vistoriaIdParam);
+    }
+  }, [vistoriaIdParam]);
 
   // Load properties on mount
   useEffect(() => {
@@ -87,16 +102,28 @@ export default function Vistorias() {
       }
       try {
         const overview = await window.api.properties.overview(imovelId);
-        if (active && overview?.contratos) {
+        let tenantMap = {};
+        try {
+          const clients = await window.api.clients?.list();
+          if (Array.isArray(clients)) {
+            for (const c of clients) tenantMap[c.id] = c.name;
+          }
+        } catch (_) {}
+        const modelo = adaptPropertyOverview(overview, tenantMap);
+        if (active && modelo?.contratos) {
           // Filtrar contratos válidos (não cancelados)
-          const validos = overview.contratos.filter(
+          const validos = modelo.contratos.filter(
             (c) => c.status !== "Cancelado"
           );
           setContratos(validos);
           if (validos.length > 0) {
-            // Prioriza o contrato vigente ou o mais recente
-            const vigente = validos.find((c) => c.status === "Vigente");
-            setContratoId(vigente ? vigente.id : validos[0].id);
+            if (contratoIdParam && validos.some((c) => c.id === contratoIdParam)) {
+              setContratoId(contratoIdParam);
+            } else {
+              // Prioriza o contrato vigente ou o mais recente
+              const vigente = validos.find((c) => c.status === "Vigente");
+              setContratoId(vigente ? vigente.id : validos[0].id);
+            }
           } else {
             setContratoId("");
           }
@@ -109,7 +136,7 @@ export default function Vistorias() {
     return () => {
       active = false;
     };
-  }, [imovelId]);
+  }, [imovelId, contratoIdParam]);
 
   // When filtroImovelId changes or when switching to 'consultar', load inspection list
   useEffect(() => {
@@ -280,6 +307,7 @@ export default function Vistorias() {
       setReportReference("");
       setArquivosSelecionados([]);
       setFiltroImovelId(imovelId);
+      setAbaAtiva("consultar");
     } catch (err) {
       console.error("Erro ao registrar vistoria:", err);
       setMensagemErro(err.message || "Erro ao registrar vistoria.");
@@ -303,7 +331,10 @@ export default function Vistorias() {
 
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto", paddingBottom: "40px" }}>
-      <BotaoVoltar destino="/imoveis" texto="Voltar para Imóveis" />
+      <BotaoVoltar
+        destino={imovelIdParam ? `/imoveis/${imovelIdParam}` : "/imoveis"}
+        texto={imovelIdParam ? "Voltar para Detalhes do Imóvel" : "Voltar para Imóveis"}
+      />
 
       {/* Header Banner */}
       <div
@@ -1009,36 +1040,62 @@ export default function Vistorias() {
                   >
                     {m.type === "IMAGE" ? (
                       <img
-                        src={`file://${m.filePath}`}
+                        src={mediaFileUrl(m.filePath)}
                         alt={m.fileName}
-                        style={{ width: "100%", height: "130px", objectFit: "cover" }}
+                        style={{ width: "100%", height: "140px", objectFit: "cover", display: "block", cursor: "pointer" }}
+                        onClick={() => window.open(mediaFileUrl(m.filePath), "_blank")}
+                        title="Clique para visualizar em tela cheia"
                         onError={(e) => {
                           e.target.style.display = "none";
-                          e.target.parentElement.innerHTML += `<div style="padding: 20px; font-size: 12px; text-align: center; color: #64748b;">Foto gravada no sistema: ${m.fileName}</div>`;
+                          if (e.target.parentElement) {
+                            const fb = document.createElement("div");
+                            fb.style.padding = "20px";
+                            fb.style.fontSize = "12px";
+                            fb.style.textAlign = "center";
+                            fb.style.color = "#64748b";
+                            fb.textContent = `Foto gravada no sistema: ${m.fileName}`;
+                            e.target.parentElement.appendChild(fb);
+                          }
                         }}
                       />
                     ) : (
                       <div
                         style={{
-                          height: "130px",
+                          height: "140px",
                           backgroundColor: "#0f172a",
                           color: "#ffffff",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: "8px",
+                          overflow: "hidden",
                         }}
                       >
-                        <Video size={36} color="#38bdf8" />
-                        <span style={{ fontSize: "12px", fontWeight: "600" }}>{m.fileName}</span>
+                        <video
+                          src={mediaFileUrl(m.filePath)}
+                          controls
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
                       </div>
                     )}
-                    <div style={{ padding: "8px", fontSize: "12px", color: "#475569" }}>
-                      <div style={{ fontWeight: "600", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    <div style={{ padding: "8px 10px", fontSize: "12px", color: "#475569" }}>
+                      <div
+                        style={{ fontWeight: "600", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}
+                        title={m.fileName}
+                      >
                         {m.fileName}
                       </div>
-                      <div>{(m.size / (1024 * 1024)).toFixed(2)} MB</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                        <span>{(m.size / (1024 * 1024)).toFixed(2)} MB</span>
+                        <a
+                          href={mediaFileUrl(m.filePath)}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: "#1877f2", textDecoration: "none", fontWeight: "600", fontSize: "11px" }}
+                        >
+                          Visualizar
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}

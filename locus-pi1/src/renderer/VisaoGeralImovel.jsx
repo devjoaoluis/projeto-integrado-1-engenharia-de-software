@@ -549,7 +549,27 @@ function VisaoGeralImovel() {
         <section className="associacao-locacao" aria-label="Associar locatário">
           <h3>Locatário</h3>
           {contratoAssociado && (
-            <p><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+              <p style={{ margin: 0 }}><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+              {contratoAssociado.tenantId && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/locatarios/${contratoAssociado.tenantId}`)}
+                  style={{
+                    backgroundColor: "#2563eb",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                  }}
+                >
+                  Ver Dossiê do Locatário
+                </button>
+              )}
+            </div>
           )}
           <form className="form-locacao" onSubmit={associarLocatario}>
             <label>
@@ -584,6 +604,22 @@ function VisaoGeralImovel() {
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
               <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
                 Desassociar locatário
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                style={{
+                  backgroundColor: "#16a34a",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Vistoria de Entrada (RN03)
               </button>
               <button
                 type="button"
@@ -826,26 +862,51 @@ function VisaoGeralImovel() {
                     {imovel.vistorias.map((item) => (
                       <tr key={item.id}>
                         <td>{item.data}</td>
-                        <td>{item.tipo}</td>
+                        <td>
+                          {item.tipo === "Vistoria" && item.tipoVistoria ? (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "2px 8px",
+                                borderRadius: "10px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                backgroundColor: item.tipoVistoria === "EXIT" ? "#ffedd5" : "#dcfce7",
+                                color: item.tipoVistoria === "EXIT" ? "#c2410c" : "#15803d",
+                              }}
+                            >
+                              {item.tipoVistoria === "EXIT" ? "Vistoria de Saída" : "Vistoria de Entrada"}
+                            </span>
+                          ) : (
+                            item.tipo
+                          )}
+                        </td>
                         <td>{item.responsavel}</td>
                         <td>{item.observacao}</td>
                         <td>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/vistorias?imovelId=${imovel.id}`)}
-                            style={{
-                              backgroundColor: "#f1f5f9",
-                              color: "#1877f2",
-                              border: "1px solid #cbd5e1",
-                              borderRadius: "4px",
-                              padding: "4px 8px",
-                              fontSize: "12px",
-                              fontWeight: "600",
-                              cursor: "pointer",
-                            }}
-                          >
-                            Ver Mídias
-                          </button>
+                          {item.tipo === "Vistoria" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const qVistoria = item.inspectionId ? `&vistoriaId=${item.inspectionId}` : "";
+                                navigate(`/vistorias?imovelId=${imovel.id}&aba=consultar${qVistoria}`);
+                              }}
+                              style={{
+                                backgroundColor: "#f1f5f9",
+                                color: "#1877f2",
+                                border: "1px solid #cbd5e1",
+                                borderRadius: "4px",
+                                padding: "4px 8px",
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Ver Mídias
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
