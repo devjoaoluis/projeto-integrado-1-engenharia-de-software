@@ -14,7 +14,6 @@ import {
   Eye,
   Info,
   ArrowRight,
-  ShieldAlert,
   ArrowLeft,
 } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
@@ -344,34 +343,6 @@ export default function Vistorias() {
         destino={imovelIdParam ? `/imoveis/${imovelIdParam}` : "/imoveis"}
         texto={imovelIdParam ? "Voltar para Detalhes do Imóvel" : "Voltar para Imóveis"}
       />
-
-      {/* Header Banner */}
-      <div
-        style={{
-          backgroundColor: "#f0fdf4",
-          border: "1px solid #bbf7d0",
-          borderRadius: "8px",
-          padding: "16px 20px",
-          marginBottom: "24px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "14px",
-        }}
-      >
-        <ShieldAlert size={26} color="#16a34a" style={{ flexShrink: 0, marginTop: "2px" }} />
-        <div>
-          <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#166534", margin: "0 0 4px" }}>
-            Módulo de Vistorias Obrigatórias
-          </h2>
-          <p style={{ fontSize: "14px", color: "#15803d", margin: 0, lineHeight: 1.5 }}>
-            A realização de vistorias com upload de fotos e vídeos é obrigatória em dois momentos cruciais:
-            <br />
-            <strong>1. Entrada do locatário:</strong> Obrigatória para liberação das chaves.
-            <br />
-            <strong>2. Saída do locatário:</strong> Obrigatória para encerramento formal do contrato e entrega do imóvel.
-          </p>
-        </div>
-      </div>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #e5e7eb" }}>

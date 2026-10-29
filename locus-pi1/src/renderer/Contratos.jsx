@@ -16,28 +16,6 @@ import {
 } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
 
-const TAGS_DISPONIVEIS = [
-  { tag: "{{imovel.endereco}}", label: "Endereço Imóvel" },
-  { tag: "{{imovel.bairro}}", label: "Bairro" },
-  { tag: "{{imovel.tipo}}", label: "Tipo Imóvel" },
-  { tag: "{{imovel.quartos}}", label: "Quartos" },
-  { tag: "{{imovel.valor}}", label: "Valor Aluguel" },
-  { tag: "{{imovel.iptu}}", label: "IPTU" },
-  { tag: "{{proprietario.nome}}", label: "Nome Locador/Proprietário" },
-  { tag: "{{proprietario.cpf}}", label: "CPF Locador" },
-  { tag: "{{proprietario.telefone}}", label: "Tel Locador" },
-  { tag: "{{proprietario.email}}", label: "E-mail Locador" },
-  { tag: "{{locatario.nome}}", label: "Nome Locatário" },
-  { tag: "{{locatario.cpf}}", label: "CPF Locatário" },
-  { tag: "{{locatario.telefone}}", label: "Tel Locatário" },
-  { tag: "{{locatario.email}}", label: "E-mail Locatário" },
-  { tag: "{{aluguel.valor}}", label: "Valor Mensal" },
-  { tag: "{{aluguel.vencimento}}", label: "Dia Vencimento" },
-  { tag: "{{aluguel.inicio}}", label: "Início Vigência" },
-  { tag: "{{aluguel.fim}}", label: "Fim Vigência" },
-  { tag: "{{data_atual}}", label: "Data Atual" },
-];
-
 export default function Contratos() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -59,12 +37,6 @@ export default function Contratos() {
   const [exportandoPdf, setExportandoPdf] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [mensagemErro, setMensagemErro] = useState("");
-
-  // Formulário de novo modelo
-  const [mostrarModalModelo, setMostrarModalModelo] = useState(false);
-  const [novoModeloNome, setNovoModeloNome] = useState("");
-  const [novoModeloConteudo, setNovoModeloConteudo] = useState("");
-  const [salvandoModelo, setSalvandoModelo] = useState(false);
 
   // Carrega listas iniciais
   useEffect(() => {
@@ -172,39 +144,6 @@ export default function Contratos() {
     } finally {
       setExportandoPdf(false);
     }
-  }
-
-  // Criar novo modelo
-  async function salvarNovoModelo(e) {
-    e.preventDefault();
-    if (!novoModeloNome.trim() || !novoModeloConteudo.trim()) {
-      setMensagemErro("Preencha o nome e o conteúdo do modelo.");
-      return;
-    }
-    setSalvandoModelo(true);
-    setMensagemErro("");
-    try {
-      const novo = await window.api.contractTemplates.create({
-        name: novoModeloNome.trim(),
-        content: novoModeloConteudo,
-      });
-      const listaAtualizada = await window.api.contractTemplates.list();
-      setModelos(listaAtualizada || []);
-      setModeloSelecionadoId(novo.id);
-      setMostrarModalModelo(false);
-      setNovoModeloNome("");
-      setNovoModeloConteudo("");
-      setMensagemSucesso(`Modelo "${novo.name}" criado com sucesso!`);
-    } catch (err) {
-      console.error("Erro ao salvar modelo:", err);
-      setMensagemErro(err.message || "Erro ao criar modelo de contrato.");
-    } finally {
-      setSalvandoModelo(false);
-    }
-  }
-
-  function inserirTag(tag) {
-    setNovoModeloConteudo((atual) => atual + " " + tag);
   }
 
   const imovelAtual = imoveis.find((i) => i.id === imovelSelecionadoId);
@@ -465,29 +404,6 @@ export default function Contratos() {
                 ))}
               </select>
 
-              <button
-                type="button"
-                onClick={() => setMostrarModalModelo(true)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  backgroundColor: "#f1f5f9",
-                  color: "#334155",
-                  border: "1px solid #cbd5e1",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                }}
-              >
-                <Plus size={16} />
-                Criar Novo Modelo Personalizado
-              </button>
-
               {imovelSelecionadoId && (
                 <div
                   style={{
@@ -623,29 +539,10 @@ export default function Contratos() {
                 Modelos de Contratos Cadastrados
               </h2>
               <p style={{ color: "#64748b", fontSize: "14px" }}>
-                Crie modelos personalizados com tags automáticas como <code>{"{{locatario.nome}}"}</code> e <code>{"{{imovel.endereco}}"}</code>.
+                Consulte os modelos disponíveis e selecione um modelo para gerar o contrato.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setMostrarModalModelo(true)}
-              style={{
-                padding: "10px 18px",
-                backgroundColor: "#1877f2",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "6px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <Plus size={18} />
-              Novo Modelo
-            </button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
@@ -733,156 +630,6 @@ export default function Contratos() {
         </div>
       )}
 
-      {/* Modal de Criação de Modelo */}
-      {mostrarModalModelo && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: "20px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
-              width: "100%",
-              maxWidth: "750px",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              padding: "24px",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a" }}>
-                Cadastrar Novo Modelo de Contrato
-              </h2>
-              <button
-                type="button"
-                onClick={() => setMostrarModalModelo(false)}
-                style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#94a3b8" }}
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={salvarNovoModelo}>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
-                  Nome do Modelo *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex.: Contrato Residencial Padrão, Contrato Comercial, etc."
-                  value={novoModeloNome}
-                  onChange={(e) => setNovoModeloNome(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "14px",
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
-                  Tags para Preenchimento Automático (clique para inserir):
-                </label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "120px", overflowY: "auto", padding: "8px", backgroundColor: "#f8fafc", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
-                  {TAGS_DISPONIVEIS.map(({ tag, label }) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => inserirTag(tag)}
-                      title={`Inserir ${tag}`}
-                      style={{
-                        padding: "4px 8px",
-                        backgroundColor: "#ffffff",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        color: "#1877f2",
-                        cursor: "pointer",
-                      }}
-                    >
-                      + {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
-                  Conteúdo do Contrato *
-                </label>
-                <textarea
-                  rows={12}
-                  required
-                  placeholder="Digite as cláusulas do contrato incluindo as tags acima..."
-                  value={novoModeloConteudo}
-                  onChange={(e) => setNovoModeloConteudo(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    fontSize: "13px",
-                    fontFamily: "Courier New, monospace",
-                    lineHeight: "1.5",
-                  }}
-                />
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-                <button
-                  type="button"
-                  onClick={() => setMostrarModalModelo(false)}
-                  style={{
-                    padding: "10px 18px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#475569",
-                    border: "1px solid #cbd5e1",
-                    borderRadius: "6px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvandoModelo}
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: "#1877f2",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontWeight: "bold",
-                    cursor: salvandoModelo ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {salvandoModelo ? "Salvando..." : "Salvar Modelo"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
