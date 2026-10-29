@@ -185,6 +185,7 @@ export default function Contratos() {
           Gerar Contrato (Preenchimento Automático)
         </button>
 
+        {/* Temporariamente ocultado: Aba de modelos de contrato
         <button
           onClick={() => setAbaAtiva("modelos")}
           style={{
@@ -204,6 +205,7 @@ export default function Contratos() {
           <Plus size={18} />
           Modelos de Contrato ({modelos.length})
         </button>
+        */}
       </div>
 
       {/* Alertas de Sucesso e Erro */}
@@ -380,6 +382,10 @@ export default function Contratos() {
                 3. Modelo de Contrato
               </h2>
 
+              <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 12px" }}>
+                Utilizando o <strong>Modelo Padrão de Locação Residencial</strong> do sistema.
+              </p>
+              {/* Seleção de modelo personalizado comentada temporariamente:
               <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>
                 Selecione o Modelo:
               </label>
@@ -403,6 +409,7 @@ export default function Contratos() {
                   </option>
                 ))}
               </select>
+              */}
 
               {imovelSelecionadoId && (
                 <div
@@ -559,6 +566,7 @@ export default function Contratos() {
         </div>
       )}
 
+      {/* Visualização de modelos de contratos cadastrados comentada temporariamente:
       {abaAtiva === "modelos" && (
         <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
@@ -570,11 +578,9 @@ export default function Contratos() {
                 Consulte os modelos disponíveis e selecione um modelo para gerar o contrato.
               </p>
             </div>
-
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
-            {/* Card do Modelo Padrão */}
             <div
               style={{
                 border: "1px solid #e2e8f0",
@@ -612,7 +618,6 @@ export default function Contratos() {
               </button>
             </div>
 
-            {/* Modelos salvos */}
             {modelos.map((mod) => (
               <div
                 key={mod.id}
@@ -657,6 +662,7 @@ export default function Contratos() {
           </div>
         </div>
       )}
+      */}
 
     </div>
   );
