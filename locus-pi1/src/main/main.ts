@@ -20,6 +20,12 @@ if (started) {
   app.quit();
 }
 
+if (process.env.DOCKER_CONTAINER === 'true' || process.env.NO_SANDBOX === 'true') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
+}
+
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
