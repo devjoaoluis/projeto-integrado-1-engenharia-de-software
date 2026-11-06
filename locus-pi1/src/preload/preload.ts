@@ -135,8 +135,13 @@ contextBridge.exposeInMainWorld("api", {
 
     releaseKeys: (id: string) =>
       ipcRenderer.invoke("rentals:release-keys", id),
-    cancel: (id: string) =>
-      ipcRenderer.invoke("rentals:cancel", id),
+    getTerminationSummary: (id: string) =>
+      ipcRenderer.invoke("rentals:get-termination-summary", id),
+    cancel: (
+      id: string,
+      options?: import("../main/application/use-cases/CancelRental").CancelRentalOptions
+    ) =>
+      ipcRenderer.invoke("rentals:cancel", id, options),
   },
 
   owners: {
@@ -209,5 +214,34 @@ contextBridge.exposeInMainWorld("api", {
 
     delete: (id: string) =>
       ipcRenderer.invoke("clients:delete", id),
+  },
+
+  visits: {
+    create: (
+      data: import("../main/application/use-cases/CreateVisit")
+        .CreateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:create", data),
+
+    list: (
+      filter?: import("../main/domain/repositories/IVisitRepository")
+        .VisitFilter
+    ) =>
+      ipcRenderer.invoke("visits:list", filter),
+
+    get: (id: string) =>
+      ipcRenderer.invoke("visits:get", id),
+
+    update: (
+      data: import("../main/application/use-cases/UpdateVisit")
+        .UpdateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:update", data),
+
+    delete: (id: string) =>
+      ipcRenderer.invoke("visits:delete", id),
+
+    upcoming: (limit?: number) =>
+      ipcRenderer.invoke("visits:upcoming", limit),
   },
 });
