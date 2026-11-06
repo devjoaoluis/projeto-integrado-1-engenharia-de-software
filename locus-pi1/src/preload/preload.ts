@@ -215,4 +215,33 @@ contextBridge.exposeInMainWorld("api", {
     delete: (id: string) =>
       ipcRenderer.invoke("clients:delete", id),
   },
+
+  visits: {
+    create: (
+      data: import("../main/application/use-cases/CreateVisit")
+        .CreateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:create", data),
+
+    list: (
+      filter?: import("../main/domain/repositories/IVisitRepository")
+        .VisitFilter
+    ) =>
+      ipcRenderer.invoke("visits:list", filter),
+
+    get: (id: string) =>
+      ipcRenderer.invoke("visits:get", id),
+
+    update: (
+      data: import("../main/application/use-cases/UpdateVisit")
+        .UpdateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:update", data),
+
+    delete: (id: string) =>
+      ipcRenderer.invoke("visits:delete", id),
+
+    upcoming: (limit?: number) =>
+      ipcRenderer.invoke("visits:upcoming", limit),
+  },
 });
