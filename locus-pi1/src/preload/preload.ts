@@ -135,8 +135,13 @@ contextBridge.exposeInMainWorld("api", {
 
     releaseKeys: (id: string) =>
       ipcRenderer.invoke("rentals:release-keys", id),
-    cancel: (id: string) =>
-      ipcRenderer.invoke("rentals:cancel", id),
+    getTerminationSummary: (id: string) =>
+      ipcRenderer.invoke("rentals:get-termination-summary", id),
+    cancel: (
+      id: string,
+      options?: import("../main/application/use-cases/CancelRental").CancelRentalOptions
+    ) =>
+      ipcRenderer.invoke("rentals:cancel", id, options),
   },
 
   owners: {
