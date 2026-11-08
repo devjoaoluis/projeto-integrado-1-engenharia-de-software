@@ -12,4 +12,15 @@ CREATE TABLE IF NOT EXISTS property_visits (
 CREATE INDEX IF NOT EXISTS property_visits_property_idx ON property_visits(property_id);
 CREATE INDEX IF NOT EXISTS property_visits_client_idx ON property_visits(client_id);
 CREATE INDEX IF NOT EXISTS property_visits_scheduled_idx ON property_visits(scheduled_at);
+
+CREATE TABLE IF NOT EXISTS visit_reminders (
+  id TEXT PRIMARY KEY NOT NULL,
+  visit_id TEXT NOT NULL REFERENCES property_visits(id) ON DELETE CASCADE,
+  stage TEXT NOT NULL,
+  triggered_at INTEGER NOT NULL,
+  dismissed_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS visit_reminders_visit_stage_idx ON visit_reminders(visit_id, stage);
+CREATE INDEX IF NOT EXISTS visit_reminders_visit_idx ON visit_reminders(visit_id);
 `;

@@ -243,5 +243,32 @@ contextBridge.exposeInMainWorld("api", {
 
     upcoming: (limit?: number) =>
       ipcRenderer.invoke("visits:upcoming", limit),
+
+    getAlerts: (
+      options?: import("../main/application/use-cases/GetVisitAlerts")
+        .GetVisitAlertsOptions
+    ) =>
+      ipcRenderer.invoke("visits:get-alerts", options),
+
+    checkReminders: () =>
+      ipcRenderer.invoke("visits:check-reminders"),
+
+    dismissReminder: (data: {
+      visitId: string;
+      stage: import("../main/domain/entities/VisitReminder").VisitReminderStage;
+    }) =>
+      ipcRenderer.invoke("visits:dismiss-reminder", data),
+
+    onReminderNotification: (
+      callback: (
+        alert: import("../main/domain/entities/VisitReminder").VisitAlert
+      ) => void
+    ) => {
+      const subscription = (_event: any, alert: any) => callback(alert);
+      ipcRenderer.on("visits:reminder-notification", subscription);
+      return () => {
+        ipcRenderer.removeListener("visits:reminder-notification", subscription);
+      };
+    },
   },
 });

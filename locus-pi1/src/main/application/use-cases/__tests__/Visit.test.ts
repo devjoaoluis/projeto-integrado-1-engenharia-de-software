@@ -138,13 +138,11 @@ function makeFixture() {
   const client: Client = {
     id: "client-1",
     name: "Mariana Silva",
-    type: "BUYER",
+    type: "TENANT",
+    guarantorId: null,
     cpfCnpj: "123.456.789-00",
     phone: "(11) 98888-7777",
     email: "mariana@email.com",
-    address: "Rua B, 20",
-    occupation: "Engenheira",
-    grossIncome: 12000,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
