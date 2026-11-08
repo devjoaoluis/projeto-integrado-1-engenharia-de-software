@@ -271,4 +271,15 @@ contextBridge.exposeInMainWorld("api", {
       };
     },
   },
+
+  overdue: {
+    check: (options?: import("../main/application/use-cases/CheckOverdueRents").CheckOverdueRentsOptions) =>
+      ipcRenderer.invoke("overdue:check", options),
+    triggerAlerts: (options?: import("../main/application/use-cases/TriggerOverdueAlerts").TriggerOverdueAlertsInput) =>
+      ipcRenderer.invoke("overdue:trigger-alerts", options),
+    settleDebt: (input: import("../main/application/use-cases/SettleOverdueDebt").SettleOverdueDebtInput) =>
+      ipcRenderer.invoke("overdue:settle-debt", input),
+    listNotifications: (filter?: import("../main/domain/repositories/IOverdueNotificationRepository").OverdueNotificationFilter) =>
+      ipcRenderer.invoke("overdue:list-notifications", filter),
+  },
 });
