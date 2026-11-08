@@ -3,7 +3,8 @@ import assert from "node:assert";
 import { GetRentalTerminationSummary } from "../GetRentalTerminationSummary";
 import { CancelRental } from "../CancelRental";
 import { Rental } from "../../../domain/entities/Rental";
-import { PropertyContract, PropertyHistory, PropertyPayment, PropertyInspection } from "../../../domain/entities/PropertyHistory";
+import { PropertyContract, PropertyHistory, PropertyPayment, PropertyInspection, PropertyMaintenance } from "../../../domain/entities/PropertyHistory";
+import { Inspection } from "../../../domain/entities/Inspection";
 import { IRentalRepository } from "../../../domain/repositories/IRentalRepository";
 import { IPropertyHistoryRepository } from "../../../domain/repositories/IPropertyHistoryRepository";
 import { IInspectionRepository } from "../../../domain/repositories/IInspectionRepository";
@@ -26,10 +27,10 @@ class MockRentalRepository implements IRentalRepository {
   async findAll() {
     return this.rentals;
   }
-  async updatePrerequisites() {
+  async updatePrerequisites(): Promise<Rental> {
     throw new Error("Not implemented");
   }
-  async releaseKeys() {
+  async releaseKeys(): Promise<Rental> {
     throw new Error("Not implemented");
   }
   async cancel(id: string, cancelledAt: number) {
@@ -67,22 +68,25 @@ class MockHistoryRepository implements IPropertyHistoryRepository {
     this.inspections.push(inspection);
     return inspection;
   }
-  async createMaintenance() {
-    throw new Error("Not implemented");
+  async createMaintenance(maintenance: PropertyMaintenance): Promise<PropertyMaintenance> {
+    return maintenance;
   }
 }
 
 class MockInspectionRepository implements IInspectionRepository {
-  inspections: PropertyInspection[] = [];
+  inspections: Inspection[] = [];
 
-  async findByPropertyId(propertyId: string) {
+  async create(): Promise<any> {
+    throw new Error("Not implemented");
+  }
+  async findById(): Promise<any> {
+    return null;
+  }
+  async findByPropertyId(propertyId: string): Promise<Inspection[]> {
     return this.inspections.filter((i) => i.propertyId === propertyId);
   }
-  async findByContractId(contractId: string) {
+  async findByContractId(contractId: string): Promise<Inspection[]> {
     return this.inspections.filter((i) => i.contractId === contractId);
-  }
-  async record() {
-    throw new Error("Not implemented");
   }
 }
 
