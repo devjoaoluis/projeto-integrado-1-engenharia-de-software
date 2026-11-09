@@ -5,6 +5,7 @@ import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
 import { registerInspectionsIpc } from "./ipc/inspections.ipc";
 import { registerTenantDocumentsIpc } from "./ipc/tenant-documents.ipc";
 import { registerVisitsIpc } from "./ipc/visits.ipc";
+import { registerOverdueIpc } from "./ipc/overdue.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -72,6 +73,7 @@ app.on('ready', async () => {
   registerInspectionExitIpc();
   registerTenantDocumentsIpc();
   registerVisitsIpc();
+  registerOverdueIpc();
   createWindow();
 });
 
