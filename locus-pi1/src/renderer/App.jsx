@@ -9,6 +9,8 @@ import Imoveis from "./Imoveis";
 import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Contatos from "./Contatos";
+import { AlignEndHorizontal } from "lucide-react";
+import { AgendamentoVisitas } from "./AgendamentoVisitas";
 import Contratos from "./Contratos";
 import Vistorias from "./Vistorias";
 import Locatarios from "./Locatarios";
@@ -64,8 +66,8 @@ export default function App() {
             <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
             <Route path="/contratos" element={<Contratos />} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
-            <Route path="/visitas" element={<div>Visitas</div>} />
-            <Route path="/vistorias" element={<Vistorias />} />
+            <Route path="/visitas" element={<AgendamentoVisitas/>} />
+            <Route path="/vistorias" element={<div>Vistorias</div>} />
             <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
           </Route>
 
