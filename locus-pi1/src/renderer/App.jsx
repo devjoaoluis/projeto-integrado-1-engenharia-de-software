@@ -9,6 +9,8 @@ import Imoveis from "./Imoveis";
 import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Contatos from "./Contatos";
+import { AlignEndHorizontal } from "lucide-react";
+import { AgendamentoVisitas } from "./AgendamentoVisitas";
 
 export default function App() {
   const [hasUsers, setHasUsers] = useState(null);
@@ -58,7 +60,7 @@ export default function App() {
                 <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
             <Route path="/contratos" element={<div>Contratos</div>} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
-            <Route path="/visitas" element={<div>Visitas</div>} />
+            <Route path="/visitas" element={<AgendamentoVisitas/>} />
             <Route path="/vistorias" element={<div>Vistorias</div>} />
             <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
           </Route>
