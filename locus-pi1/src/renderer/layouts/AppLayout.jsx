@@ -11,11 +11,17 @@ const titulos = {
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
+    "/locatarios": "Locatários",
 };
 
 function AppLayout() {
     const { pathname } = useLocation();
-    const titulo = titulos[pathname] ?? (pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" : pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" : "Locus");
+    const titulo = titulos[pathname] ?? (
+        pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" :
+        pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
+        pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
+        "Locus"
+    );
 
     return (
         <>
@@ -47,6 +53,17 @@ function AppLayout() {
                         margin: 0;
                     }
 
+                    .topo-identidade {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 16px;
+                    }
+
+                    .topo-marca {
+                        font-size: 22px;
+                        font-weight: 700;
+                    }
+
                     .topo-icones {
                         display: flex;
                         gap: 16px;
@@ -57,6 +74,21 @@ function AppLayout() {
                         background-color: #ffffff;
                         padding: 24px;
                     }
+
+                    .botao-voltar-padrao {
+                        align-self: flex-start;
+                        margin-bottom: 16px;
+                        padding: 8px 0;
+                        border: none;
+                        background: transparent;
+                        color: #1976d2;
+                        font-weight: 700;
+                        cursor: pointer;
+                    }
+
+                    .botao-voltar-padrao:hover {
+                        text-decoration: underline;
+                    }
                 `}
             </style>
 
@@ -65,7 +97,10 @@ function AppLayout() {
 
                 <div className="principal">
                     <header className="topo">
-                        <h1>{titulo}</h1>
+                        <div className="topo-identidade">
+                            <span className="topo-marca">Locus</span>
+                            <h1>{titulo}</h1>
+                        </div>
                         <div className="topo-icones">
                             <User size={20} />
                             <Bell size={20} />

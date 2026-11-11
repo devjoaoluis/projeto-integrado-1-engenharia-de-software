@@ -25,6 +25,9 @@ export interface PropertyPayment {
 }
 
 export interface PropertyInspection {
+  // Legacy history entries may have no contract or inspection type.
+  contractId?: string | null;
+  type?: "ENTRY" | "EXIT" | null;
   id: string;
   propertyId: string;
   inspectedAt: number;

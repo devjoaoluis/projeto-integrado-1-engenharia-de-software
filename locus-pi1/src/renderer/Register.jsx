@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "./Input";
 import Button from "./Button";
+import BotaoVoltar from "./components/BotaoVoltar";
 
 export default function Register({ onSuccess }) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [repetirSenha, setRepetirSenha] = useState("");
   const [perguntaSeguranca, setPerguntaSeguranca] = useState("");
   const [respostaSeguranca, setRespostaSeguranca] = useState("");
   const [error, setError] = useState(null);
@@ -19,8 +20,13 @@ export default function Register({ onSuccess }) {
     e.preventDefault();
     setError(null);
 
-    if (senha !== confirmarSenha) {
+    if (senha !== repetirSenha) {
       setError("As senhas não coincidem.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
 
@@ -115,6 +121,7 @@ export default function Register({ onSuccess }) {
       </style>
 
       <div className="register-container">
+        <BotaoVoltar destino="/login" texto="Voltar para o login" />
         <h1 className="register-title">Bem-vindo à Locus Marismar</h1>
 
         <div className="register-card">
@@ -146,13 +153,17 @@ export default function Register({ onSuccess }) {
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Senha"
+                minLength={6}
                 required
               />
+              <span style={{ color: "#666", fontSize: "12px", marginTop: "-8px" }}>
+                A senha deve ter pelo menos 6 caracteres.
+              </span>
 
               <Input
                 type="password"
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
+                value={repetirSenha}
+                onChange={(e) => setRepetirSenha(e.target.value)}
                 placeholder="Repetir Senha"
                 required
               />

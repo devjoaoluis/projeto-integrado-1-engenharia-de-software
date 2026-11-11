@@ -71,7 +71,8 @@ describe("DeleteProperty Use Case", () => {
 
     const useCase = new DeleteProperty(propRepo, mediaRepo, storage);
 
-    await propRepo.create({ id: "prop1", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100, description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
+    await propRepo.create({ id: "prop1", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100,
+      description: null, ownerId: "owner-1", status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
     await mediaRepo.create({ id: "m1", propertyId: "prop1", type: MediaType.IMAGE, fileName: "x.jpg", filePath: "path/to/x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
 
     await useCase.execute("prop1");

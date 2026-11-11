@@ -310,7 +310,7 @@ export default function Locatarios() {
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: "12px", fontWeight: "500" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "12px", fontWeight: "500", color: AZUL }}>
                     <Avatar nome={l.nome} />
                     {l.nome}
                   </span>

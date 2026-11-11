@@ -7,11 +7,27 @@ import VisaoGeralImovel from "./VisaoGeralImovel";
 import CadastrarImovel from "./CadastrarImovel";
 import Locatarios from "./Locatarios";
 import VisaoGeralLocatario from "./VisaoGeralLocatario";
+import Vistorias from "./Vistorias";
+import VisaoGeralVistoria from "./VistoriaImovel";
 
 export default function App() {
-    return (
-        <Routes>
-            <Route path="/login" element={<Login />} />
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      <Route element={<AppLayout />}>
+        <Route path="/home" element={<Home />} />
+        <Route path="/imoveis" element={<Imoveis />} />
+        <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
+        <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
+
+        {/* Módulo de Locatários + Visão Geral  */}
+        <Route path="/locatarios" element={<Locatarios />} />
+        <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
+
+        {/* Módulo de Vistoria*/}
+        <Route path="/vistorias" element={<Vistorias />} />
+        <Route path="/vistorias/:id" element={<VisaoGeralVistoria />} />
 
             <Route element={<AppLayout />}>
                 <Route path="/home" element={<Home />} />
@@ -27,7 +43,7 @@ export default function App() {
                 <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-    );
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
 }

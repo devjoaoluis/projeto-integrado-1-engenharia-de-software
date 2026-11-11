@@ -18,8 +18,14 @@ const repo = new DrizzlePropertyRepository();
 const create = new CreateProperty(repo);
 const update = new UpdateProperty(repo);
 const search = new SearchProperties(repo);
-const data = { title: "Casa São José", address: "Rua A", price: 1000 };
-before(() => initializeDatabase(sqlite));
+const data = { title: "Casa São José", address: "Rua A", price: 1000, ownerId: "owner-1" };
+before(async () => {
+  await initializeDatabase(sqlite);
+  await sqlite.execute({
+    sql: "INSERT INTO owners (id, name, cpf_cnpj, phone, email, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    args: ["owner-1", "Proprietário de teste", "00000000000", "0000000000", null, 1, 1],
+  });
+});
 after(() => {
   sqlite.close();
   if (previousModule) require.cache[modulePath] = previousModule;

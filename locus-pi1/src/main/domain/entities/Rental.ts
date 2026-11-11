@@ -4,6 +4,7 @@ export interface Rental {
   tenantId: string;
   monthlyRent: number;
   startDate: number;
+  endDate?: number | null;
   dueDay: number;
   parentRentalId: string | null;
   formalConsent: string | null;

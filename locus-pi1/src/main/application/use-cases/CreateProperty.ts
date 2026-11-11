@@ -30,6 +30,9 @@ export class CreateProperty {
     if (!dto.address || dto.address.trim() === "") {
       throw new Error("Address is required");
     }
+    if (!dto.ownerId || dto.ownerId.trim() === "") {
+      throw new Error("Owner is required");
+    }
     if (dto.price < 0) {
       throw new Error("Price cannot be negative");
     }

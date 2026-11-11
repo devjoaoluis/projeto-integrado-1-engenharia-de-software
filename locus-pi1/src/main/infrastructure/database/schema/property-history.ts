@@ -42,12 +42,15 @@ export const propertyPayments = sqliteTable("property_payments", {
 export const propertyInspections = sqliteTable("property_inspections", {
   id: text("id").primaryKey(),
   propertyId: text("property_id").notNull().references(() => properties.id, { onDelete: "restrict" }),
+  contractId: text("contract_id").references(() => propertyContracts.id, { onDelete: "restrict" }),
+  type: text("inspection_type", { enum: ["ENTRY", "EXIT"] }),
   inspectedAt: integer("inspected_at").notNull(),
   description: text("description").notNull(),
   reportReference: text("report_reference"),
   createdAt: integer("created_at").notNull(),
 }, (table) => [
   index("property_inspections_property_date_idx").on(table.propertyId, table.inspectedAt),
+  index("property_inspections_contract_date_idx").on(table.contractId, table.inspectedAt),
   check("property_inspections_date_check", sql`${table.inspectedAt} >= 0`),
 ]);
 

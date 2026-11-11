@@ -34,7 +34,7 @@ export function adaptPropertyOverview(overview, tenantNames = {}) {
       ...contracts.previous.map(item => ({ ...item, label: item.status === "CANCELLED" ? "Cancelado" : "Encerrado" })),
       ...contracts.scheduled.map(item => ({ ...item, label: "Agendado" })),
     ].map(item => ({
-      id: item.id, rentalId: item.rentalId ?? null, codigo: item.reference, locatario: tenantNames[item.tenantId] ?? "Locatário não encontrado",
+      id: item.id, rentalId: item.rentalId ?? null, tenantId: item.tenantId, codigo: item.reference, locatario: tenantNames[item.tenantId] ?? "Locatário não encontrado",
       inicio: date(item.startDate), fim: date(item.endDate), valor: item.monthlyRent, status: item.label,
     })),
     pagamentos: payments.map(item => ({
@@ -42,7 +42,7 @@ export function adaptPropertyOverview(overview, tenantNames = {}) {
     })),
     vistorias: [
       ...inspections.map(item => ({
-        id: `inspection-${item.id}`, timestamp: item.inspectedAt, data: date(item.inspectedAt), tipo: "Vistoria",
+        id: `inspection-${item.id}`, inspectionId: item.id, timestamp: item.inspectedAt, data: date(item.inspectedAt), tipo: "Vistoria", tipoVistoria: item.type,
         responsavel: item.reportReference ?? "—", observacao: item.description,
       })),
       ...maintenances.map(item => ({

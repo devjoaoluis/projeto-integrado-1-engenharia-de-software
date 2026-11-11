@@ -3,6 +3,7 @@ import {
   Home,
   Building2,
   Users,
+  UserCheck,
   FileText,
   ArrowLeftRight,
   CalendarDays,
@@ -15,6 +16,7 @@ const menuItens = [
   { nome: "Home", icone: Home, to: "/home" },
   { nome: "Imóveis", icone: Building2, to: "/imoveis" },
   { nome: "Contatos", icone: Users, to: "/contatos" },
+  { nome: "Locatários", icone: UserCheck, to: "/locatarios" },
   { nome: "Contratos", icone: FileText, to: "/contratos" },
   { nome: "Pagamentos", icone: ArrowLeftRight, to: "/pagamentos" },
   { nome: "Visitas", icone: CalendarDays, to: "/visitas" },
@@ -78,14 +80,17 @@ export function Sidebar() {
         style={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "8px",
           backgroundColor: "#ffffff",
           color: "#1877f2",
           border: "none",
           borderRadius: "6px",
           padding: "10px 16px",
+          width: "100%",
           fontWeight: "bold",
           cursor: "pointer",
+          flexShrink: 0,
         }}
       >
         <LogOut size={18} color="#FF0000" />

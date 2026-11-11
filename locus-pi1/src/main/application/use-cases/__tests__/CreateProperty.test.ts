@@ -37,6 +37,7 @@ describe("CreateProperty Use Case", () => {
       title: "Casa de Teste",
       address: "Rua X",
       price: 100000,
+      ownerId: "owner-1",
     });
 
     assert.strictEqual(result.title, "Casa de Teste");
@@ -52,9 +53,21 @@ describe("CreateProperty Use Case", () => {
 
     await assert.rejects(
       async () => {
-        await useCase.execute({ title: "", address: "Rua X", price: 100000 });
+        await useCase.execute({ title: "", address: "Rua X", price: 100000, ownerId: "owner-1" });
       },
       (err: Error) => err.message === "Title is required"
+    );
+  });
+
+  it("should throw if owner is missing", async () => {
+    const repo = new MockPropertyRepository();
+    const useCase = new CreateProperty(repo);
+
+    await assert.rejects(
+      async () => {
+        await useCase.execute({ title: "Casa", address: "Rua X", price: 100000 });
+      },
+      (err: Error) => err.message === "Owner is required"
     );
   });
 });
