@@ -111,6 +111,18 @@ export class FillContractTemplate {
     const startDateFormatted = rental?.startDate ? formatDate(rental.startDate) : formatDate(now.getTime());
     const endDateFormatted = rental?.endDate ? formatDate(rental.endDate) : "Indeterminado";
 
+    let prazoMeses = "30";
+    let prazoDias = "30";
+    if (rental?.startDate && rental?.endDate) {
+      const startMs = typeof rental.startDate === "number" ? rental.startDate : new Date(rental.startDate).getTime();
+      const endMs = typeof rental.endDate === "number" ? rental.endDate : new Date(rental.endDate).getTime();
+      if (!isNaN(startMs) && !isNaN(endMs) && endMs > startMs) {
+        const diffDays = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+        prazoDias = String(diffDays);
+        prazoMeses = String(Math.max(1, Math.round(diffDays / 30)));
+      }
+    }
+
     const replacementMap: Record<string, string> = {
       // Imovel
       "imovel.titulo": property.title || "Imóvel Residencial",
@@ -155,10 +167,16 @@ export class FillContractTemplate {
       "aluguel.dia_vencimento": dueDay,
       "aluguel.inicio": startDateFormatted,
       "aluguel.fim": endDateFormatted,
+      "aluguel.prazo_meses": prazoMeses,
+      "aluguel.prazo_dias": prazoDias,
       "contrato.valor": rentFormatted,
       "contrato.vencimento": dueDay,
       "contrato.inicio": startDateFormatted,
       "contrato.fim": endDateFormatted,
+      "contrato.prazo_meses": prazoMeses,
+      "contrato.prazo_dias": prazoDias,
+      "prazo_meses": prazoMeses,
+      "prazo_dias": prazoDias,
 
       // Datas
       "data_atual": formatLongDate(now),

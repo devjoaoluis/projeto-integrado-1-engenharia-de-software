@@ -4,6 +4,8 @@ import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
 import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
 import { registerInspectionsIpc } from "./ipc/inspections.ipc";
 import { registerTenantDocumentsIpc } from "./ipc/tenant-documents.ipc";
+import { registerVisitsIpc } from "./ipc/visits.ipc";
+import { registerOverdueIpc } from "./ipc/overdue.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -18,6 +20,12 @@ import { databaseReady } from './infrastructure/database/db';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
+}
+
+if (process.env.DOCKER_CONTAINER === 'true' || process.env.NO_SANDBOX === 'true') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
 const createWindow = () => {
@@ -64,6 +72,8 @@ app.on('ready', async () => {
   registerInspectionEntryIpc();
   registerInspectionExitIpc();
   registerTenantDocumentsIpc();
+  registerVisitsIpc();
+  registerOverdueIpc();
   createWindow();
 });
 

@@ -4,7 +4,7 @@ import { IContactRepository } from "../../domain/repositories/IContactRepository
 import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IContractTemplateRepository } from "../../domain/repositories/IContractTemplateRepository";
 import { FillContractTemplate } from "./FillContractTemplate";
-import { DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "./defaultContractTemplate";
+import { DEFAULT_RENTAL_CONTRACT_TEMPLATE, BUILTIN_CONTRACT_TEMPLATES } from "./defaultContractTemplate";
 import { Property } from "../../domain/entities/Property";
 import { Client } from "../../domain/entities/Client";
 import { Contact } from "../../domain/entities/Contact";
@@ -86,11 +86,24 @@ export class AssembleContractData {
     if (input.customTemplateContent && input.customTemplateContent.trim().length > 0) {
       templateContent = input.customTemplateContent;
       templateName = "Modelo Personalizado";
-    } else if (input.templateId && this.templateRepository) {
-      const savedTemplate = await this.templateRepository.findById(input.templateId);
-      if (savedTemplate) {
-        templateContent = savedTemplate.content;
-        templateName = savedTemplate.name;
+    } else if (input.templateId) {
+      let foundInRepo = false;
+      if (this.templateRepository) {
+        const savedTemplate = await this.templateRepository.findById(input.templateId);
+        if (savedTemplate) {
+          templateContent = savedTemplate.content;
+          templateName = savedTemplate.name;
+          foundInRepo = true;
+        }
+      }
+      if (!foundInRepo) {
+        const builtin = BUILTIN_CONTRACT_TEMPLATES.find(
+          (t) => t.id === input.templateId || t.name.toLowerCase() === input.templateId?.toLowerCase()
+        );
+        if (builtin) {
+          templateContent = builtin.content;
+          templateName = builtin.name;
+        }
       }
     }
 

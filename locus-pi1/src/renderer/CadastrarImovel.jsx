@@ -116,7 +116,7 @@ function CadastrarImovel() {
         setDados((antigo) => ({ ...antigo, [name]: value }));
     }
 
-    async function removerMidiaExistente(idMidia) {
+    async function excluirMidiaExistente(idMidia) {
         try {
             if (window.api?.propertyMedia?.delete) {
                 await window.api.propertyMedia.delete(idMidia);
@@ -127,8 +127,8 @@ function CadastrarImovel() {
             }
             setMidiasExistentes((prev) => prev.filter(m => (m.id || m) !== idMidia));
         } catch (error) {
-            console.error("Erro ao remover mídia:", error);
-            setErro(mensagemErro(error, "Não foi possível remover a mídia. Tente novamente."));
+            console.error("Erro ao excluir mídia:", error);
+            setErro(mensagemErro(error, "Não foi possível excluir a mídia. Tente novamente."));
         }
     }
 
@@ -440,7 +440,7 @@ function CadastrarImovel() {
                                                     ) : (
                                                         <img src={urlSanitizada} alt="Mídia do imóvel" />
                                                     )}
-                                                    <button type="button" title="Remover mídia" onClick={() => removerMidiaExistente(id)}>×</button>
+                                                    <button type="button" title="Excluir mídia" onClick={() => excluirMidiaExistente(id)}>×</button>
                                                 </div>
                                             );
                                         })}

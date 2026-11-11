@@ -156,7 +156,7 @@ export default function VisaoGeralLocatario() {
         }
       }
 
-      // 3. Carregar documentos do dossiê (HU-13)
+      // 3. Carregar documentos do dossiê
       await carregarDocumentos();
     } catch (err) {
       console.error("Erro ao carregar dados do locatário:", err);
@@ -529,7 +529,25 @@ export default function VisaoGeralLocatario() {
                   </button>
                 </p>
               ) : (
-                <p style={{ margin: 0 }}><strong>Imóvel:</strong> Nenhum vinculado</p>
+                <p style={{ margin: 0 }}>
+                  <strong>Imóvel:</strong> Nenhum vinculado{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/imoveis")}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#2563eb",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      textDecoration: "underline",
+                      padding: 0,
+                    }}
+                    title="Selecione um imóvel para associar este locatário"
+                  >
+                    (vincular a um imóvel)
+                  </button>
+                </p>
               )}
             </div>
           </div>
@@ -555,7 +573,7 @@ export default function VisaoGeralLocatario() {
               }}
             >
               <ClipboardCheck size={16} color="#16a34a" />
-              Vistorias (RN03)
+              Vistorias
             </button>
           )}
           <button
@@ -576,7 +594,7 @@ export default function VisaoGeralLocatario() {
             }}
           >
             <FileText size={16} />
-            Gerar Contrato (HU-11)
+            Gerar Contrato
           </button>
         </div>
       </div>
@@ -604,7 +622,7 @@ export default function VisaoGeralLocatario() {
           <p style={{ fontSize: "16px", fontWeight: "bold", color: temIdentificacao ? "#15803d" : "#b45309", margin: "4px 0" }}>
             {temIdentificacao ? "Entregue e Validado" : "Pendente de Envio"}
           </p>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Obrigatório para locação</span>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>Necessário para locação</span>
         </div>
 
         <div style={{ background: "#ffffff", padding: "16px 20px", borderRadius: "10px", border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
@@ -615,7 +633,7 @@ export default function VisaoGeralLocatario() {
           <p style={{ fontSize: "16px", fontWeight: "bold", color: temRenda ? "#15803d" : "#b45309", margin: "4px 0" }}>
             {temRenda ? "Entregue e Validado" : "Pendente de Envio"}
           </p>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Obrigatório para análise de crédito</span>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>Necessário para análise de crédito</span>
         </div>
       </div>
 
@@ -624,7 +642,7 @@ export default function VisaoGeralLocatario() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
           <div>
             <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a", margin: "0 0 4px" }}>
-              Dossiê de Documentos (HU-13)
+              Dossiê de Documentos
             </h2>
             <p style={{ color: "#64748b", fontSize: "14px", margin: 0 }}>
               Faça upload, visualize em tela cheia e baixe os documentos originais do locatário.
