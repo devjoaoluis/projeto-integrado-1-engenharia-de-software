@@ -22,6 +22,10 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("contracts:export-pdf", params),
     getDefaultTemplate: () =>
       ipcRenderer.invoke("contracts:get-default-template"),
+    getBuiltinTemplates: () =>
+      ipcRenderer.invoke("contracts:get-builtin-templates"),
+    seedBuiltinTemplates: () =>
+      ipcRenderer.invoke("contracts:seed-builtin-templates"),
   },
 
   inspections: {
@@ -135,8 +139,13 @@ contextBridge.exposeInMainWorld("api", {
 
     releaseKeys: (id: string) =>
       ipcRenderer.invoke("rentals:release-keys", id),
-    cancel: (id: string) =>
-      ipcRenderer.invoke("rentals:cancel", id),
+    getTerminationSummary: (id: string) =>
+      ipcRenderer.invoke("rentals:get-termination-summary", id),
+    cancel: (
+      id: string,
+      options?: import("../main/application/use-cases/CancelRental").CancelRentalOptions
+    ) =>
+      ipcRenderer.invoke("rentals:cancel", id, options),
   },
 
   owners: {
@@ -209,5 +218,72 @@ contextBridge.exposeInMainWorld("api", {
 
     delete: (id: string) =>
       ipcRenderer.invoke("clients:delete", id),
+  },
+
+  visits: {
+    create: (
+      data: import("../main/application/use-cases/CreateVisit")
+        .CreateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:create", data),
+
+    list: (
+      filter?: import("../main/domain/repositories/IVisitRepository")
+        .VisitFilter
+    ) =>
+      ipcRenderer.invoke("visits:list", filter),
+
+    get: (id: string) =>
+      ipcRenderer.invoke("visits:get", id),
+
+    update: (
+      data: import("../main/application/use-cases/UpdateVisit")
+        .UpdateVisitDTO
+    ) =>
+      ipcRenderer.invoke("visits:update", data),
+
+    delete: (id: string) =>
+      ipcRenderer.invoke("visits:delete", id),
+
+    upcoming: (limit?: number) =>
+      ipcRenderer.invoke("visits:upcoming", limit),
+
+    getAlerts: (
+      options?: import("../main/application/use-cases/GetVisitAlerts")
+        .GetVisitAlertsOptions
+    ) =>
+      ipcRenderer.invoke("visits:get-alerts", options),
+
+    checkReminders: () =>
+      ipcRenderer.invoke("visits:check-reminders"),
+
+    dismissReminder: (data: {
+      visitId: string;
+      stage: import("../main/domain/entities/VisitReminder").VisitReminderStage;
+    }) =>
+      ipcRenderer.invoke("visits:dismiss-reminder", data),
+
+    onReminderNotification: (
+      callback: (
+        alert: import("../main/domain/entities/VisitReminder").VisitAlert
+      ) => void
+    ) => {
+      const subscription = (_event: any, alert: any) => callback(alert);
+      ipcRenderer.on("visits:reminder-notification", subscription);
+      return () => {
+        ipcRenderer.removeListener("visits:reminder-notification", subscription);
+      };
+    },
+  },
+
+  overdue: {
+    check: (options?: import("../main/application/use-cases/CheckOverdueRents").CheckOverdueRentsOptions) =>
+      ipcRenderer.invoke("overdue:check", options),
+    triggerAlerts: (options?: import("../main/application/use-cases/TriggerOverdueAlerts").TriggerOverdueAlertsInput) =>
+      ipcRenderer.invoke("overdue:trigger-alerts", options),
+    settleDebt: (input: import("../main/application/use-cases/SettleOverdueDebt").SettleOverdueDebtInput) =>
+      ipcRenderer.invoke("overdue:settle-debt", input),
+    listNotifications: (filter?: import("../main/domain/repositories/IOverdueNotificationRepository").OverdueNotificationFilter) =>
+      ipcRenderer.invoke("overdue:list-notifications", filter),
   },
 });

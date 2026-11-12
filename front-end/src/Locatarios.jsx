@@ -90,6 +90,7 @@ function Pilula({ status }) {
   );
 }
 
+// Componente de Paginação com botões em formato de bolinha / números originais
 function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
   if (totalPaginas <= 1) return null;
 
@@ -332,7 +333,7 @@ export default function Locatarios() {
         </div>
       </div>
 
-      {/* Paginação */}
+      {/* Paginação em formato de bolinhas numeradas */}
       <Paginacao paginaAtual={paginaAtual} totalPaginas={totalPaginas} onMudar={setPagina} />
     </div>
   );

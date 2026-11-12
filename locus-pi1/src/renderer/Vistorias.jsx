@@ -14,7 +14,6 @@ import {
   Eye,
   Info,
   ArrowRight,
-  ShieldAlert,
   ArrowLeft,
 } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
@@ -46,7 +45,7 @@ export default function Vistorias() {
     tipoParam === "EXIT" ? "EXIT" : "ENTRY"
   );
   const [inspectedAt, setInspectedAt] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA")
   );
   const [description, setDescription] = useState("");
   const [reportReference, setReportReference] = useState("");
@@ -216,7 +215,7 @@ export default function Vistorias() {
     e.target.value = "";
   }
 
-  function removerArquivo(index) {
+  function excluirArquivo(index) {
     setArquivosSelecionados((prev) => {
       const item = prev[index];
       if (item?.preview) URL.revokeObjectURL(item.preview);
@@ -244,11 +243,20 @@ export default function Vistorias() {
       return;
     }
 
-    const timestampData = new Date(`${inspectedAt}T12:00:00`).getTime();
-    if (timestampData > Date.now()) {
+    const now = new Date();
+    const [ano, mes, dia] = inspectedAt.split("-").map(Number);
+    const dataVistoria = new Date(ano, mes - 1, dia);
+    const dataHoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (dataVistoria > dataHoje) {
       setMensagemErro("A data da vistoria não pode estar no futuro.");
       return;
     }
+
+    const timestampData =
+      dataVistoria.getTime() === dataHoje.getTime()
+        ? Date.now()
+        : new Date(ano, mes - 1, dia, 12, 0, 0).getTime();
 
     const sourceFilePaths = arquivosSelecionados
       .map((a) => a.path)
@@ -268,7 +276,7 @@ export default function Vistorias() {
     try {
       const payload = {
         propertyId: imovelId,
-        contractId,
+        contractId: contratoId,
         inspectedAt: timestampData,
         description: description.trim(),
         reportReference: reportReference.trim() || null,
@@ -335,34 +343,6 @@ export default function Vistorias() {
         destino={imovelIdParam ? `/imoveis/${imovelIdParam}` : "/imoveis"}
         texto={imovelIdParam ? "Voltar para Detalhes do Imóvel" : "Voltar para Imóveis"}
       />
-
-      {/* Header Banner */}
-      <div
-        style={{
-          backgroundColor: "#f0fdf4",
-          border: "1px solid #bbf7d0",
-          borderRadius: "8px",
-          padding: "16px 20px",
-          marginBottom: "24px",
-          display: "flex",
-          alignItems: "flex-start",
-          gap: "14px",
-        }}
-      >
-        <ShieldAlert size={26} color="#16a34a" style={{ flexShrink: 0, marginTop: "2px" }} />
-        <div>
-          <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#166534", margin: "0 0 4px" }}>
-            Módulo de Vistorias Obrigatórias (Regra de Negócio RN03)
-          </h2>
-          <p style={{ fontSize: "14px", color: "#15803d", margin: 0, lineHeight: 1.5 }}>
-            A realização de vistorias com upload de fotos e vídeos é obrigatória em dois momentos cruciais:
-            <br />
-            <strong>1. Entrada do locatário:</strong> Obrigatória para liberação das chaves.
-            <br />
-            <strong>2. Saída do locatário:</strong> Obrigatória para encerramento formal do contrato e entrega do imóvel.
-          </p>
-        </div>
-      </div>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #e5e7eb" }}>
@@ -518,18 +498,55 @@ export default function Vistorias() {
                 </option>
                 {contratos.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.reference || `CTR-${c.id.substring(0, 6)}`} | Locatário: {c.locatario} ({c.status})
+                    {c.codigo || c.reference || `CTR-${c.id.substring(0, 6)}`} | Locatário: {c.locatario} ({c.status})
                   </option>
                 ))}
               </select>
+              {imovelId && contratos.length === 0 && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    padding: "10px 12px",
+                    backgroundColor: "#fffbeb",
+                    border: "1px solid #fde68a",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    color: "#92400e",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <span>
+                    <strong>Atenção:</strong> Este imóvel não possui locação/contrato ativo registrado. O dossiê de documentos armazena os arquivos pessoais do locatário, mas para habilitar a vistoria é necessário formalizar a locação associando o locatário ao imóvel.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/imoveis/${imovelId}`)}
+                    style={{
+                      alignSelf: "flex-start",
+                      background: "#d97706",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "4px",
+                      padding: "5px 12px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Ir para Visão Geral do Imóvel para Associar Locatário &rarr;
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-            {/* Tipo de Vistoria (Momento RN03) */}
+            {/* Tipo de Vistoria */}
             <div>
               <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
-                Tipo de Vistoria (RN03) *
+                Tipo de Vistoria *
               </label>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button
@@ -578,7 +595,7 @@ export default function Vistorias() {
                 type="date"
                 value={inspectedAt}
                 onChange={(e) => setInspectedAt(e.target.value)}
-                max={new Date().toISOString().split("T")[0]}
+                max={new Date().toLocaleDateString("en-CA")}
                 required
                 style={{
                   width: "100%",
@@ -695,7 +712,7 @@ export default function Vistorias() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          removerArquivo(idx);
+                          excluirArquivo(idx);
                         }}
                         style={{
                           position: "absolute",
@@ -713,7 +730,7 @@ export default function Vistorias() {
                           cursor: "pointer",
                           zIndex: 2,
                         }}
-                        title="Remover anexo"
+                        title="Excluir anexo"
                       >
                         <X size={14} />
                       </button>
