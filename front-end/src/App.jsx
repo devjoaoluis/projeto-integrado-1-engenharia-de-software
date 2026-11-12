@@ -21,27 +21,19 @@ export default function App() {
         <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
         <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
 
-        {/* Módulo de Locatários + Visão Geral  */}
+        {/* Módulo de Locatários + Visão Geral */}
         <Route path="/locatarios" element={<Locatarios />} />
         <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
 
-        {/* Módulo de Vistoria*/}
+        {/* Módulo de Vistoria */}
         <Route path="/vistorias" element={<Vistorias />} />
         <Route path="/vistorias/:id" element={<VisaoGeralVistoria />} />
 
-            <Route element={<AppLayout />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/imoveis" element={<Imoveis />} />
-                <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
-                <Route path="/contratos" element={<div>Contratos</div>} />
-                <Route path="/pagamentos" element={<div>Pagamentos</div>} />
-                <Route path="/visitas" element={<div>Visitas</div>} />
-                <Route path="/vistorias" element={<div>Vistorias</div>} />
-                <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
-                <Route path="/locatarios" element={<Locatarios />} />  
-                {/* Adicione esta linha abaixo para abrir o Dossiê de Documentos do Locatário */}
-                <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
-            </Route>
+        {/* Placeholders */}
+        <Route path="/contratos" element={<div>Contratos</div>} />
+        <Route path="/pagamentos" element={<div>Pagamentos</div>} />
+        <Route path="/visitas" element={<div>Visitas</div>} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
