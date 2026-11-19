@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 
 export const AgendamentoVisitas = () => {
+  const navigate = useNavigate();
   const [visitas, setVisitas] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [imoveis, setImoveis] = useState([]);
@@ -218,7 +220,8 @@ export const AgendamentoVisitas = () => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "16px" }}>
         <div>
           <button 
-            onClick={() => window.history.back()} 
+            type="button"
+            onClick={() => navigate("/imoveis")} 
             style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: "14px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px", padding: 0, marginBottom: "8px" }}
           >
             &larr; Voltar para Imóveis

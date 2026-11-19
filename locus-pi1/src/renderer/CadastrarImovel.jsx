@@ -328,7 +328,7 @@ function CadastrarImovel() {
                             required
                         />
                         <Campo
-                            label="Valor IPTU"
+                            label="Valor do IPTU (R$)"
                             name="valorIptu"
                             type="number"
                             min="0"
@@ -337,7 +337,7 @@ function CadastrarImovel() {
                             onChange={mudar}
                         />
                         <Campo
-                            label="Número de quartos"
+                            label="Quartos"
                             name="quartos"
                             type="number"
                             min="0"
@@ -387,16 +387,16 @@ function CadastrarImovel() {
                             onChange={mudar}
                         />
                         <Campo
-                            label="Situação Fiscal"
+                            label="Situação fiscal"
                             name="situacaoFiscal"
                             opcoes={SITUACOES_FISCAIS}
                             value={dados.situacaoFiscal}
                             onChange={mudar}
                         />
 
-                        <Campo label="nº" name="numero" value={dados.numero} onChange={mudar} required />
+                        <Campo label="Número" name="numero" value={dados.numero} onChange={mudar} required />
                         <Campo
-                            label="Situação Saneamento"
+                            label="Situação de saneamento"
                             name="situacaoSaneamento"
                             opcoes={SITUACOES_SANEAMENTO}
                             value={dados.situacaoSaneamento}
