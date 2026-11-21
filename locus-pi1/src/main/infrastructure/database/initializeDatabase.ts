@@ -95,6 +95,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
     }
   }
   await client.executeMultiple(propertyHistoryTables);
+  const contractTableInfo = await client.execute("PRAGMA table_info(property_contracts)");
+  const contractColumns = contractTableInfo.rows.map((row) => row.name);
+  if (!contractColumns.includes("notes")) {
+    await client.execute("ALTER TABLE property_contracts ADD COLUMN notes TEXT");
+  }
   await initializeContacts(client);
   await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);
