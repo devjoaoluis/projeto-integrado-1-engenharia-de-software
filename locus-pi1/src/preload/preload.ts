@@ -141,6 +141,10 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("rentals:release-keys", id),
     getTerminationSummary: (id: string) =>
       ipcRenderer.invoke("rentals:get-termination-summary", id),
+    terminate: (
+      data: import("../main/application/use-cases/TerminateRental").TerminateRentalDTO | string
+    ) =>
+      ipcRenderer.invoke("rentals:terminate", data),
     cancel: (
       id: string,
       options?: import("../main/application/use-cases/CancelRental").CancelRentalOptions
@@ -218,6 +222,15 @@ contextBridge.exposeInMainWorld("api", {
 
     delete: (id: string) =>
       ipcRenderer.invoke("clients:delete", id),
+
+    terminateContract: (data: { clientId: string; notes?: string; hasDebts?: boolean }) =>
+      ipcRenderer.invoke("clients:terminate-contract", data),
+  },
+
+  payments: {
+    list: () => ipcRenderer.invoke("payments:list"),
+    getByTenant: (tenantId: string) =>
+      ipcRenderer.invoke("payments:get-by-tenant", tenantId),
   },
 
   visits: {

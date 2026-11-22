@@ -11,6 +11,7 @@ export interface PropertyContract {
   startDate: number;
   endDate: number | null;
   status: "ACTIVE" | "ENDED" | "CANCELLED";
+  notes?: string | null;
   createdAt: number;
 }
 

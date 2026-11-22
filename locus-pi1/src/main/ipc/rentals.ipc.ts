@@ -11,6 +11,8 @@ import { DrizzleInspectionRepository } from "../infrastructure/repositories/Driz
 import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
 import { CancelRental, CancelRentalOptions } from "../application/use-cases/CancelRental";
 import { GetRentalTerminationSummary } from "../application/use-cases/GetRentalTerminationSummary";
+import { TerminateRental, TerminateRentalDTO } from "../application/use-cases/TerminateRental";
+import { ListPayments } from "../application/use-cases/ListPayments";
 
 export function registerRentalsIpc() {
   const rentalRepo = new DrizzleRentalRepository();
@@ -26,6 +28,8 @@ export function registerRentalsIpc() {
   const releaseKeys = new ReleaseRentalKeys(rentalRepo, inspectionRepo, historyRepo);
   const cancelRental = new CancelRental(rentalRepo, inspectionRepo, historyRepo);
   const getTerminationSummary = new GetRentalTerminationSummary(rentalRepo, historyRepo, inspectionRepo, clientRepo, propertyRepo);
+  const terminateRental = new TerminateRental(rentalRepo, inspectionRepo, historyRepo, clientRepo, propertyRepo);
+  const listPayments = new ListPayments(rentalRepo, historyRepo, clientRepo, propertyRepo);
 
   ipcMain.handle("rentals:create", async (_, data: CreateRentalDTO) => createRental.execute(data));
   ipcMain.handle("rentals:get", async (_, id: string) => getRental.execute(id));
@@ -33,8 +37,12 @@ export function registerRentalsIpc() {
   ipcMain.handle("rentals:update-prerequisites", async (_, data: UpdateRentalPrerequisitesDTO) => updatePrerequisites.execute(data));
   ipcMain.handle("rentals:release-keys", async (_, id: string) => releaseKeys.execute(id));
   ipcMain.handle("rentals:get-termination-summary", async (_, id: string) => getTerminationSummary.execute(id));
+  ipcMain.handle("rentals:terminate", async (_, data: TerminateRentalDTO | string) => terminateRental.execute(data));
   ipcMain.handle("rentals:cancel", async (_, id: string, options?: CancelRentalOptions) => {
-    await cancelRental.execute(id, options);
+    await terminateRental.execute({ rentalId: id, ...options });
     return { success: true };
   });
+
+  ipcMain.handle("payments:list", async () => listPayments.execute());
+  ipcMain.handle("payments:get-by-tenant", async (_, tenantId: string) => listPayments.execute(tenantId));
 }

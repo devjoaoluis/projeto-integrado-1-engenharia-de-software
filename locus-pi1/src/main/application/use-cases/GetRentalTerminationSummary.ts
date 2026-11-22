@@ -64,9 +64,15 @@ export class GetRentalTerminationSummary {
       throw new Error("Rental id is required");
     }
 
-    const rental = await this.rentalRepository.findById(rentalId);
+    let rental = await this.rentalRepository.findById(rentalId);
     if (!rental) {
-      throw new Error(`Rental with id ${rentalId} not found`);
+      const allRentals = await this.rentalRepository.findAll();
+      rental = allRentals.find(
+        (r) => r.tenantId === rentalId && (!r.endDate || r.endDate >= r.startDate)
+      ) ?? null;
+      if (!rental) {
+        throw new Error(`Rental with id ${rentalId} not found`);
+      }
     }
 
     // Busca histórico de contratos e pagamentos vinculados ao imóvel

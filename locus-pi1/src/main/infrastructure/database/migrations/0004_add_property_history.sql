@@ -8,6 +8,7 @@ CREATE TABLE `property_contracts` (
 	`start_date` integer NOT NULL,
 	`end_date` integer,
 	`status` text NOT NULL,
+	`notes` text,
 	`created_at` integer NOT NULL,
 	FOREIGN KEY (`property_id`) REFERENCES `properties`(`id`) ON UPDATE no action ON DELETE restrict,
 	FOREIGN KEY (`tenant_id`) REFERENCES `clients`(`id`) ON UPDATE no action ON DELETE restrict,
