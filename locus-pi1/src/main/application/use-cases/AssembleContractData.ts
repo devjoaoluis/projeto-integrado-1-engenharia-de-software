@@ -3,7 +3,8 @@ import { IClientRepository } from "../../domain/repositories/IClientRepository";
 import { IContactRepository } from "../../domain/repositories/IContactRepository";
 import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IContractTemplateRepository } from "../../domain/repositories/IContractTemplateRepository";
-import { FillContractTemplate } from "./FillContractTemplate";
+import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
+import { FillContractTemplate, formatDate } from "./FillContractTemplate";
 import { DEFAULT_RENTAL_CONTRACT_TEMPLATE, BUILTIN_CONTRACT_TEMPLATES } from "./defaultContractTemplate";
 import { Property } from "../../domain/entities/Property";
 import { Client } from "../../domain/entities/Client";
@@ -15,6 +16,10 @@ export interface AssembleContractDataInput {
   tenantId?: string;
   templateId?: string;
   customTemplateContent?: string;
+  startDate?: number | string | null;
+  endDate?: number | string | null;
+  monthlyRent?: number | null;
+  saveDates?: boolean;
 }
 
 export interface AssembleContractDataResult {
@@ -25,6 +30,36 @@ export interface AssembleContractDataResult {
   tenant: Client | null;
   guarantor: Contact | null;
   rental: Rental | null;
+  effectiveDates: {
+    startDate: number;
+    endDate: number | null;
+    startDateFormatted: string;
+    endDateFormatted: string;
+    prazoMeses: number | null;
+    prazoDias: number | null;
+  };
+}
+
+export function parseContractDate(val: number | string | null | undefined): number | null {
+  if (val === null || val === undefined || val === "") return null;
+  if (typeof val === "number") return isNaN(val) ? null : val;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (!trimmed) return null;
+    // Formato YYYY-MM-DD
+    const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+      return Date.UTC(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), 12, 0, 0);
+    }
+    // Formato DD/MM/YYYY
+    const br = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (br) {
+      return Date.UTC(parseInt(br[3], 10), parseInt(br[2], 10) - 1, parseInt(br[1], 10), 12, 0, 0);
+    }
+    const parsed = new Date(trimmed).getTime();
+    return isNaN(parsed) ? null : parsed;
+  }
+  return null;
 }
 
 export class AssembleContractData {
@@ -37,6 +72,7 @@ export class AssembleContractData {
     private guarantorRepository?: IContactRepository,
     private rentalRepository?: IRentalRepository,
     private templateRepository?: IContractTemplateRepository,
+    private historyRepository?: IPropertyHistoryRepository,
   ) {}
 
   async execute(input: AssembleContractDataInput): Promise<AssembleContractDataResult> {
@@ -76,6 +112,41 @@ export class AssembleContractData {
       tenant = await this.clientRepository.findById(resolvedTenantId);
       if (tenant?.guarantorId && this.guarantorRepository) {
         guarantor = await this.guarantorRepository.findById(tenant.guarantorId);
+      }
+    }
+
+    // Resolver datas de vigência (permitindo override pelo formulário)
+    let resolvedStartDate: number = rental?.startDate ?? Date.now();
+    if (input.startDate !== undefined) {
+      const parsedStart = parseContractDate(input.startDate);
+      if (parsedStart !== null) {
+        resolvedStartDate = parsedStart;
+      }
+    }
+
+    let resolvedEndDate: number | null = rental?.endDate ?? null;
+    if (input.endDate !== undefined) {
+      resolvedEndDate = parseContractDate(input.endDate);
+    }
+
+    // Validação de consistência temporal
+    if (resolvedEndDate !== null && resolvedEndDate <= resolvedStartDate) {
+      throw new Error("A data de término do contrato deve ser posterior à data de início.");
+    }
+
+    // Se solicitado salvar datas e houver historyRepository
+    if (input.saveDates && this.historyRepository && property.id) {
+      const history = await this.historyRepository.findByPropertyId(property.id);
+      const activeContract = history.contracts.find((c) =>
+        (rental ? c.rentalId === rental.id : false) ||
+        (resolvedTenantId ? c.tenantId === resolvedTenantId : false) ||
+        c.status === "ACTIVE"
+      );
+      if (activeContract && typeof this.historyRepository.updateContractDates === "function") {
+        await this.historyRepository.updateContractDates(activeContract.id, {
+          startDate: resolvedStartDate,
+          endDate: resolvedEndDate,
+        });
       }
     }
 
@@ -121,26 +192,28 @@ export class AssembleContractData {
           email: null,
         };
 
+    const monthlyRent = input.monthlyRent ?? (rental ? rental.monthlyRent : property.price);
+
     const fillResult = this.fillTemplate.execute({
       templateContent,
       property,
       owner,
       tenant: tenantData,
       guarantor,
-      rental: rental
-        ? {
-            monthlyRent: rental.monthlyRent,
-            startDate: rental.startDate,
-            endDate: rental.endDate,
-            dueDay: rental.dueDay,
-          }
-        : {
-            monthlyRent: property.price,
-            startDate: Date.now(),
-            endDate: null,
-            dueDay: 10,
-          },
+      rental: {
+        monthlyRent,
+        startDate: resolvedStartDate,
+        endDate: resolvedEndDate,
+        dueDay: rental ? rental.dueDay : 10,
+      },
     });
+
+    let prazoMeses: number | null = null;
+    let prazoDias: number | null = null;
+    if (resolvedStartDate && resolvedEndDate && resolvedEndDate > resolvedStartDate) {
+      prazoDias = Math.round((resolvedEndDate - resolvedStartDate) / (1000 * 60 * 60 * 24));
+      prazoMeses = Math.max(1, Math.round(prazoDias / 30));
+    }
 
     return {
       filledContent: fillResult.filledContent,
@@ -150,6 +223,14 @@ export class AssembleContractData {
       tenant,
       guarantor,
       rental,
+      effectiveDates: {
+        startDate: resolvedStartDate,
+        endDate: resolvedEndDate,
+        startDateFormatted: formatDate(resolvedStartDate),
+        endDateFormatted: formatDate(resolvedEndDate),
+        prazoMeses,
+        prazoDias,
+      },
     };
   }
 }
