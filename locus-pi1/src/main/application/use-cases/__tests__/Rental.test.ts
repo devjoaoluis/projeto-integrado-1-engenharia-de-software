@@ -55,7 +55,7 @@ describe("Rental use cases", () => {
     await assert.rejects(create.execute({ ...dto, tenantId: "missing" }), /Client.*not found/);
     assert.equal(repo.rentals.length, 0);
   });
-  for (const status of [PropertyStatus.ALUGADO, PropertyStatus.VENDIDO, PropertyStatus.INATIVO]) {
+  for (const status of [PropertyStatus.ALUGADO]) {
     it(`rejects a primary rental for ${status}`, async () => {
       const { create, dto } = fixture(status);
       await assert.rejects(create.execute(dto), /not available/);

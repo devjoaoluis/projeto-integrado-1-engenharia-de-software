@@ -1,9 +1,6 @@
 export enum PropertyStatus {
-  CADASTRADO = "CADASTRADO",
   DISPONIVEL = "DISPONIVEL",
-  VENDIDO = "VENDIDO",
   ALUGADO = "ALUGADO",
-  INATIVO = "INATIVO",
 }
 
 export interface Property {
