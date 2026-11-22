@@ -173,6 +173,21 @@ contextBridge.exposeInMainWorld("api", {
 
     delete: (id: string) =>
       ipcRenderer.invoke("owners:delete", id),
+
+    getPayoutReport: (
+      params: import("../main/application/use-cases/GetOwnerPayoutReport").GetOwnerPayoutReportInput
+    ) =>
+      ipcRenderer.invoke("owners:get-payout-report", params),
+
+    generatePayoutPdf: (
+      params: import("../main/application/use-cases/GetOwnerPayoutReport").GetOwnerPayoutReportInput
+    ) =>
+      ipcRenderer.invoke("owners:generate-payout-pdf", params),
+
+    exportPayoutPdf: (
+      params: import("../main/ipc/contacts.ipc").ExportOwnerPayoutPdfParams
+    ) =>
+      ipcRenderer.invoke("owners:export-payout-pdf", params),
   },
 
   guarantors: {
@@ -298,5 +313,22 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("overdue:settle-debt", input),
     listNotifications: (filter?: import("../main/domain/repositories/IOverdueNotificationRepository").OverdueNotificationFilter) =>
       ipcRenderer.invoke("overdue:list-notifications", filter),
+  },
+
+  repasses: {
+    getReport: (
+      params: import("../main/application/use-cases/GetOwnerPayoutReport").GetOwnerPayoutReportInput
+    ) =>
+      ipcRenderer.invoke("owners:get-payout-report", params),
+
+    generatePdf: (
+      params: import("../main/application/use-cases/GetOwnerPayoutReport").GetOwnerPayoutReportInput
+    ) =>
+      ipcRenderer.invoke("owners:generate-payout-pdf", params),
+
+    exportPdf: (
+      params: import("../main/ipc/contacts.ipc").ExportOwnerPayoutPdfParams
+    ) =>
+      ipcRenderer.invoke("owners:export-payout-pdf", params),
   },
 });
