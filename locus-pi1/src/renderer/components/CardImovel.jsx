@@ -4,7 +4,24 @@ import Badge from "./Badge";
 
 function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onExcluir }) {
     const [erroImagem, setErroImagem] = useState(false);
-    const corStatus = status === "Disponível" ? "verde" : "vermelho";
+
+    const statusFormatado = {
+        DISPONIVEL: "Disponível",
+        Disponível: "Disponível",
+        ALUGADO: "Alugado",
+        Alugado: "Alugado",
+        CADASTRADO: "Cadastrado",
+        Cadastrado: "Cadastrado",
+        VENDIDO: "Vendido",
+        Vendido: "Vendido",
+        INATIVO: "Inativo",
+        Inativo: "Inativo",
+    }[status] || status || "Disponível";
+
+    const corStatus = 
+        status === "DISPONIVEL" || status === "Disponível" ? "verde" :
+        status === "ALUGADO" || status === "Alugado" ? "vermelho" : "cinza";
+
     const alugado = status === "ALUGADO" || status === "Alugado";
 
     const valorNumerico = Number(valor) || 0;
@@ -140,7 +157,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                     <p className="card-imovel-endereco">{endereco}</p>
 
                     <div className="card-imovel-etiquetas">
-                        <Badge texto={status || "Disponível"} cor={corStatus} />
+                        <Badge texto={statusFormatado} cor={corStatus} />
                         <Badge texto={valorFormatado} />
                         {tipo && <Badge texto={tipo} />}
                     </div>

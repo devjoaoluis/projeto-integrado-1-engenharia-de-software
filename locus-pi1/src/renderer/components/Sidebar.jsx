@@ -42,7 +42,14 @@ export function Sidebar() {
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "20px 12px 12px",
-        minHeight: "100vh",
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        left: 0,
+        flexShrink: 0,
+        boxSizing: "border-box",
+        overflowY: "auto",
+        zIndex: 50,
       }}
     >
       <div>

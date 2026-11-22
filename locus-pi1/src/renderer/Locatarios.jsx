@@ -105,6 +105,21 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
   const verificarPagamentos = async () => {
     try {
       setLoading(true);
+
+      // Prioriza obter o resumo financeiro estruturado via rentals:get-termination-summary se disponível
+      if (window.api && window.api.rentals && typeof window.api.rentals.getTerminationSummary === "function") {
+        try {
+          const summary = await window.api.rentals.getTerminationSummary(locatario.id);
+          if (summary) {
+            setPagamentos(summary.pendingDebts || []);
+            setTemDebitos(Boolean(summary.hasPendingDebts));
+            return;
+          }
+        } catch {
+          // Continua para a verificação em pagamentos
+        }
+      }
+
       const pagamentosRes = window.api && window.api.payments && typeof window.api.payments.list === "function"
         ? await window.api.payments.list()
         : [];
@@ -135,7 +150,16 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
           hasDebts: temDebitos
         });
       } else if (window.api && window.api.rentals && typeof window.api.rentals.terminate === "function") {
-        await window.api.rentals.terminate({ tenantId: locatario.id, notes: motivo });
+        await window.api.rentals.terminate({
+          tenantId: locatario.id,
+          notes: motivo,
+          hasDebts: temDebitos
+        });
+      } else if (window.api && window.api.rentals && typeof window.api.rentals.cancel === "function") {
+        await window.api.rentals.cancel(locatario.id, {
+          notes: motivo,
+          hasDebts: temDebitos
+        });
       } else if (window.api && window.api.rentals && typeof window.api.rentals.update === "function") {
         // Fallback caso utilize atualização direta de aluguel
         const rentalsList = await window.api.rentals.list().catch(() => []);
@@ -152,7 +176,8 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
       }, 1000);
     } catch (error) {
       console.error("Erro ao rescindir contrato:", error);
-      setFeedback({ type: "error", message: "Erro ao processar a rescisão no backend." });
+      const msg = error?.message || "Erro ao processar a rescisão no backend.";
+      setFeedback({ type: "error", message: msg });
     } finally {
       setLoading(false);
     }

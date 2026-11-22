@@ -18,9 +18,9 @@ function AppLayout() {
     const { pathname } = useLocation();
     const titulo = titulos[pathname] ?? (
         pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" :
-        pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
-        pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
-        "Locus"
+            pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
+                pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
+                    "Locus"
     );
 
     return (
@@ -29,13 +29,17 @@ function AppLayout() {
                 {`
                     .layout {
                         display: flex;
-                        min-height: 100vh;
+                        height: 100vh;
+                        overflow: hidden;
                     }
 
                     .principal {
                         flex: 1;
                         display: flex;
                         flex-direction: column;
+                        height: 100vh;
+                        overflow-y: auto;
+                        min-width: 0;
                     }
 
                     .topo {
@@ -45,6 +49,10 @@ function AppLayout() {
                         background-color: #1877f2;
                         color: white;
                         padding: 16px 24px;
+                        position: sticky;
+                        top: 0;
+                        z-index: 10;
+                        flex-shrink: 0;
                     }
 
                     .topo h1 {
@@ -98,7 +106,7 @@ function AppLayout() {
                 <div className="principal">
                     <header className="topo">
                         <div className="topo-identidade">
-                            <span className="topo-marca">Locus</span>
+                            <span className="topo-marca"></span>
                             <h1>{titulo}</h1>
                         </div>
                         <div className="topo-icones">

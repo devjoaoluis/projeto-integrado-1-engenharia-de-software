@@ -32,15 +32,30 @@ export class DrizzleRentalRepository implements IRentalRepository {
   }
 
   async findById(id: string): Promise<Rental | null> {
-    return (await db.select().from(rentals).where(eq(rentals.id, id)).get()) ?? null;
+    const row = (await db.select().from(rentals).where(eq(rentals.id, id)).get()) ?? null;
+    if (!row) return null;
+    const contract = await db.select({ endDate: propertyContracts.endDate }).from(propertyContracts).where(eq(propertyContracts.rentalId, id)).get();
+    return { ...row, endDate: contract?.endDate ?? null };
   }
 
   async findByPropertyId(propertyId: string): Promise<Rental[]> {
-    return db.select().from(rentals).where(eq(rentals.propertyId, propertyId)).all();
+    const rows = await db.select().from(rentals).where(eq(rentals.propertyId, propertyId)).all();
+    if (!rows.length) return [];
+    const contracts = await db.select({ rentalId: propertyContracts.rentalId, endDate: propertyContracts.endDate }).from(propertyContracts).where(eq(propertyContracts.propertyId, propertyId)).all();
+    return rows.map((r) => {
+      const c = contracts.find((c) => c.rentalId === r.id);
+      return { ...r, endDate: c?.endDate ?? null };
+    });
   }
 
   async findAll(): Promise<Rental[]> {
-    return db.select().from(rentals).orderBy(rentals.createdAt).all();
+    const rows = await db.select().from(rentals).orderBy(rentals.createdAt).all();
+    if (!rows.length) return [];
+    const contracts = await db.select({ rentalId: propertyContracts.rentalId, endDate: propertyContracts.endDate }).from(propertyContracts).all();
+    return rows.map((r) => {
+      const c = contracts.find((c) => c.rentalId === r.id);
+      return { ...r, endDate: c?.endDate ?? null };
+    });
   }
 
   async updatePrerequisites(id: string, prerequisites: Pick<Rental, "contractSigned" | "signaturesNotarized" | "initialPaymentsPaid">): Promise<Rental> {
@@ -63,25 +78,33 @@ export class DrizzleRentalRepository implements IRentalRepository {
     });
   }
 
-  async cancel(id: string, cancelledAt: number): Promise<void> {
+  async cancel(id: string, cancelledAt: number, options?: { notes?: string | null; hasDebts?: boolean }): Promise<void> {
     await db.transaction(async (tx) => {
       const rental = await tx.select().from(rentals).where(eq(rentals.id, id)).get();
       if (!rental) throw new Error(`Rental with id ${id} not found`);
       const children = await tx.select({ id: rentals.id }).from(rentals).where(eq(rentals.parentRentalId, id)).limit(1);
       if (children.length) throw new Error("Encerre as sublocações antes de encerrar a locação principal.");
       const contracts = await tx.select().from(propertyContracts).where(eq(propertyContracts.rentalId, id));
+      const notesToSave = options?.notes ?? null;
+      const statusToSet = cancelledAt > rental.startDate ? "ENDED" : "CANCELLED";
+      const endDateToSet = cancelledAt > rental.startDate ? cancelledAt : null;
+
       if (!contracts.length) {
         await tx.insert(propertyContracts).values({
           id: randomUUID(), propertyId: rental.propertyId, tenantId: rental.tenantId, rentalId: null,
           reference: `LOC-${rental.id}`, monthlyRent: rental.monthlyRent, startDate: rental.startDate,
-          endDate: cancelledAt > rental.startDate ? cancelledAt : null,
-          status: cancelledAt > rental.startDate ? "ENDED" : "CANCELLED", createdAt: rental.createdAt,
+          endDate: endDateToSet,
+          status: statusToSet,
+          notes: notesToSave,
+          createdAt: rental.createdAt,
         }).run();
       }
       for (const contract of contracts) {
-        await tx.update(propertyContracts).set({ rentalId: null,
-          status: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? "ENDED" : "CANCELLED") : contract.status,
-          endDate: contract.status === "ACTIVE" ? (cancelledAt > contract.startDate ? cancelledAt : null) : contract.endDate,
+        await tx.update(propertyContracts).set({
+          rentalId: null,
+          status: contract.status === "ACTIVE" ? statusToSet : contract.status,
+          endDate: contract.status === "ACTIVE" ? endDateToSet : contract.endDate,
+          notes: notesToSave ?? contract.notes,
         }).where(eq(propertyContracts.id, contract.id)).run();
       }
       if (rental.parentRentalId === null) {
