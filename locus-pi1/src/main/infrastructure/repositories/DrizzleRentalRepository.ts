@@ -32,15 +32,30 @@ export class DrizzleRentalRepository implements IRentalRepository {
   }
 
   async findById(id: string): Promise<Rental | null> {
-    return (await db.select().from(rentals).where(eq(rentals.id, id)).get()) ?? null;
+    const row = (await db.select().from(rentals).where(eq(rentals.id, id)).get()) ?? null;
+    if (!row) return null;
+    const contract = await db.select({ endDate: propertyContracts.endDate }).from(propertyContracts).where(eq(propertyContracts.rentalId, id)).get();
+    return { ...row, endDate: contract?.endDate ?? null };
   }
 
   async findByPropertyId(propertyId: string): Promise<Rental[]> {
-    return db.select().from(rentals).where(eq(rentals.propertyId, propertyId)).all();
+    const rows = await db.select().from(rentals).where(eq(rentals.propertyId, propertyId)).all();
+    if (!rows.length) return [];
+    const contracts = await db.select({ rentalId: propertyContracts.rentalId, endDate: propertyContracts.endDate }).from(propertyContracts).where(eq(propertyContracts.propertyId, propertyId)).all();
+    return rows.map((r) => {
+      const c = contracts.find((c) => c.rentalId === r.id);
+      return { ...r, endDate: c?.endDate ?? null };
+    });
   }
 
   async findAll(): Promise<Rental[]> {
-    return db.select().from(rentals).orderBy(rentals.createdAt).all();
+    const rows = await db.select().from(rentals).orderBy(rentals.createdAt).all();
+    if (!rows.length) return [];
+    const contracts = await db.select({ rentalId: propertyContracts.rentalId, endDate: propertyContracts.endDate }).from(propertyContracts).all();
+    return rows.map((r) => {
+      const c = contracts.find((c) => c.rentalId === r.id);
+      return { ...r, endDate: c?.endDate ?? null };
+    });
   }
 
   async updatePrerequisites(id: string, prerequisites: Pick<Rental, "contractSigned" | "signaturesNotarized" | "initialPaymentsPaid">): Promise<Rental> {

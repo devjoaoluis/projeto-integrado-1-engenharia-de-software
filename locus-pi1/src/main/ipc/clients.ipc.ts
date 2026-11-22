@@ -1,4 +1,5 @@
 import { GetClientProfile } from "../application/use-cases/GetClientProfile";
+import { GetTenantActiveContract } from "../application/use-cases/GetTenantActiveContract";
 import { DrizzleGuarantorRepository } from "../infrastructure/repositories/DrizzleGuarantorRepository";
 import { ipcMain } from "electron";
 import { CreateClient, CreateClientDTO } from "../application/use-cases/CreateClient";
@@ -29,8 +30,13 @@ export function registerClientsIpc() {
   const updateClient = new UpdateClient(clientRepo, guarantorRepo);
   const deleteClient = new DeleteClient(clientRepo);
   const terminateRental = new TerminateRental(rentalRepo, inspectionRepo, historyRepo, clientRepo, propertyRepo);
+  const getTenantActiveContract = new GetTenantActiveContract(clientRepo, propertyRepo, rentalRepo, historyRepo);
 
   ipcMain.handle("clients:profile", async (_, id: string) => profile.execute(id));
+
+  ipcMain.handle("clients:get-active-contract", async (_, tenantId: string) => {
+    return await getTenantActiveContract.execute(tenantId);
+  });
 
   ipcMain.handle("clients:create", async (_, data: CreateClientDTO) => {
     return await createClient.execute(data);

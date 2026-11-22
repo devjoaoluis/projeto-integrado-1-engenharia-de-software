@@ -18,6 +18,19 @@ export class DrizzlePropertyHistoryRepository implements IPropertyHistoryReposit
     return (await db.select().from(propertyContracts).where(eq(propertyContracts.id, id)).get()) ?? null;
   }
 
+  async findContractsByTenantId(tenantId: string): Promise<PropertyContract[]> {
+    return db.select().from(propertyContracts).where(eq(propertyContracts.tenantId, tenantId)).orderBy(desc(propertyContracts.startDate), desc(propertyContracts.createdAt)).all();
+  }
+
+  async updateContractDates(contractId: string, dates: { startDate?: number; endDate?: number | null }): Promise<PropertyContract> {
+    const updateData: Record<string, any> = {};
+    if (dates.startDate !== undefined) updateData.startDate = dates.startDate;
+    if (dates.endDate !== undefined) updateData.endDate = dates.endDate;
+    const result = await db.update(propertyContracts).set(updateData).where(eq(propertyContracts.id, contractId)).returning().get();
+    if (!result) throw new Error(`Contract with id ${contractId} not found`);
+    return result;
+  }
+
   async createContract(contract: PropertyContract): Promise<PropertyContract> {
     await db.insert(propertyContracts).values(contract);
     return contract;
