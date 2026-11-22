@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("contracts:generate-pdf", params),
     exportPdf: (params: import("../main/ipc/contracts.ipc").ExportContractPdfParams) =>
       ipcRenderer.invoke("contracts:export-pdf", params),
+    updateDates: (params: import("../main/application/use-cases/UpdateContractDates").UpdateContractDatesInput) =>
+      ipcRenderer.invoke("contracts:update-dates", params),
     getDefaultTemplate: () =>
       ipcRenderer.invoke("contracts:get-default-template"),
     getBuiltinTemplates: () =>
@@ -240,6 +242,9 @@ contextBridge.exposeInMainWorld("api", {
 
     terminateContract: (data: { clientId: string; notes?: string; hasDebts?: boolean }) =>
       ipcRenderer.invoke("clients:terminate-contract", data),
+
+    getActiveContract: (tenantId: string) =>
+      ipcRenderer.invoke("clients:get-active-contract", tenantId),
   },
 
   payments: {
