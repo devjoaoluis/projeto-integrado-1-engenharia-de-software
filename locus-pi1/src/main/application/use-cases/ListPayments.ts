@@ -107,6 +107,7 @@ export class ListPayments {
     let currentYear = start.getUTCFullYear();
     let currentMonth = start.getUTCMonth();
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const daysInMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0)).getUTCDate();
       const actualDay = Math.min(dueDay, daysInMonth);

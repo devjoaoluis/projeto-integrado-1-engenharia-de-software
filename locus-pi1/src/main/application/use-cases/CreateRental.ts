@@ -70,7 +70,7 @@ export class CreateRental {
         throw new Error("Invalid parent rental for subletting");
       }
       if (property.status !== PropertyStatus.ALUGADO) throw new Error("Property is not rented");
-    } else if (property.status !== PropertyStatus.CADASTRADO && property.status !== PropertyStatus.DISPONIVEL) {
+    } else if (property.status !== PropertyStatus.DISPONIVEL) {
       throw new Error("Property is not available for rent");
     }
     const now = Date.now();

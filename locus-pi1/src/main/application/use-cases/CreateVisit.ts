@@ -34,6 +34,10 @@ export class CreateVisit {
       throw new Error("ID do cliente é obrigatório.");
     }
 
+    if (dto.status === "CANCELADA") {
+      throw new Error("Não é permitido cadastrar uma nova visita com status 'Cancelada'.");
+    }
+
     // Calcula ou valida o timestamp de agendamento
     let scheduledAt = dto.scheduledAt;
     if (scheduledAt === undefined || scheduledAt === null) {
@@ -51,6 +55,10 @@ export class CreateVisit {
       throw new Error("Timestamp da visita deve ser um valor numérico válido.");
     }
 
+    if (scheduledAt < Date.now()) {
+      throw new Error("Não é permitido agendar visitas em datas ou horários anteriores ao momento atual.");
+    }
+
     // Valida se o imóvel existe
     const property = await this.propertyRepository.findById(dto.propertyId.trim());
     if (!property) {
@@ -61,6 +69,15 @@ export class CreateVisit {
     const client = await this.clientRepository.findById(dto.clientId.trim());
     if (!client) {
       throw new Error(`Cliente com id ${dto.clientId} não encontrado.`);
+    }
+
+    // Valida conflito de horário no mesmo imóvel para visitas agendadas
+    const existingVisits = await this.visitRepository.findAll({
+      propertyId: dto.propertyId.trim(),
+      status: "AGENDADA",
+    });
+    if (existingVisits.some((v) => v.scheduledAt === scheduledAt)) {
+      throw new Error("Já existe uma visita agendada para este imóvel no mesmo horário.");
     }
 
     const now = Date.now();
