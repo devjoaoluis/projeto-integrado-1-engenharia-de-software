@@ -24,10 +24,6 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("contracts:update-dates", params),
     getDefaultTemplate: () =>
       ipcRenderer.invoke("contracts:get-default-template"),
-    getBuiltinTemplates: () =>
-      ipcRenderer.invoke("contracts:get-builtin-templates"),
-    seedBuiltinTemplates: () =>
-      ipcRenderer.invoke("contracts:seed-builtin-templates"),
   },
 
   inspections: {
