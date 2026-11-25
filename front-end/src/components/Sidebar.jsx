@@ -19,6 +19,7 @@ const menuItens = [
   { nome: "Visitas", icone: CalendarDays, to: "/visitas" },
   { nome: "Vistorias", icone: ClipboardCheck, to: "/vistorias" },
   { nome: "Locatários", icone: Users, to: "/locatarios" },
+  { nome: "Contatos", icone: Users, to: "/contatos" },
 ];
 
 export function Sidebar() {
