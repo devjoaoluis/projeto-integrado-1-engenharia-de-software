@@ -3,13 +3,14 @@ import fs from "node:fs/promises";
 import { AssembleContractData, AssembleContractDataInput } from "../application/use-cases/AssembleContractData";
 import { FillContractTemplate, FillContractTemplateInput } from "../application/use-cases/FillContractTemplate";
 import { GenerateContractPdf, GenerateContractPdfInput } from "../application/use-cases/GenerateContractPdf";
-import { DEFAULT_RENTAL_CONTRACT_TEMPLATE, BUILTIN_CONTRACT_TEMPLATES } from "../application/use-cases/defaultContractTemplate";
-import { SeedBuiltinContractTemplates } from "../application/use-cases/SeedBuiltinContractTemplates";
+import { DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "../application/use-cases/defaultContractTemplate";
+import { UpdateContractDates, UpdateContractDatesInput } from "../application/use-cases/UpdateContractDates";
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
 import { DrizzleClientRepository } from "../infrastructure/repositories/DrizzleClientRepository";
 import { DrizzleContactRepository } from "../infrastructure/repositories/DrizzleContactRepository";
 import { DrizzleRentalRepository } from "../infrastructure/repositories/DrizzleRentalRepository";
 import { DrizzleContractTemplateRepository } from "../infrastructure/repositories/DrizzleContractTemplateRepository";
+import { DrizzlePropertyHistoryRepository } from "../infrastructure/repositories/DrizzlePropertyHistoryRepository";
 import { owners, guarantors } from "../infrastructure/database/schema/contacts";
 
 export interface ExportContractPdfParams {
@@ -26,6 +27,7 @@ export function registerContractsIpc() {
   const guarantorRepo = new DrizzleContactRepository(guarantors);
   const rentalRepo = new DrizzleRentalRepository();
   const templateRepo = new DrizzleContractTemplateRepository();
+  const historyRepo = new DrizzlePropertyHistoryRepository();
 
   const assembleData = new AssembleContractData(
     propertyRepo,
@@ -33,13 +35,19 @@ export function registerContractsIpc() {
     ownerRepo,
     guarantorRepo,
     rentalRepo,
-    templateRepo
+    templateRepo,
+    historyRepo
   );
   const fillTemplate = new FillContractTemplate();
   const generatePdf = new GenerateContractPdf();
+  const updateContractDates = new UpdateContractDates(historyRepo, rentalRepo);
 
   ipcMain.handle("contracts:assemble-data", async (_, input: AssembleContractDataInput) => {
     return assembleData.execute(input);
+  });
+
+  ipcMain.handle("contracts:update-dates", async (_, input: UpdateContractDatesInput) => {
+    return updateContractDates.execute(input);
   });
 
   ipcMain.handle("contracts:fill-template", async (_, input: FillContractTemplateInput) => {
@@ -82,15 +90,5 @@ export function registerContractsIpc() {
 
   ipcMain.handle("contracts:get-default-template", async () => {
     return DEFAULT_RENTAL_CONTRACT_TEMPLATE;
-  });
-
-  const seedBuiltin = new SeedBuiltinContractTemplates(templateRepo);
-
-  ipcMain.handle("contracts:get-builtin-templates", async () => {
-    return BUILTIN_CONTRACT_TEMPLATES;
-  });
-
-  ipcMain.handle("contracts:seed-builtin-templates", async () => {
-    return seedBuiltin.execute();
   });
 }

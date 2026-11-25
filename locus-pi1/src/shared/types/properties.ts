@@ -1,10 +1,7 @@
 // Shared types between main and renderer processes
 export enum PropertyStatus {
-  CADASTRADO = "CADASTRADO",
   DISPONIVEL = "DISPONIVEL",
-  VENDIDO = "VENDIDO",
   ALUGADO = "ALUGADO",
-  INATIVO = "INATIVO",
 }
 
 export interface PropertyListItem {

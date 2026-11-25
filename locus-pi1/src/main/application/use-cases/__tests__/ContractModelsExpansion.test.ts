@@ -2,14 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { FillContractTemplate } from "../FillContractTemplate";
 import { AssembleContractData } from "../AssembleContractData";
-import { SeedBuiltinContractTemplates } from "../SeedBuiltinContractTemplates";
-import {
-  BUILTIN_CONTRACT_TEMPLATES,
-  DEFAULT_RENTAL_CONTRACT_TEMPLATE,
-  RESIDENTIAL_GUARANTOR_CONTRACT_TEMPLATE,
-  COMMERCIAL_CONTRACT_TEMPLATE,
-  SEASONAL_CONTRACT_TEMPLATE,
-} from "../defaultContractTemplate";
+import { DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "../defaultContractTemplate";
 import { ContractTemplate } from "../../../domain/entities/ContractTemplate";
 import { IContractTemplateRepository } from "../../../domain/repositories/IContractTemplateRepository";
 import { IPropertyRepository } from "../../../domain/repositories/IPropertyRepository";
@@ -64,7 +57,7 @@ class MockRentalRepo implements Partial<IRentalRepository> {
   }
 }
 
-describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fiador, Temporada)", () => {
+describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial, etc.)", () => {
   const fillTemplate = new FillContractTemplate();
 
   const mockProperty = {
@@ -75,7 +68,7 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
     bedrooms: null as number | null,
     price: 4500,
     iptu: 350,
-    description: "Excelente sala comercial com ar condicionado e recepção.",
+    description: "Excelente sala comercial com recepção.",
   };
 
   const mockOwner = {
@@ -101,67 +94,15 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
 
   const mockRental = {
     monthlyRent: 4500,
-    startDate: new Date("2026-03-01T00:00:00Z").getTime(),
-    endDate: new Date("2027-02-28T23:59:59Z").getTime(),
+    startDate: new Date("2026-03-01T12:00:00Z").getTime(),
+    endDate: new Date("2027-02-28T12:00:00Z").getTime(),
     dueDay: 5,
   };
 
-  describe("Disponibilidade dos Novos Textos-Base (Modelos)", () => {
-    it("disponibiliza 4 modelos nativos no catálogo de modelos integrados", () => {
-      assert.equal(BUILTIN_CONTRACT_TEMPLATES.length, 4);
-
-      const categories = BUILTIN_CONTRACT_TEMPLATES.map((t) => t.category);
-      assert.ok(categories.includes("RESIDENCIAL"));
-      assert.ok(categories.includes("RESIDENCIAL_FIADOR"));
-      assert.ok(categories.includes("COMERCIAL"));
-      assert.ok(categories.includes("TEMPORADA"));
-    });
-
-    it("possui textos-base válidos e não vazios para cada modelo", () => {
-      assert.ok(DEFAULT_RENTAL_CONTRACT_TEMPLATE.length > 500);
-      assert.ok(RESIDENTIAL_GUARANTOR_CONTRACT_TEMPLATE.length > 500);
-      assert.ok(COMMERCIAL_CONTRACT_TEMPLATE.length > 500);
-      assert.ok(SEASONAL_CONTRACT_TEMPLATE.length > 500);
-    });
-  });
-
-  describe("Preenchimento Automático de Variáveis nos Novos Modelos", () => {
-    it("preenche corretamente o modelo Residencial com Fiador sem lacunas pendentes", () => {
+  describe("Critério de Aceitação: Preenchimento de variáveis automáticas nos modelos", () => {
+    it("preenche corretamente o modelo padrão do sistema sem lacunas pendentes", () => {
       const result = fillTemplate.execute({
-        templateContent: RESIDENTIAL_GUARANTOR_CONTRACT_TEMPLATE,
-        property: {
-          ...mockProperty,
-          title: "Apartamento Jardins",
-          address: "Rua Oscar Freire, 500",
-          neighborhood: "Jardins",
-          type: "Residencial",
-          bedrooms: 3,
-        },
-        owner: mockOwner,
-        tenant: mockTenant,
-        guarantor: mockGuarantor,
-        rental: mockRental,
-        currentDate: new Date("2026-03-01T12:00:00Z"),
-      });
-
-      // Valida que dados essenciais foram substituídos
-      assert.ok(result.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
-      assert.ok(result.filledContent.includes("12.345.678/0001-99"));
-      assert.ok(result.filledContent.includes("Tech Solutions Informática ME"));
-      assert.ok(result.filledContent.includes("Roberto de Oliveira Fiador"));
-      assert.ok(result.filledContent.includes("111.222.333-44"));
-      assert.ok(result.filledContent.includes("Rua Oscar Freire, 500"));
-      assert.ok(result.filledContent.includes("4.500,00"));
-      assert.ok(result.filledContent.includes("dia 5"));
-
-      // Assegura que nenhuma tag {{...}} ficou sem substituição
-      const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
-      assert.equal(unreplaced, null, `Tags não substituídas encontradas: ${unreplaced?.join(", ")}`);
-    });
-
-    it("preenche corretamente o modelo Comercial sem lacunas pendentes", () => {
-      const result = fillTemplate.execute({
-        templateContent: COMMERCIAL_CONTRACT_TEMPLATE,
+        templateContent: DEFAULT_RENTAL_CONTRACT_TEMPLATE,
         property: mockProperty,
         owner: mockOwner,
         tenant: mockTenant,
@@ -169,62 +110,142 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
         currentDate: new Date("2026-03-01T12:00:00Z"),
       });
 
-      assert.ok(result.filledContent.includes("CONTRATO DE LOCAÇÃO DE IMÓVEL NÃO RESIDENCIAL (COMERCIAL)"));
+      assert.ok(result.filledContent.includes("CONTRATO DE LOCAÇÃO DE IMÓVEL RESIDENCIAL"));
       assert.ok(result.filledContent.includes("Av. Paulista, 1000, Sala 501"));
-      assert.ok(result.filledContent.includes("Bela Vista"));
+      assert.ok(result.filledContent.includes("4.500,00"));
       assert.ok(result.filledContent.includes("Tech Solutions Informática ME"));
       assert.ok(result.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
-      assert.ok(result.filledContent.includes("4.500,00"));
-      assert.ok(result.filledContent.includes("alvarás"));
 
-      // Assegura que nenhuma tag {{...}} ficou sem substituição
       const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
       assert.equal(unreplaced, null, `Tags não substituídas encontradas: ${unreplaced?.join(", ")}`);
     });
 
-    it("preenche corretamente o modelo de Temporada sem lacunas pendentes", () => {
-      const seasonalRental = {
-        monthlyRent: 3500,
-        startDate: new Date("2026-12-20T00:00:00Z").getTime(),
-        endDate: new Date("2027-01-20T23:59:59Z").getTime(),
-        dueDay: 20,
-      };
+    it("preenche todas as variáveis automáticas (nome, CPF, valor, datas, endereço) em modelo de locação comercial", () => {
+      const clientCommercialModel = [
+        "CONTRATO DE LOCAÇÃO NÃO RESIDENCIAL / COMERCIAL",
+        "Locador: {{proprietario.nome}} | Documento: {{proprietario.cpf}}",
+        "Locatário: {{locatario.nome}} | Documento: {{locatario.cpf}}",
+        "Imóvel locado: {{imovel.endereco}} - {{imovel.bairro}}",
+        "Tipo: {{imovel.tipo}} | Descrição: {{imovel.descricao}}",
+        "Valor do Aluguel: {{aluguel.valor}} com vencimento todo dia {{aluguel.vencimento}}",
+        "IPTU estimado: {{imovel.iptu}}",
+        "Vigência contratual: de {{aluguel.inicio}} a {{aluguel.fim}}",
+        "Data de assinatura: {{data_atual}}",
+      ].join("\n");
 
       const result = fillTemplate.execute({
-        templateContent: SEASONAL_CONTRACT_TEMPLATE,
-        property: {
-          title: "Casa de Praia",
-          address: "Av. Beira Mar, 100",
-          neighborhood: "Praia Grande",
-          type: "Casa",
-          bedrooms: 4,
-          price: 3500,
-          iptu: 200,
-          description: "Casa mobiliada com piscina, churrasqueira e 4 suítes.",
-        },
+        templateContent: clientCommercialModel,
+        property: mockProperty,
         owner: mockOwner,
         tenant: mockTenant,
-        rental: seasonalRental,
-        currentDate: new Date("2026-12-15T12:00:00Z"),
+        rental: mockRental,
+        currentDate: new Date("2026-03-01T12:00:00Z"),
       });
 
-      assert.ok(result.filledContent.includes("CONTRATO DE LOCAÇÃO DE IMÓVEL POR TEMPORADA"));
-      assert.ok(result.filledContent.includes("Av. Beira Mar, 100"));
-      assert.ok(result.filledContent.includes("3.500,00"));
-      assert.ok(result.filledContent.includes("Casa mobiliada com piscina"));
-      assert.ok(result.filledContent.includes("90 (noventa) dias"));
+      // Validação das variáveis solicitadas no critério de aceitação
+      // Nome e CPF
+      assert.ok(result.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
+      assert.ok(result.filledContent.includes("12.345.678/0001-99"));
+      assert.ok(result.filledContent.includes("Tech Solutions Informática ME"));
+      assert.ok(result.filledContent.includes("98.765.432/0001-11"));
+
+      // Endereço
+      assert.ok(result.filledContent.includes("Av. Paulista, 1000, Sala 501"));
+      assert.ok(result.filledContent.includes("Bela Vista"));
+
+      // Valor
+      assert.ok(result.filledContent.includes("4.500,00"));
+
+      // Datas
+      assert.ok(result.filledContent.includes("01/03/2026"));
+      assert.ok(result.filledContent.includes("dia 5"));
+
+      // Nenhuma lacuna pendente
+      const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
+      assert.equal(unreplaced, null, `Tags não substituídas encontradas: ${unreplaced?.join(", ")}`);
+    });
+
+    it("preenche variáveis automáticas incluindo garantia fidejussória (fiador) em modelo residencial", () => {
+      const clientGuarantorModel = [
+        "CONTRATO COM GARANTIA FIDEJUSSÓRIA",
+        "Locador: {{locador.nome}} (CPF: {{locador.cpf}})",
+        "Locatário: {{locatario.nome}} (CPF: {{locatario.cpf}})",
+        "Fiador: {{fiador.nome}} (CPF: {{fiador.cpf}}, Tel: {{fiador.telefone}})",
+        "Endereço: {{imovel.endereco}}, {{imovel.bairro}}",
+        "Aluguel: {{aluguel.valor}} - Vencimento: dia {{aluguel.vencimento}}",
+        "Período: {{aluguel.inicio}} até {{aluguel.fim}}",
+        "Emitido em: {{data_atual}}",
+      ].join("\n");
+
+      const result = fillTemplate.execute({
+        templateContent: clientGuarantorModel,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        guarantor: mockGuarantor,
+        rental: mockRental,
+        currentDate: new Date("2026-03-01T12:00:00Z"),
+      });
+
+      assert.ok(result.filledContent.includes("Roberto de Oliveira Fiador"));
+      assert.ok(result.filledContent.includes("111.222.333-44"));
+      assert.ok(result.filledContent.includes("Tech Solutions Informática ME"));
+      assert.ok(result.filledContent.includes("Av. Paulista, 1000, Sala 501"));
+      assert.ok(result.filledContent.includes("4.500,00"));
+
+      const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
+      assert.equal(unreplaced, null, `Tags não substituídas encontradas: ${unreplaced?.join(", ")}`);
+    });
+
+    it("preenche variáveis em formato direto e invertido (nome, CPF, valor, datas, endereço)", () => {
+      const customModel = [
+        "Endereço: {{endereco}}",
+        "Endereço imóvel: {{endereco_imovel}}",
+        "Valor: {{valor}}",
+        "Valor aluguel: {{valor_aluguel}}",
+        "Data: {{data}}",
+        "Data início: {{data_inicio}}",
+        "Data fim: {{data_fim}}",
+        "Nome locatário: {{nome_locatario}}",
+        "CPF locatário: {{cpf_locatario}}",
+        "Nome locador: {{nome_locador}}",
+        "CPF locador: {{cpf_locador}}",
+        "Nome fiador: {{nome_fiador}}",
+        "CPF fiador: {{cpf_fiador}}",
+      ].join("\n");
+
+      const result = fillTemplate.execute({
+        templateContent: customModel,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        guarantor: mockGuarantor,
+        rental: mockRental,
+        currentDate: new Date("2026-03-01T12:00:00Z"),
+      });
+
+      assert.ok(result.filledContent.includes("Endereço: Av. Paulista, 1000, Sala 501"));
+      assert.ok(result.filledContent.includes("Endereço imóvel: Av. Paulista, 1000, Sala 501"));
+      assert.ok(result.filledContent.includes("Valor: ") && result.filledContent.includes("4.500,00"));
+      assert.ok(result.filledContent.includes("Valor aluguel: ") && result.filledContent.includes("4.500,00"));
+      assert.ok(result.filledContent.includes("Nome locatário: Tech Solutions Informática ME"));
+      assert.ok(result.filledContent.includes("CPF locatário: 98.765.432/0001-11"));
+      assert.ok(result.filledContent.includes("Nome locador: Empreendimentos Imobiliários Silva Ltda"));
+      assert.ok(result.filledContent.includes("CPF locador: 12.345.678/0001-99"));
+      assert.ok(result.filledContent.includes("Nome fiador: Roberto de Oliveira Fiador"));
+      assert.ok(result.filledContent.includes("CPF fiador: 111.222.333-44"));
 
       const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
       assert.equal(unreplaced, null, `Tags não substituídas encontradas: ${unreplaced?.join(", ")}`);
     });
   });
 
-  describe("Integração com AssembleContractData", () => {
-    it("resolve e preenche o modelo comercial usando templateId builtin-comercial", async () => {
+  describe("Integração com AssembleContractData e Repositório de Modelos", () => {
+    it("busca modelo cadastrado pelo cliente no repositório e preenche as variáveis", async () => {
       const propRepo = new MockPropertyRepo();
       propRepo.props.push({
         id: "prop-com-1",
-        title: "Galpão Industrial",
+        title: "Galpão Comercial",
         address: "Rodovia Anhanguera, km 100",
         neighborhood: "Distrito Industrial",
         bedrooms: 0,
@@ -280,6 +301,14 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
       });
 
       const templateRepo = new MockContractTemplateRepository();
+      // Modelo providenciado/cadastrado pelo cliente no repositório
+      await templateRepo.create({
+        id: "template-comercial-cliente",
+        name: "Contrato de Locação Comercial - Modelo Imobiliária",
+        content: "CONTRATO COMERCIAL\nImóvel: {{imovel.endereco}}\nLocatário: {{locatario.nome}}\nLocador: {{proprietario.nome}}\nValor: {{aluguel.valor}}",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
 
       const assemble = new AssembleContractData(
         propRepo as unknown as IPropertyRepository,
@@ -292,17 +321,17 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
 
       const assembled = await assemble.execute({
         propertyId: "prop-com-1",
-        templateId: "builtin-comercial",
+        templateId: "template-comercial-cliente",
       });
 
-      assert.equal(assembled.templateName, "Contrato de Locação Comercial");
+      assert.equal(assembled.templateName, "Contrato de Locação Comercial - Modelo Imobiliária");
       assert.ok(assembled.filledContent.includes("Rodovia Anhanguera, km 100"));
       assert.ok(assembled.filledContent.includes("Distribuidora Nacional de Bebidas"));
       assert.ok(assembled.filledContent.includes("Logística e Transportes SA"));
       assert.ok(assembled.filledContent.includes("12.000,00"));
     });
 
-    it("resolve e preenche o modelo com fiador vinculando o fiador do cliente", async () => {
+    it("resolve e preenche modelo com fiador associando o fiador registrado para o locatário", async () => {
       const propRepo = new MockPropertyRepo();
       propRepo.props.push({
         id: "prop-fiador-1",
@@ -373,6 +402,13 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
       });
 
       const templateRepo = new MockContractTemplateRepository();
+      await templateRepo.create({
+        id: "template-fiador-cliente",
+        name: "Modelo Residencial com Fiador",
+        content: "CONTRATO COM FIADOR\nFiador: {{fiador.nome}} (CPF: {{fiador.cpf}})\nLocatário: {{locatario.nome}}\nLocador: {{proprietario.nome}}",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
 
       const assemble = new AssembleContractData(
         propRepo as unknown as IPropertyRepository,
@@ -385,31 +421,14 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial com Fi
 
       const assembled = await assemble.execute({
         propertyId: "prop-fiador-1",
-        templateId: "builtin-residencial-fiador",
+        templateId: "template-fiador-cliente",
       });
 
-      assert.equal(assembled.templateName, "Contrato de Locação Residencial com Fiador");
+      assert.equal(assembled.templateName, "Modelo Residencial com Fiador");
       assert.ok(assembled.filledContent.includes("Marcos Paulo Fiador"));
       assert.ok(assembled.filledContent.includes("555.666.777-88"));
       assert.ok(assembled.filledContent.includes("Lucas Inquilino"));
       assert.ok(assembled.filledContent.includes("Ana Beatriz Proprietária"));
-    });
-  });
-
-  describe("Caso de Uso: SeedBuiltinContractTemplates", () => {
-    it("cadastra todos os 4 modelos no repositório de banco de dados e evita duplicidades", async () => {
-      const templateRepo = new MockContractTemplateRepository();
-      const seedUseCase = new SeedBuiltinContractTemplates(templateRepo);
-
-      // Primeiro cadastro
-      const seeded = await seedUseCase.execute();
-      assert.equal(seeded.length, 4);
-      assert.equal((await templateRepo.findAll()).length, 4);
-
-      // Segundo cadastro idempotente
-      const secondSeeded = await seedUseCase.execute();
-      assert.equal(secondSeeded.length, 0);
-      assert.equal((await templateRepo.findAll()).length, 4);
     });
   });
 });

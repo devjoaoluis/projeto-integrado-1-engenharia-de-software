@@ -57,8 +57,8 @@ describe("SearchProperties Use Case", () => {
   it("should return valid search results", async () => {
     const repo = new MockPropertyRepository();
     repo.properties = [
-      { id: "1", title: "Casa Centro", address: "Rua A", neighborhood: "Centro", bedrooms: 3, price: 200000, description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 },
-      { id: "2", title: "Apto Norte", address: "Rua B", neighborhood: "Norte", bedrooms: 2, price: 150000, description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 }
+      { id: "1", title: "Casa Centro", address: "Rua A", neighborhood: "Centro", bedrooms: 3, price: 200000, description: null, status: PropertyStatus.DISPONIVEL, createdAt: 1, updatedAt: 1 },
+      { id: "2", title: "Apto Norte", address: "Rua B", neighborhood: "Norte", bedrooms: 2, price: 150000, description: null, status: PropertyStatus.DISPONIVEL, createdAt: 1, updatedAt: 1 }
     ];
     
     const useCase = new SearchProperties(repo);

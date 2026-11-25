@@ -26,7 +26,7 @@ async function run() {
         neighborhood,
         bedrooms,
         price,
-        status: "CADASTRADO" as const,
+        status: "DISPONIVEL" as const,
         searchNormalized,
         description: null,
         createdAt: Date.now(),
@@ -58,7 +58,7 @@ async function run() {
   console.log(`Found ${result.total} items. Returned ${result.items.length}.`);
   console.log(`Time taken: ${(end - start).toFixed(2)} ms`);
   
-  const explain = await db.run(sql`EXPLAIN QUERY PLAN SELECT * FROM properties WHERE status = 'CADASTRADO' AND neighborhood = 'Centro'`);
+  const explain = await db.run(sql`EXPLAIN QUERY PLAN SELECT * FROM properties WHERE status = 'DISPONIVEL' AND neighborhood = 'Centro'`);
   console.log("EXPLAIN QUERY PLAN:", explain);
 }
 

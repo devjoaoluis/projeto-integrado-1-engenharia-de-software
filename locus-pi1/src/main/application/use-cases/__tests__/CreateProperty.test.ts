@@ -43,7 +43,7 @@ describe("CreateProperty Use Case", () => {
     assert.strictEqual(result.title, "Casa de Teste");
     assert.strictEqual(result.address, "Rua X");
     assert.strictEqual(result.price, 100000);
-    assert.strictEqual(result.status, PropertyStatus.CADASTRADO);
+    assert.strictEqual(result.status, PropertyStatus.DISPONIVEL);
     assert.ok(repo.properties.find(p => p.id === result.id));
   });
 

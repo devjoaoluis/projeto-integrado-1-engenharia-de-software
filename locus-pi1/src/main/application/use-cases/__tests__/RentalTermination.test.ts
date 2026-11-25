@@ -2,6 +2,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import { GetRentalTerminationSummary } from "../GetRentalTerminationSummary";
 import { CancelRental } from "../CancelRental";
+import { TerminateRental } from "../TerminateRental";
+import { ListPayments } from "../ListPayments";
 import { Rental } from "../../../domain/entities/Rental";
 import { PropertyContract, PropertyHistory, PropertyPayment, PropertyInspection, PropertyMaintenance } from "../../../domain/entities/PropertyHistory";
 import { Inspection } from "../../../domain/entities/Inspection";
@@ -13,6 +15,7 @@ import { IPropertyRepository } from "../../../domain/repositories/IPropertyRepos
 
 class MockRentalRepository implements IRentalRepository {
   rentals: Rental[] = [];
+  cancelledCalls: Array<{ id: string; cancelledAt: number; options?: { notes?: string | null; hasDebts?: boolean } }> = [];
 
   async create(rental: Rental) {
     this.rentals.push(rental);
@@ -33,9 +36,10 @@ class MockRentalRepository implements IRentalRepository {
   async releaseKeys(): Promise<Rental> {
     throw new Error("Not implemented");
   }
-  async cancel(id: string, cancelledAt: number) {
+  async cancel(id: string, cancelledAt: number, options?: { notes?: string | null; hasDebts?: boolean }) {
     const rentalIndex = this.rentals.findIndex((r) => r.id === id);
     if (rentalIndex === -1) throw new Error("Rental not found");
+    this.cancelledCalls.push({ id, cancelledAt, options });
     this.rentals.splice(rentalIndex, 1);
   }
 }
@@ -320,5 +324,275 @@ describe("HU-14: Quebra de Contrato e Desassociação com Verificação Financei
     await cancelRental.execute("rental-to-cancel");
 
     assert.equal(await rentalRepo.findById("rental-to-cancel"), null);
+  });
+
+  it("busca resumo financeiro informando tenantId diretamente (integração com a tela de locatários)", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const historyRepo = new MockHistoryRepository();
+
+    const startTimestamp = new Date(Date.UTC(2026, 0, 1)).getTime();
+    await rentalRepo.create({
+      id: "rental-tenant-lookup",
+      propertyId: "prop-direct",
+      tenantId: "tenant-direct-id",
+      monthlyRent: 1200,
+      startDate: startTimestamp,
+      dueDay: 5,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: null,
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    const useCase = new GetRentalTerminationSummary(rentalRepo, historyRepo);
+    const summary = await useCase.execute("tenant-direct-id");
+
+    assert.equal(summary.rentalId, "rental-tenant-lookup");
+    assert.equal(summary.tenantId, "tenant-direct-id");
+    assert.equal(summary.propertyId, "prop-direct");
+  });
+
+  it("TerminateRental encerra contrato, desassocia locatário e registra motivo no histórico", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const historyRepo = new MockHistoryRepository();
+    const clientRepo = {
+      findById: async (id: string) => ({ id, name: "Maria Silva", type: "TENANT" }),
+    } as unknown as IClientRepository;
+    const propertyRepo = {
+      findById: async (id: string) => ({ id, title: "Apartamento Centro" }),
+    } as unknown as IPropertyRepository;
+
+    const startTimestamp = Date.now() - 10000;
+    await rentalRepo.create({
+      id: "rental-terminate-ok",
+      propertyId: "prop-term-1",
+      tenantId: "tenant-term-1",
+      monthlyRent: 1800,
+      startDate: startTimestamp,
+      dueDay: 10,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: null,
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    const terminateRental = new TerminateRental(rentalRepo, undefined, historyRepo, clientRepo, propertyRepo);
+    const result = await terminateRental.execute({
+      rentalId: "rental-terminate-ok",
+      notes: "Locatário adquiriu imóvel próprio",
+      hasDebts: false,
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.rentalId, "rental-terminate-ok");
+    assert.equal(result.propertyId, "prop-term-1");
+    assert.equal(result.tenantId, "tenant-term-1");
+    assert.equal(result.status, "ENDED");
+    assert.equal(result.notes, "Locatário adquiriu imóvel próprio");
+    assert.equal(result.hasDebts, false);
+    assert.equal(result.tenantName, "Maria Silva");
+    assert.equal(result.propertyTitle, "Apartamento Centro");
+
+    // Locatário desassociado (registro removido do rentals)
+    assert.equal(await rentalRepo.findById("rental-terminate-ok"), null);
+    assert.equal(rentalRepo.cancelledCalls.length, 1);
+    assert.equal(rentalRepo.cancelledCalls[0].options?.notes, "Locatário adquiriu imóvel próprio");
+  });
+
+  it("TerminateRental localiza aluguel por tenantId ou clientId quando rentalId não for informado", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const startTimestamp = Date.now() - 5000;
+    await rentalRepo.create({
+      id: "rental-by-tenant",
+      propertyId: "prop-by-tenant",
+      tenantId: "client-123",
+      monthlyRent: 1500,
+      startDate: startTimestamp,
+      dueDay: 15,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: null,
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    const terminateRental = new TerminateRental(rentalRepo);
+    const result = await terminateRental.execute({
+      clientId: "client-123",
+      notes: "Encerramento antecipado consensual",
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.rentalId, "rental-by-tenant");
+    assert.equal(await rentalRepo.findById("rental-by-tenant"), null);
+  });
+
+  it("TerminateRental permite concluir mesmo com débitos alertados registrando no histórico", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const startTimestamp = Date.now() - 10000;
+    await rentalRepo.create({
+      id: "rental-debts",
+      propertyId: "prop-debts",
+      tenantId: "tenant-debts",
+      monthlyRent: 2000,
+      startDate: startTimestamp,
+      dueDay: 5,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: null,
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    const terminateRental = new TerminateRental(rentalRepo);
+    const result = await terminateRental.execute({
+      rentalId: "rental-debts",
+      hasDebts: true,
+      notes: "Acordo de quitação assinado em separado",
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.hasDebts, true);
+    assert.ok(result.notes?.includes("Acordo de quitação"));
+    assert.ok(result.notes?.includes("débitos pendentes registrados"));
+    assert.equal(await rentalRepo.findById("rental-debts"), null);
+  });
+
+  it("TerminateRental rejeita solicitação se não houver locação ativa encontrada", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const terminateRental = new TerminateRental(rentalRepo);
+
+    await assert.rejects(
+      terminateRental.execute({ rentalId: "inexistente" }),
+      /não encontrado ou já encerrado/
+    );
+
+    await assert.rejects(
+      terminateRental.execute({}),
+      /obrigatório para rescisão/
+    );
+  });
+
+  it("TerminateRental exige vistoria de saída se as chaves foram entregues (RN03)", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const inspectionRepo = new MockInspectionRepository();
+    const startTimestamp = Date.now() - 10000;
+    await rentalRepo.create({
+      id: "rental-keys-needed",
+      propertyId: "prop-keys",
+      tenantId: "tenant-keys",
+      monthlyRent: 1000,
+      startDate: startTimestamp,
+      dueDay: 10,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: startTimestamp, // Chaves entregues
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    const terminateRental = new TerminateRental(rentalRepo, inspectionRepo);
+
+    // Sem vistoria de saída: deve rejeitar com RN03
+    await assert.rejects(
+      terminateRental.execute("rental-keys-needed"),
+      /RN03: A vistoria de saída é obrigatória/
+    );
+
+    // Adiciona vistoria de saída
+    inspectionRepo.inspections.push({
+      id: "insp-exit-1",
+      propertyId: "prop-keys",
+      contractId: null,
+      type: "EXIT",
+      inspectedAt: Date.now(),
+      description: "Saída realizada",
+      reportReference: null,
+      createdAt: Date.now(),
+    });
+
+    // Agora deve concluir com sucesso
+    const result = await terminateRental.execute("rental-keys-needed");
+    assert.equal(result.success, true);
+  });
+
+  it("ListPayments calcula e lista pagamentos efetuados e parcelas pendentes com status adequado", async () => {
+    const rentalRepo = new MockRentalRepository();
+    const historyRepo = new MockHistoryRepository();
+
+    const startTimestamp = new Date(Date.UTC(2026, 0, 1)).getTime();
+    await rentalRepo.create({
+      id: "rental-payments-test",
+      propertyId: "prop-p1",
+      tenantId: "tenant-p1",
+      monthlyRent: 1000,
+      startDate: startTimestamp,
+      dueDay: 10,
+      parentRentalId: null,
+      formalConsent: null,
+      contractSigned: true,
+      signaturesNotarized: true,
+      initialPaymentsPaid: true,
+      keysReleasedAt: null,
+      createdAt: startTimestamp,
+      updatedAt: startTimestamp,
+    });
+
+    await historyRepo.createContract({
+      id: "contract-p1",
+      propertyId: "prop-p1",
+      tenantId: "tenant-p1",
+      rentalId: "rental-payments-test",
+      reference: "LOC-p1",
+      monthlyRent: 1000,
+      startDate: startTimestamp,
+      endDate: null,
+      status: "ACTIVE",
+      createdAt: startTimestamp,
+    });
+
+    // 1 pagamento efetuado em Janeiro
+    await historyRepo.createPayment({
+      id: "pay-p1",
+      propertyId: "prop-p1",
+      contractId: "contract-p1",
+      amount: 1000,
+      paidAt: new Date(Date.UTC(2026, 0, 10)).getTime(),
+      description: "Aluguel referente a Janeiro/2026",
+      createdAt: startTimestamp,
+    });
+
+    const listPayments = new ListPayments(rentalRepo, historyRepo);
+    // Consulta em 15 de Fevereiro de 2026 (esperadas Jan e Fev, pago Jan => Fev pendente/atrasado)
+    const febTime = new Date(Date.UTC(2026, 1, 15)).getTime();
+    const payments = await listPayments.execute("tenant-p1", febTime);
+
+    assert.ok(payments.length >= 2);
+    const paid = payments.find((p) => p.status === "PAGO");
+    assert.ok(paid);
+    assert.equal(paid?.amount, 1000);
+    assert.equal(paid?.tenantId, "tenant-p1");
+
+    const pending = payments.find((p) => p.status === "ATRASADO" || p.status === "PENDENTE");
+    assert.ok(pending);
+    assert.equal(pending?.referenceMonth, "02/2026");
+    assert.equal(pending?.amount, 1000);
   });
 });

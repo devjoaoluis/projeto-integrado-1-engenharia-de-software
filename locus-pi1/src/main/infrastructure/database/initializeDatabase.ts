@@ -18,7 +18,7 @@ export async function initializeDatabase(client: Client): Promise<void> {
     bedrooms INTEGER,
     description TEXT,
     price REAL NOT NULL,
-    status TEXT DEFAULT 'CADASTRADO' NOT NULL,
+    status TEXT DEFAULT 'DISPONIVEL' NOT NULL,
     search_normalized TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
@@ -95,6 +95,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
     }
   }
   await client.executeMultiple(propertyHistoryTables);
+  const contractTableInfo = await client.execute("PRAGMA table_info(property_contracts)");
+  const contractColumns = contractTableInfo.rows.map((row) => row.name);
+  if (!contractColumns.includes("notes")) {
+    await client.execute("ALTER TABLE property_contracts ADD COLUMN notes TEXT");
+  }
   await initializeContacts(client);
   await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);
@@ -173,4 +178,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");
   await client.execute("CREATE INDEX IF NOT EXISTS idx_price ON properties (price)");
   await client.execute("CREATE INDEX IF NOT EXISTS idx_bedrooms ON properties (bedrooms)");
+
+  // Migra imóveis legados com status CADASTRADO para DISPONIVEL
+  await client.execute("UPDATE properties SET status = 'DISPONIVEL' WHERE status = 'CADASTRADO'");
 }

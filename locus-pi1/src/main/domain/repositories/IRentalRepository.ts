@@ -8,5 +8,5 @@ export interface IRentalRepository {
   findAll(): Promise<Rental[]>;
   updatePrerequisites(id: string, prerequisites: Pick<Rental, "contractSigned" | "signaturesNotarized" | "initialPaymentsPaid">): Promise<Rental>;
   releaseKeys(id: string, releasedAt: number): Promise<Rental>;
-  cancel?(id: string, cancelledAt: number): Promise<void>;
+  cancel?(id: string, cancelledAt: number, options?: { notes?: string | null; hasDebts?: boolean }): Promise<void>;
 }
