@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, BellRing, X } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
 
 const POR_PAGINA = 5;
 const AZUL = "#2563eb";
 const COLUNAS = "1.8fr 1.2fr 1fr 1fr 80px 240px";
+const CHAVE_ATRASO_MANUAL = "locus_atrasos_manuais";
 
 const formVazio = {
   nome: "",
@@ -14,6 +15,48 @@ const formVazio = {
   email: "",
   status: "Em dia"
 };
+
+function lerMapaAtrasoManual() {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_ATRASO_MANUAL) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function gravarAtrasoManual(id, atrasado) {
+  if (!id) return;
+  const mapa = lerMapaAtrasoManual();
+  if (atrasado) {
+    mapa[String(id)] = true;
+  } else {
+    delete mapa[String(id)];
+  }
+  localStorage.setItem(CHAVE_ATRASO_MANUAL, JSON.stringify(mapa));
+}
+
+function locacaoEstaEmAtraso(aluguel, agora = new Date()) {
+  if (!aluguel) return false;
+  const statusLoc = String(aluguel.status || "").trim().toUpperCase();
+  if (["TERMINATED", "CANCELLED", "CANCELED", "CLOSED", "INACTIVE"].includes(statusLoc)) {
+    return false;
+  }
+
+  if (aluguel.initialPaymentsPaid === false) {
+    return true;
+  }
+
+  const dueDay = Number(aluguel.dueDay);
+  if (!Number.isNaN(dueDay) && dueDay >= 1 && dueDay <= 31) {
+    const startMs = aluguel.startDate ? new Date(aluguel.startDate).getTime() : NaN;
+    const jaIniciou = Number.isNaN(startMs) || startMs <= agora.getTime();
+    if (jaIniciou && agora.getDate() > dueDay && aluguel.initialPaymentsPaid !== true) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function Avatar({ nome }) {
   const iniciais = nome
@@ -142,7 +185,6 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
     try {
       setLoading(true);
 
-      // Tenta executar a rescisão contratual em diferentes endpoints disponíveis no preload/backend
       if (window.api && window.api.clients && typeof window.api.clients.terminateContract === "function") {
         await window.api.clients.terminateContract({
           clientId: locatario.id,
@@ -161,13 +203,15 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
           hasDebts: temDebitos
         });
       } else if (window.api && window.api.rentals && typeof window.api.rentals.update === "function") {
-        // Fallback caso utilize atualização direta de aluguel
         const rentalsList = await window.api.rentals.list().catch(() => []);
         const activeRental = rentalsList.find(r => String(r.tenantId) === String(locatario.id) && (!r.status || r.status === "ACTIVE"));
         if (activeRental) {
           await window.api.rentals.update({ id: activeRental.id, status: "TERMINATED", notes: motivo });
         }
       }
+
+      gravarAtrasoManual(locatario.id, false);
+      window.dispatchEvent(new Event("locus:locatarios-atualizados"));
 
       setFeedback({ type: "success", message: "Contrato encerrado e locatário desassociado com sucesso!" });
       setTimeout(() => {
@@ -283,36 +327,88 @@ export default function Locatarios() {
   const [form, setForm] = useState(formVazio);
   const [editando, setEditando] = useState(null);
   const [locatarioParaRescindir, setLocatarioParaRescindir] = useState(null);
+  const [alertaAberto, setAlertaAberto] = useState(true);
+  const [avisoDisparo, setAvisoDisparo] = useState("");
+  const notificouSessaoRef = useRef(false);
 
   const carregarDados = async () => {
     try {
       setLoading(true);
-      const [dados, alugueis, imoveis] = await Promise.all([
+      const [dados, alugueis, imoveis, pagamentos] = await Promise.all([
         window.api.clients.list(),
         window.api.rentals ? window.api.rentals.list().catch(() => []) : [],
         window.api.properties ? window.api.properties.list().catch(() => []) : [],
+        window.api && window.api.payments && typeof window.api.payments.list === "function"
+          ? window.api.payments.list().catch(() => [])
+          : [],
       ]);
 
       const imovelPorId = {};
       (imoveis || []).forEach((im) => {
-        imovelPorId[im.id] = im.title || im.address || `Imóvel #${im.id.slice(0, 5)}`;
+        imovelPorId[im.id] = im.title || im.address || `Imóvel #${String(im.id).slice(0, 5)}`;
       });
 
+      const agora = new Date();
       const imovelPorCliente = {};
+      const atrasoPorLocacaoCliente = {};
       (alugueis || []).forEach((aluguel) => {
-        if (aluguel.tenantId && aluguel.propertyId && (!aluguel.status || aluguel.status === "ACTIVE")) {
-          imovelPorCliente[aluguel.tenantId] = imovelPorId[aluguel.propertyId] || "Imóvel associado";
+        const idCli = aluguel.tenantId || aluguel.clientId;
+        if (!idCli) return;
+        const chaveCli = String(idCli);
+
+        const statusLoc = String(aluguel.status || "").trim().toUpperCase();
+        if (aluguel.propertyId && !["TERMINATED", "CANCELLED", "CANCELED", "CLOSED"].includes(statusLoc)) {
+          imovelPorCliente[chaveCli] = imovelPorId[aluguel.propertyId] || "Imóvel associado";
+        }
+
+        if (locacaoEstaEmAtraso(aluguel, agora)) {
+          atrasoPorLocacaoCliente[chaveCli] = true;
         }
       });
 
-      const formatados = (dados || []).map((l) => ({
-        ...l,
-        nome: l.name || l.nome,
-        telefone: l.phone || l.telefone,
-        cpf: l.cpfCnpj || l.cpf,
-        imovel: imovelPorCliente[l.id] || l.imovel || l.property || "—",
-        status: l.status || "Em dia"
-      }));
+      const agoraMs = agora.getTime();
+      const atrasosPorCliente = {};
+      (pagamentos || []).forEach((p) => {
+        const st = String(p.status || "").trim().toUpperCase();
+        const rawVenc = p.dueDate ?? p.vencimento ?? p.dueAt;
+        const vencMs = rawVenc ? new Date(rawVenc).getTime() : NaN;
+        const vencidoPendente =
+          ["PENDENTE", "PENDING", "EM_ABERTO"].includes(st) &&
+          !Number.isNaN(vencMs) &&
+          vencMs < agoraMs;
+
+        if (["ATRASADO", "OVERDUE"].includes(st) || vencidoPendente) {
+          const idCli = p.clientId || p.tenantId;
+          if (idCli) {
+            atrasosPorCliente[String(idCli)] = (atrasosPorCliente[String(idCli)] || 0) + 1;
+          }
+        }
+      });
+
+      const mapaManual = lerMapaAtrasoManual();
+
+      const formatados = (dados || []).map((l) => {
+        const atrasadoStatus = ["atrasado", "overdue"].includes(
+          String(l.status || "").trim().toLowerCase()
+        );
+        const temPagamentoAtrasado = (atrasosPorCliente[String(l.id)] || 0) > 0;
+        const temLocacaoAtrasada = Boolean(atrasoPorLocacaoCliente[String(l.id)]);
+        const atrasoManual = Boolean(mapaManual[String(l.id)]);
+        const statusFinal =
+          atrasadoStatus || temPagamentoAtrasado || temLocacaoAtrasada || atrasoManual
+            ? "Atrasado"
+            : (l.status || "Em dia");
+
+        return {
+          ...l,
+          nome: l.name || l.nome,
+          telefone: l.phone || l.telefone,
+          cpf: l.cpfCnpj || l.cpf,
+          imovel: imovelPorCliente[String(l.id)] || l.imovel || l.property || "—",
+          status: statusFinal,
+          qtdPagamentosAtrasados: atrasosPorCliente[String(l.id)] || 0
+        };
+      });
       setLocatarios(formatados);
     } catch (err) {
       console.error("Erro ao carregar locatários:", err);
@@ -324,6 +420,46 @@ export default function Locatarios() {
   useEffect(() => {
     carregarDados();
   }, []);
+
+  const inadimplentes = locatarios.filter((l) => l.status === "Atrasado");
+
+  function dispararAlertaInadimplentes(listaAlvo = inadimplentes, manual = false) {
+    if (!listaAlvo || listaAlvo.length === 0) return;
+
+    const nomes = listaAlvo.map((l) => l.nome).filter(Boolean);
+    const resumoNomes = nomes.slice(0, 3).join(", ") + (nomes.length > 3 ? ` e +${nomes.length - 3}` : "");
+
+    setAlertaAberto(true);
+    setAvisoDisparo(
+      manual
+        ? `Alerta de atraso disparado para ${listaAlvo.length} ${listaAlvo.length === 1 ? "locatário" : "locatários"}: ${resumoNomes}.`
+        : ""
+    );
+
+    if (typeof Notification !== "undefined") {
+      const enviar = () => {
+        new Notification("Alerta de Inadimplência", {
+          body: `${listaAlvo.length} ${listaAlvo.length === 1 ? "locatário em atraso" : "locatários em atraso"}: ${resumoNomes}`,
+          tag: "alerta-inadimplentes",
+        });
+      };
+
+      if (Notification.permission === "granted") {
+        enviar();
+      } else if (Notification.permission === "default" && manual) {
+        Notification.requestPermission().then((perm) => {
+          if (perm === "granted") enviar();
+        });
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!loading && inadimplentes.length > 0 && !notificouSessaoRef.current) {
+      notificouSessaoRef.current = true;
+      dispararAlertaInadimplentes(inadimplentes, false);
+    }
+  }, [loading, inadimplentes.length]);
 
   const filtrados = locatarios.filter((l) => {
     const nome = l.nome || "";
@@ -388,22 +524,32 @@ export default function Locatarios() {
         ? await window.api.clients.update({ id: editando, ...dadosParaEnviar })
         : await window.api.clients.create(dadosParaEnviar);
 
+      const idAlvo = respostaServidor?.id || editando;
+      const atrasoManual = form.status === "Atrasado";
+      gravarAtrasoManual(idAlvo, atrasoManual);
+
+      const anterior = locatarios.find((item) => String(item.id) === String(idAlvo));
       const novoLocatario = {
+        ...anterior,
         ...respostaServidor,
-        nome: respostaServidor.name || respostaServidor.nome,
-        telefone: respostaServidor.phone || respostaServidor.telefone,
-        cpf: respostaServidor.cpfCnpj || respostaServidor.cpf,
-        imovel: respostaServidor.imovel || respostaServidor.property || "—",
-        status: respostaServidor.status || form.status || "Em dia"
+        id: idAlvo,
+        nome: respostaServidor?.name || respostaServidor?.nome || form.nome.trim(),
+        telefone: respostaServidor?.phone || respostaServidor?.telefone || telefoneValor.trim(),
+        cpf: respostaServidor?.cpfCnpj || respostaServidor?.cpf || documentoLimpo,
+        imovel: anterior?.imovel || respostaServidor?.imovel || respostaServidor?.property || "—",
+        status: atrasoManual ? "Atrasado" : (form.status || "Em dia")
       };
 
       setLocatarios((atual) => editando
-        ? atual.map((locatario) => locatario.id === editando ? novoLocatario : locatario)
+        ? atual.map((locatario) => String(locatario.id) === String(idAlvo) ? novoLocatario : locatario)
         : [novoLocatario, ...atual]);
       setForm(formVazio);
       setEditando(null);
       setMostrarForm(false);
       setPagina(1);
+      if (atrasoManual) setAlertaAberto(true);
+
+      window.dispatchEvent(new Event("locus:locatarios-atualizados"));
     } catch (err) {
       console.error("Erro detalhado ao salvar locatário:", err);
       alert("Erro ao salvar o locatário na base de dados. Verifique o console (F12).");
@@ -448,6 +594,100 @@ export default function Locatarios() {
           {mostrarForm ? "← Voltar" : "Novo locatário"}
         </button>
       </div>
+
+      {inadimplentes.length > 0 && alertaAberto && (
+        <div
+          role="alert"
+          style={{
+            backgroundColor: "#fef2f2",
+            border: "1px solid #fecaca",
+            borderLeft: "4px solid #dc2626",
+            borderRadius: "8px",
+            padding: "14px 16px",
+            marginBottom: "20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "12px",
+            color: "#991b1b"
+          }}
+        >
+          <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+            <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: "2px", color: "#dc2626" }} />
+            <div>
+              <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>
+                Alerta de atraso: {inadimplentes.length}{" "}
+                {inadimplentes.length === 1 ? "locatário inadimplente" : "locatários inadimplentes"}
+              </div>
+              <div style={{ fontSize: "13px", color: "#7f1d1d" }}>
+                {inadimplentes.map((l) => `${l.nome} (${l.imovel})`).join(" • ")}
+              </div>
+              {avisoDisparo && (
+                <div style={{ fontSize: "12px", color: "#15803d", fontWeight: "600", marginTop: "6px" }}>
+                  {avisoDisparo}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRascunho((atual) => ({ ...atual, status: "Atrasado" }));
+                    setFiltros((atual) => ({ ...atual, status: "Atrasado" }));
+                    setPagina(1);
+                  }}
+                  style={{
+                    backgroundColor: "#dc2626",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                >
+                  Filtrar atrasados
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispararAlertaInadimplentes(inadimplentes, true)}
+                  style={{
+                    backgroundColor: "#fff",
+                    color: "#991b1b",
+                    border: "1px solid #fca5a5",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px"
+                  }}
+                >
+                  <BellRing size={13} /> Disparar alerta
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setAlertaAberto(false)}
+            aria-label="Fechar alerta de atraso"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#991b1b",
+              cursor: "pointer",
+              padding: "2px",
+              display: "flex"
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {mostrarForm && (
         <form onSubmit={salvar} style={{ background: "#f8fafc", padding: "20px", borderRadius: "8px", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
@@ -579,15 +819,15 @@ export default function Locatarios() {
                     alignItems: "center",
                     padding: "12px 16px",
                     borderRadius: "8px",
-                    backgroundColor: i % 2 === 0 ? "#f8fafc" : "#ffffff",
+                    backgroundColor: l.status === "Atrasado" ? "#fff5f5" : (i % 2 === 0 ? "#f8fafc" : "#ffffff"),
                     fontSize: "14px",
                     color: "#101828",
                     cursor: "pointer",
-                    border: "1px solid transparent",
+                    border: l.status === "Atrasado" ? "1px solid #fecaca" : "1px solid transparent",
                     transition: "border-color 0.2s"
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = "#cbd5e1"}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = "transparent"}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "#f87171" : "#cbd5e1"}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "#fecaca" : "transparent"}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: "500", color: "#2563eb" }}>
                     <Avatar nome={l.nome} />
