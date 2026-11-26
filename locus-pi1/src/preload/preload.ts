@@ -130,6 +130,9 @@ contextBridge.exposeInMainWorld("api", {
     list: () =>
       ipcRenderer.invoke("rentals:list"),
 
+    listContractHistory: () =>
+      ipcRenderer.invoke("rentals:list-contract-history"),
+
     updatePrerequisites: (
       data: import("../main/application/use-cases/UpdateRentalPrerequisites")
         .UpdateRentalPrerequisitesDTO
