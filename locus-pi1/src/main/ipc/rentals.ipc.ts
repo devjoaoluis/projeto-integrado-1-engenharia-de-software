@@ -20,6 +20,9 @@ export function registerRentalsIpc() {
   const clientRepo = new DrizzleClientRepository();
   const inspectionRepo = new DrizzleInspectionRepository();
   const historyRepo = new DrizzlePropertyHistoryRepository();
+  ipcMain.handle("rentals:list-contract-history", async () => {
+  return historyRepo.findAllContracts();
+});
 
   const createRental = new CreateRental(rentalRepo, propertyRepo, clientRepo);
   const getRental = new GetRental(rentalRepo);
