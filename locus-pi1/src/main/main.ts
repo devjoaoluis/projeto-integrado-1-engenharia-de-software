@@ -1,10 +1,34 @@
+import { registerContractTemplatesIpc } from "./ipc/contract-templates.ipc";
+import { registerContractsIpc } from "./ipc/contracts.ipc";
+import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
+import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
+import { registerInspectionsIpc } from "./ipc/inspections.ipc";
+import { registerTenantDocumentsIpc } from "./ipc/tenant-documents.ipc";
+import { registerVisitsIpc } from "./ipc/visits.ipc";
+import { registerOverdueIpc } from "./ipc/overdue.ipc";
+import { registerLateFeeIpc } from "./ipc/late-fee.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-
+import { registerPropertiesIpc } from './ipc/properties.ipc';
+import { registerPropertyMediaIpc } from './ipc/property-media.ipc';
+import { registerAuthIpc } from './ipc/auth.ipc';
+import { registerContactsIpc } from './ipc/contacts.ipc';
+import { registerClientsIpc } from './ipc/clients.ipc';
+import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
+import { registerRentalsIpc } from './ipc/rentals.ipc';
+import { databaseReady } from './infrastructure/database/db';
+import { SeedBuiltinContractTemplates } from './application/use-cases/SeedBuiltinContractTemplates';
+import { DrizzleContractTemplateRepository } from './infrastructure/repositories/DrizzleContractTemplateRepository';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
+}
+
+if (process.env.DOCKER_CONTAINER === 'true' || process.env.NO_SANDBOX === 'true') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
 const createWindow = () => {
@@ -14,6 +38,7 @@ const createWindow = () => {
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
     },
   });
 
@@ -30,20 +55,31 @@ const createWindow = () => {
   mainWindow.webContents.openDevTools();
 };
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
-  createWindow();
+app.on('ready', async () => {
+  await databaseReady;
+  await new SeedBuiltinContractTemplates(new DrizzleContractTemplateRepository()).execute();
   
-  const { registerPropertiesIpc } = require('./ipc/properties.ipc');
-  const { registerPropertyMediaIpc } = require('./ipc/property-media.ipc');
-  const { registerClientsIpc } = require('./ipc/clients.ipc');
-  const { registerLateFeeIpc } = require('./ipc/late-fee.ipc');
   registerPropertiesIpc();
   registerPropertyMediaIpc();
+  registerAuthIpc();
   registerClientsIpc();
+  registerContactsIpc();
+  registerRentalsIpc();
+  registerPropertyOverviewIpc();
+  registerContractTemplatesIpc();
+  registerContractsIpc();
+  registerInspectionsIpc();
+  registerInspectionEntryIpc();
+  registerInspectionExitIpc();
+  registerTenantDocumentsIpc();
+  registerVisitsIpc();
+  registerOverdueIpc();
   registerLateFeeIpc();
+  createWindow();
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

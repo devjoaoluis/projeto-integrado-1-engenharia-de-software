@@ -1,0 +1,184 @@
+import { contractTemplateTables } from "./contractTemplateTables";
+import { initializeInspectionModule } from "./inspectionModuleTables";
+import { initializeContacts } from "./initializeContacts";
+import { propertyHistoryTables } from "./propertyHistoryTables";
+import { tenantDocumentTables } from "./tenantDocumentTables";
+import { propertyVisitTables } from "./propertyVisitTables";
+import { overdueNotificationTables } from "./overdueNotificationTables";
+import { Client } from "@libsql/client";
+
+export async function initializeDatabase(client: Client): Promise<void> {
+  await client.execute("PRAGMA foreign_keys = ON");
+  await client.executeMultiple(`
+  CREATE TABLE IF NOT EXISTS properties (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    address TEXT NOT NULL,
+    neighborhood TEXT,
+    bedrooms INTEGER,
+    description TEXT,
+    price REAL NOT NULL,
+    status TEXT DEFAULT 'DISPONIVEL' NOT NULL,
+    search_normalized TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS property_media (
+    id TEXT PRIMARY KEY NOT NULL,
+    property_id TEXT NOT NULL,
+    type TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (property_id) REFERENCES properties(id) ON UPDATE NO ACTION ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS clients (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    cpf_cnpj TEXT UNIQUE,
+    phone TEXT,
+    email TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+CREATE TABLE IF NOT EXISTS "sessions" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"created_at" integer NOT NULL,
+	"expires_at" integer NOT NULL,
+	FOREIGN KEY ("user_id") REFERENCES "users"("id") ON UPDATE no action ON DELETE cascade
+);
+
+CREATE TABLE IF NOT EXISTS "users" (
+	"id" text PRIMARY KEY NOT NULL,
+	"nome" text NOT NULL,
+	"email" text NOT NULL,
+	"senha_hash" text NOT NULL,
+	"pergunta_seguranca" text,
+	"resposta_hash" text,
+	"criado_em" integer NOT NULL,
+	"atualizado_em" integer NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "users_email_unique" ON "users" ("email");
+CREATE TABLE IF NOT EXISTS rentals (
+  id TEXT PRIMARY KEY NOT NULL,
+  property_id TEXT NOT NULL REFERENCES properties(id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL REFERENCES clients(id) ON DELETE RESTRICT,
+  monthly_rent REAL NOT NULL CHECK (monthly_rent > 0),
+  start_date INTEGER NOT NULL,
+  due_day INTEGER NOT NULL CHECK (due_day BETWEEN 1 AND 31),
+  parent_rental_id TEXT REFERENCES rentals(id) ON DELETE RESTRICT,
+  formal_consent TEXT,
+  contract_signed INTEGER NOT NULL DEFAULT 0 CHECK (contract_signed IN (0, 1)),
+  signatures_notarized INTEGER NOT NULL DEFAULT 0 CHECK (signatures_notarized IN (0, 1)),
+  initial_payments_paid INTEGER NOT NULL DEFAULT 0 CHECK (initial_payments_paid IN (0, 1)),
+  keys_released_at INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  CHECK (parent_rental_id IS NULL OR length(trim(formal_consent)) > 0 AND formal_consent IS NOT NULL),
+  CHECK (keys_released_at IS NULL OR (contract_signed = 1 AND signatures_notarized = 1 AND initial_payments_paid = 1))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_primary_unique ON rentals(property_id) WHERE parent_rental_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(property_id, tenant_id);
+`);
+  // Legacy accounts keep their password and have no recovery question until configured.
+  const userColumns = await client.execute("PRAGMA table_info(users)");
+  const columnNames = new Set(userColumns.rows.map((column) => String(column.name)));
+  for (const column of ["pergunta_seguranca", "resposta_hash"]) {
+    if (!columnNames.has(column)) {
+      await client.execute(`ALTER TABLE users ADD COLUMN ${column} TEXT`);
+    }
+  }
+  await client.executeMultiple(propertyHistoryTables);
+  const contractTableInfo = await client.execute("PRAGMA table_info(property_contracts)");
+  const contractColumns = contractTableInfo.rows.map((row) => row.name);
+  if (!contractColumns.includes("notes")) {
+    await client.execute("ALTER TABLE property_contracts ADD COLUMN notes TEXT");
+  }
+  await initializeContacts(client);
+  await client.executeMultiple(contractTemplateTables);
+  await initializeInspectionModule(client);
+  await client.executeMultiple(tenantDocumentTables);
+  await client.executeMultiple(propertyVisitTables);
+  await client.executeMultiple(overdueNotificationTables);
+
+
+  const tableInfo = await client.execute("PRAGMA table_info(properties)");
+  const columns = tableInfo.rows.map((row) => row.name);
+  
+  if (!columns.includes("neighborhood")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN neighborhood TEXT");
+  }
+  if (!columns.includes("bedrooms")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN bedrooms INTEGER");
+  }
+  if (!columns.includes("search_normalized")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN search_normalized TEXT");
+
+  }
+  if (!columns.includes("iptu")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN iptu REAL");
+  }
+  if (!columns.includes("type")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN type TEXT");
+  }
+  if (!columns.includes("fiscal_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN fiscal_status TEXT");
+  }
+  if (!columns.includes("sanitation_status")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN sanitation_status TEXT");
+  }
+  if (!columns.includes("registration_date")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN registration_date TEXT");
+  }
+  if (!columns.includes("owner_id")) {
+    await client.execute("ALTER TABLE properties ADD COLUMN owner_id TEXT REFERENCES owners(id) ON DELETE RESTRICT");
+  }
+
+  // Repair legacy orphan references without deleting properties or valid owners.
+  await client.execute("UPDATE properties SET owner_id = NULL WHERE owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE owners.id = properties.owner_id)");
+  // Persist a real contract for legacy rental associations as well.
+  await client.executeMultiple(`
+    INSERT INTO property_contracts (id, property_id, tenant_id, rental_id, reference, monthly_rent, start_date, end_date, status, created_at)
+    SELECT 'rental-' || r.id, r.property_id, r.tenant_id, r.id, 'LOC-' || r.id, r.monthly_rent, r.start_date, NULL, 'ACTIVE', r.created_at
+    FROM rentals r WHERE NOT EXISTS (SELECT 1 FROM property_contracts c WHERE c.rental_id = r.id);
+  `);
+
+  // Keep owner references valid on both new and upgraded databases.
+  await client.executeMultiple(`
+    CREATE TRIGGER IF NOT EXISTS properties_owner_insert BEFORE INSERT ON properties
+    WHEN NEW.owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE id = NEW.owner_id)
+    BEGIN SELECT RAISE(ABORT, 'Proprietário não encontrado.'); END;
+    CREATE TRIGGER IF NOT EXISTS properties_owner_update BEFORE UPDATE OF owner_id ON properties
+    WHEN NEW.owner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM owners WHERE id = NEW.owner_id)
+    BEGIN SELECT RAISE(ABORT, 'Proprietário não encontrado.'); END;
+    CREATE TRIGGER IF NOT EXISTS owners_property_delete BEFORE DELETE ON owners
+    WHEN EXISTS (SELECT 1 FROM properties WHERE owner_id = OLD.id)
+    BEGIN SELECT RAISE(ABORT, 'Desvincule o proprietário dos imóveis antes de excluí-lo.'); END;
+  `);
+
+  // Also repair databases where the migration already added the column.
+  const result = await client.execute("SELECT id, title, address, neighborhood FROM properties WHERE search_normalized IS NULL");
+  for (const row of result.rows) {
+    const searchNormalized = `${row.title} ${row.address} ${row.neighborhood || ""}`
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+    await client.execute({
+      sql: "UPDATE properties SET search_normalized = ? WHERE id = ?",
+      args: [searchNormalized, row.id]
+    });
+  }
+
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_price ON properties (price)");
+  await client.execute("CREATE INDEX IF NOT EXISTS idx_bedrooms ON properties (bedrooms)");
+
+  // Migra imóveis legados com status CADASTRADO para DISPONIVEL
+  await client.execute("UPDATE properties SET status = 'DISPONIVEL' WHERE status = 'CADASTRADO'");
+}

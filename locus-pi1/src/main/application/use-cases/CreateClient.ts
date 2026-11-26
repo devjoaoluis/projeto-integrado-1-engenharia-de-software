@@ -1,40 +1,48 @@
+import { IGuarantorRepository } from "../../domain/repositories/IGuarantorRepository";
+import { requiredText, optionalContactDocument, optionalText, optionalEmail } from "./contactValidation";
 import { randomUUID } from "crypto";
-import { Client } from "../../domain/entities/Client";
+import { Client, ClientType } from "../../domain/entities/Client";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 
 export interface CreateClientDTO {
+  type?: ClientType;
+  guarantorId?: string | null;
   name: string;
-  cpfCnpj: string;
-  phone: string;
+  cpfCnpj?: string | null;
+  phone?: string | null;
   email?: string | null;
 }
 
 export class CreateClient {
-  constructor(private clientRepository: IClientRepository) {}
+  constructor(private clientRepository: IClientRepository, private guarantorRepository?: IGuarantorRepository) {}
 
   async execute(dto: CreateClientDTO): Promise<Client> {
-    if (!dto.name || dto.name.trim() === "") {
-      throw new Error("Name is required");
-    }
-    if (!dto.cpfCnpj || dto.cpfCnpj.trim() === "") {
-      throw new Error("CPF/CNPJ is required");
-    }
-    if (!dto.phone || dto.phone.trim() === "") {
-      throw new Error("Phone is required");
+    if (!dto) throw new Error("Client data is required");
+    const name = requiredText(dto.name, "Name");
+    const cleanCpfCnpj = optionalContactDocument(dto.cpfCnpj);
+    const phone = optionalText(dto.phone, "Phone");
+    const email = optionalEmail(dto.email);
+    const type = "TENANT" as const;
+    if (dto.type !== undefined && dto.type !== "TENANT") throw new Error("Invalid client type");
+    const guarantorId = dto.guarantorId ?? null;
+    if (guarantorId !== null) {
+      requiredText(guarantorId, "Guarantor id");
+      if (!this.guarantorRepository || !await this.guarantorRepository.findById(guarantorId)) throw new Error("Guarantor not found");
     }
 
-    const cleanCpfCnpj = dto.cpfCnpj.trim();
-    const existing = await this.clientRepository.findByCpfCnpj(cleanCpfCnpj);
+    const existing = cleanCpfCnpj ? await this.clientRepository.findByCpfCnpj(cleanCpfCnpj) : null;
     if (existing) {
       throw new Error("A client with this CPF/CNPJ already exists");
     }
 
     const client: Client = {
       id: randomUUID(),
-      name: dto.name.trim(),
-      cpfCnpj: cleanCpfCnpj,
-      phone: dto.phone.trim(),
-      email: dto.email ? dto.email.trim() : null,
+      name,
+      type,
+      guarantorId,
+      cpfCnpj: cleanCpfCnpj ?? "",
+      phone: phone ?? "",
+      email,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };

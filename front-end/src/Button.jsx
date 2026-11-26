@@ -1,5 +1,4 @@
-
-function Button({ texto }) {
+function Button({ texto, ...props }) {
     return (
         <>
             <style>
@@ -15,16 +14,18 @@ function Button({ texto }) {
                         font-size: 16px;
                     }
 
-                    .button:hover {
+                    .button:hover:not(:disabled) {
                         background-color: #1565c0;
+                    }
+
+                    .button:disabled {
+                        opacity: 0.7;
+                        cursor: not-allowed;
                     }
                 `}
             </style>
 
-            <button
-                className="button"
-                type="submit"
-            >
+            <button className="button" type="submit" {...props}>
                 {texto}
             </button>
         </>

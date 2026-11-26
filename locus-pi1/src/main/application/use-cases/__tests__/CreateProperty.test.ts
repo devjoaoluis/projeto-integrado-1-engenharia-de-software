@@ -14,6 +14,9 @@ class MockPropertyRepository implements IPropertyRepository {
   async findById(id: string): Promise<Property | null> {
     return this.properties.find(p => p.id === id) || null;
   }
+  async search(params: any): Promise<any> {
+    return { items: this.properties, total: this.properties.length, limit: 20, offset: 0 };
+  }
   async findAll(): Promise<Property[]> {
     return this.properties;
   }
@@ -34,12 +37,13 @@ describe("CreateProperty Use Case", () => {
       title: "Casa de Teste",
       address: "Rua X",
       price: 100000,
+      ownerId: "owner-1",
     });
 
     assert.strictEqual(result.title, "Casa de Teste");
     assert.strictEqual(result.address, "Rua X");
     assert.strictEqual(result.price, 100000);
-    assert.strictEqual(result.status, PropertyStatus.CADASTRADO);
+    assert.strictEqual(result.status, PropertyStatus.DISPONIVEL);
     assert.ok(repo.properties.find(p => p.id === result.id));
   });
 
@@ -49,9 +53,21 @@ describe("CreateProperty Use Case", () => {
 
     await assert.rejects(
       async () => {
-        await useCase.execute({ title: "", address: "Rua X", price: 100000 });
+        await useCase.execute({ title: "", address: "Rua X", price: 100000, ownerId: "owner-1" });
       },
       (err: Error) => err.message === "Title is required"
+    );
+  });
+
+  it("should throw if owner is missing", async () => {
+    const repo = new MockPropertyRepository();
+    const useCase = new CreateProperty(repo);
+
+    await assert.rejects(
+      async () => {
+        await useCase.execute({ title: "Casa", address: "Rua X", price: 100000 });
+      },
+      (err: Error) => err.message === "Owner is required"
     );
   });
 });

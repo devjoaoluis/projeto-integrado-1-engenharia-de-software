@@ -1,0 +1,79 @@
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import Login from "./Login";
+import Register from "./Register";
+import ForgotPassword from "./components/ForgotPassword"
+import AppLayout from "./layouts/AppLayout";
+import Home from "./Home";
+import Imoveis from "./Imoveis";
+import VisaoGeralImovel from "./VisaoGeralImovel";
+import CadastrarImovel from "./CadastrarImovel";
+import Contatos from "./Contatos";
+import { AlignEndHorizontal } from "lucide-react";
+import { AgendamentoVisitas } from "./AgendamentoVisitas";
+import Contratos from "./Contratos";
+import Vistorias from "./Vistorias";
+import Locatarios from "./Locatarios";
+import VisaoGeralLocatario from "./VisaoGeralLocatario";
+
+export default function App() {
+  const [hasUsers, setHasUsers] = useState(null);
+
+  useEffect(() => {
+    async function checkUsersExist() {
+      try {
+        const response = await window.api.auth.hasUsers();
+        if (response.success) {
+          setHasUsers(response.hasUsers);
+        } else {
+          setHasUsers(true);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar utilizadores:", error);
+        setHasUsers(true);
+      }
+    }
+
+    checkUsersExist();
+  }, []);
+
+  if (hasUsers === null) {
+    return (
+      <div className="min-h-screen bg-[#1E75C8] flex items-center justify-center text-white font-medium">
+        Carregando...
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      {!hasUsers ? (
+        <>
+          <Route path="/register" element={<Register onSuccess={() => setHasUsers(true)} />} />
+          <Route path="*" element={<Navigate to="/register" replace />} />
+        </>
+      ) : (
+        <>
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          <Route element={<AppLayout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/imoveis" element={<Imoveis />} />
+            <Route path="/contatos" element={<Contatos />} />
+            <Route path="/locatarios" element={<Locatarios />} />
+            <Route path="/locatarios/:id" element={<VisaoGeralLocatario />} />
+            <Route path="/imoveis/:id" element={<VisaoGeralImovel />} />
+            <Route path="/contratos" element={<Contratos />} />
+            <Route path="/pagamentos" element={<div>Pagamentos</div>} />
+            <Route path="/visitas" element={<AgendamentoVisitas/>} />
+            <Route path="/vistorias" element={<div>Vistorias</div>} />
+            <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+      )}
+    </Routes>
+  );
+}

@@ -1,5 +1,4 @@
-
-function Input({ type, placeholder }) {
+function Input(props) {
     return (
         <>
             <style>
@@ -20,11 +19,7 @@ function Input({ type, placeholder }) {
                 `}
             </style>
 
-            <input
-                className="input"
-                type={type}
-                placeholder={placeholder}
-            />
+            <input className="input" {...props} />
         </>
     );
 }

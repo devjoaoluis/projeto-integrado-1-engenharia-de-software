@@ -54,7 +54,7 @@ describe("Client Use Cases", () => {
     });
 
     assert.strictEqual(client.name, "João Silva");
-    assert.strictEqual(client.cpfCnpj, "123.456.789-00");
+    assert.strictEqual(client.cpfCnpj, "12345678900");
     assert.strictEqual(client.phone, "(85) 99999-9999");
     assert.strictEqual(client.email, "joao@email.com");
     assert.ok(client.id);
@@ -77,20 +77,13 @@ describe("Client Use Cases", () => {
     );
   });
 
-  it("should throw if cpfCnpj is empty", async () => {
+  it("should allow missing optional contact details", async () => {
     const repo = new MockClientRepository();
     const useCase = new CreateClient(repo);
 
-    await assert.rejects(
-      async () => {
-        await useCase.execute({
-          name: "João Silva",
-          cpfCnpj: "",
-          phone: "99999-9999",
-        });
-      },
-      (err: Error) => err.message === "CPF/CNPJ is required"
-    );
+    const client = await useCase.execute({ name: "João Silva" });
+    assert.equal(client.cpfCnpj, "");
+    assert.equal(client.phone, "");
   });
 
   it("should prevent duplicate CPF/CNPJ", async () => {

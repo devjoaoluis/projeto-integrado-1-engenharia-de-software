@@ -1,8 +1,34 @@
-
 import Input from "./Input";
 import Button from "./Button";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function FormLogin() {
+    const navigate = useNavigate();
+    const [email, setEmail] = useState("");
+    const [senha, setSenha] = useState("");
+    const [erro, setErro] = useState("");
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setErro("");
+
+        if (senha.length < 6) {
+            setErro("A senha deve ter no mínimo 6 caracteres.");
+                return;
+    }
+
+        if (window.api) {
+            const res = await window.api.auth.login({ email, senha });
+            if (!res.success) {
+                setErro(res.error || "Email ou senha inválidos.");
+                return;
+            }
+        }
+
+        navigate("/home");
+    }
+
     return (
         <>
             <style>
@@ -11,7 +37,7 @@ function FormLogin() {
                         box-sizing: border-box;
                     }
 
-                    body {
+                    .login-page {
                         margin: 0;
                         background-color: #1976d2;
                         font-family: Arial, sans-serif;
@@ -60,44 +86,60 @@ function FormLogin() {
                         margin-bottom: 14px;
                         color: #1976d2;
                     }
+
+                    .erro-login {
+                        color: #d32f2f;
+                        font-size: 14px;
+                        margin-bottom: 14px;
+                    }
                 `}
             </style>
 
-            <div className="form-container">
+            <div className="login-page">
+                <div className="form-container">
 
-                <h1 className="bem-vindo">
-                    Bem-vindo à Locus Marismar
-                </h1>
+                    <h1 className="bem-vindo">
+                        Bem-vindo à Locus Marismar
+                    </h1>
 
-                <div className="login">
+                    <form className="login" onSubmit={handleSubmit}>
 
-                    <h2 className="titulo">Login</h2>
+                        <h2 className="titulo">Login</h2>
 
-                    <div className="campo">
-                        <Input
-                            type="email"
-                            placeholder="Email"
-                        />
-                    </div>
+                        <div className="campo">
+                            <Input
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                    <div className="campo">
-                        <Input
-                            type="password"
-                            placeholder="Senha"
-                        />
-                    </div>
+                        <div className="campo">
+                            <Input
+                                type="password"
+                                placeholder="Senha"
+                                value={senha}
+                                onChange={(e) => setSenha(e.target.value)}
+                                required
+                            />
+                        </div>
 
-                    <a
-                        className="esqueci-senha"
-                        href="#"
-                    >
-                        Esqueci minha senha
-                    </a>
+                        <a
+                            className="esqueci-senha"
+                            href="#/login"
+                        >
+                            Esqueci minha senha
+                        </a>
 
-                    <Button texto="Entrar" />
+                        {erro && <p className="erro-login">{erro}</p>}
+
+                        <Button texto="Entrar" />
+
+                    </form>
 
                 </div>
-
             </div>
         </>
     );
