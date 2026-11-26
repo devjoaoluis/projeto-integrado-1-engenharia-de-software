@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adaptPropertyOverview } from "./propertyOverview.mjs";
@@ -7,10 +8,12 @@ import BotaoVoltar from "./components/BotaoVoltar";
 function VisaoGeralImovel() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [abaAtiva, setAbaAtiva] = useState("contratos");
   const [midiaAtiva, setMidiaAtiva] = useState(0);
   const [locatarios, setLocatarios] = useState([]);
   const [proprietarios, setProprietarios] = useState([]);
+
   const [locacao, setLocacao] = useState({
     tenantId: "",
     monthlyRent: "",
@@ -18,59 +21,151 @@ function VisaoGeralImovel() {
     endDate: "",
     dueDay: "10",
   });
+
   const [salvandoLocacao, setSalvandoLocacao] = useState(false);
   const [erroLocacao, setErroLocacao] = useState("");
   const [sucessoLocacao, setSucessoLocacao] = useState("");
-  const [confirmarDesassociacao, setConfirmarDesassociacao] = useState(false);
+  const [desassociacaoPendente, setDesassociacaoPendente] = useState(false);
 
-  const [result, setResult] = useState({ id: null, imovel: null, erro: "" });
+  // Estados da rescisão
+  const [rescisaoAberta, setRescisaoAberta] = useState(false);
+  const [resumoRescisao, setResumoRescisao] = useState(null);
+  const [carregandoRescisao, setCarregandoRescisao] = useState(false);
+  const [salvandoRescisao, setSalvandoRescisao] = useState(false);
+  const [motivoRescisao, setMotivoRescisao] = useState("");
+  const [aceitarDebitos, setAceitarDebitos] = useState(false);
+  const [erroRescisao, setErroRescisao] = useState("");
+
+  const [result, setResult] = useState({
+    id: null,
+    imovel: null,
+    erro: "",
+  });
 
   async function carregarOverview() {
     const overview = await window.api.properties.overview(id);
-    const contracts = [...overview.contracts.current, ...overview.contracts.previous, ...overview.contracts.scheduled];
-    const tenantNames = Object.fromEntries(await Promise.all(
-      [...new Set(contracts.map(contract => contract.tenantId))].map(async tenantId => {
-        try { return [tenantId, (await window.api.clients.get(tenantId)).name]; }
-        catch { return [tenantId, "Locatário não encontrado"]; }
-      })
-    ));
+
+    const contracts = [
+      ...overview.contracts.current,
+      ...overview.contracts.previous,
+      ...overview.contracts.scheduled,
+    ];
+
+    const tenantNames = Object.fromEntries(
+      await Promise.all(
+        [...new Set(contracts.map((contract) => contract.tenantId))]
+          .map(async (tenantId) => {
+            try {
+              return [
+                tenantId,
+                (await window.api.clients.get(tenantId)).name,
+              ];
+            } catch {
+              return [tenantId, "Locatário não encontrado"];
+            }
+          })
+      )
+    );
+
     const modelo = adaptPropertyOverview(overview, tenantNames);
-    setResult({ id, imovel: modelo, erro: "" });
+
+    setResult({
+      id,
+      imovel: modelo,
+      erro: "",
+    });
+
     setMidiaAtiva(0);
   }
 
   useEffect(() => {
     let active = true;
+
     async function load() {
       try {
-        if (active) await carregarOverview();
+        if (active) {
+          await carregarOverview();
+        }
       } catch {
-        if (active) setResult({ id, imovel: null, erro: "Não foi possível carregar este imóvel. Ele pode ter sido removido." });
+        if (active) {
+          setResult({
+            id,
+            imovel: null,
+            erro: "Não foi possível carregar este imóvel. Ele pode ter sido removido.",
+          });
+        }
       }
     }
+
     load();
-    return () => { active = false; };
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   useEffect(() => {
     let active = true;
+
     window.api.clients.list()
       .then((clientes) => {
-        if (active) setLocatarios((clientes || []).filter((cliente) => cliente.type === "TENANT"));
+        if (active) {
+          setLocatarios(
+            (clientes || []).filter(
+              (cliente) => cliente.type === "TENANT"
+            )
+          );
+        }
       })
-      .catch((error) => console.error("Erro ao carregar locatários:", error));
+      .catch((error) =>
+        console.error("Erro ao carregar locatários:", error)
+      );
+
     window.api.owners.list()
-      .then((lista) => { if (active) setProprietarios(lista || []); })
-      .catch((error) => console.error("Erro ao carregar proprietários:", error));
-    return () => { active = false; };
+      .then((lista) => {
+        if (active) {
+          setProprietarios(lista || []);
+        }
+      })
+      .catch((error) =>
+        console.error("Erro ao carregar proprietários:", error)
+      );
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  if (result.id !== id) return <p role="status">Carregando imóvel...</p>;
-  if (result.erro) return <div role="alert"><p>{result.erro}</p><button onClick={() => navigate("/imoveis")}>Voltar para Imóveis</button></div>;
+  if (result.id !== id) {
+    return <p role="status">Carregando imóvel...</p>;
+  }
+
+  if (result.erro) {
+    return (
+      <div role="alert">
+        <p>{result.erro}</p>
+        <button onClick={() => navigate("/imoveis")}>
+          Voltar para Imóveis
+        </button>
+      </div>
+    );
+  }
+
   const imovel = result.imovel;
-  const contratoAssociado = imovel.contratos.find((contrato) => ["Vigente", "Agendado"].includes(contrato.status) && contrato.rentalId);
-  const historicoLocacoes = imovel.contratos.filter((contrato) => contrato.status !== "Agendado");
-  const proprietarioAtual = proprietarios.find((proprietario) => proprietario.id === imovel.ownerId);
+
+  const contratoAssociado = imovel.contratos.find(
+    (contrato) =>
+      ["Vigente", "Agendado"].includes(contrato.status) &&
+      contrato.rentalId
+  );
+
+  const historicoLocacoes = imovel.contratos.filter(
+    (contrato) => contrato.status !== "Agendado"
+  );
+
+  const proprietarioAtual = proprietarios.find(
+    (proprietario) => proprietario.id === imovel.ownerId
+  );
 
   const valorFormatado = imovel.valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -79,43 +174,169 @@ function VisaoGeralImovel() {
 
   function atualizarLocacao(event) {
     const { name, value } = event.target;
-    setLocacao((atual) => ({ ...atual, [name]: value }));
+
+    setLocacao((atual) => ({
+      ...atual,
+      [name]: value,
+    }));
+  }
+
+  function formatarMoeda(valor) {
+    return Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
   }
 
   async function associarLocatario(event) {
     event.preventDefault();
+
     setErroLocacao("");
     setSucessoLocacao("");
     setSalvandoLocacao(true);
+
     try {
       await window.api.rentals.create({
         propertyId: imovel.id,
         tenantId: locacao.tenantId,
         monthlyRent: imovel.valor,
-        startDate: new Date(`${locacao.startDate}T00:00:00`).getTime(),
-        endDate: locacao.endDate ? new Date(`${locacao.endDate}T00:00:00`).getTime() : null,
+        startDate: new Date(
+          `${locacao.startDate}T00:00:00`
+        ).getTime(),
+        endDate: locacao.endDate
+          ? new Date(`${locacao.endDate}T00:00:00`).getTime()
+          : null,
         dueDay: Number(locacao.dueDay),
       });
+
       await carregarOverview();
-      setSucessoLocacao("Locatário associado com sucesso. O imóvel foi marcado como alugado.");
-      setLocacao((atual) => ({ ...atual, tenantId: "" }));
+
+      setSucessoLocacao(
+        "Locatário associado com sucesso. O imóvel foi marcado como alugado."
+      );
+
+      setLocacao((atual) => ({
+        ...atual,
+        tenantId: "",
+      }));
     } catch (error) {
       console.error("Erro ao associar locatário:", error);
-      setErroLocacao(error.message || "Não foi possível associar o locatário.");
+
+      setErroLocacao(
+        error.message || "Não foi possível associar o locatário."
+      );
     } finally {
       setSalvandoLocacao(false);
     }
   }
 
+  // DESASSOCIAÇÃO: mantém o comportamento existente
   async function desassociarLocatario() {
     if (!contratoAssociado) return;
-    setConfirmarDesassociacao(false);
+
+    setDesassociacaoPendente(false);
+
     try {
-      await window.api.rentals.cancel(contratoAssociado.rentalId);
+      await window.api.rentals.cancel(
+        contratoAssociado.rentalId
+      );
+
       await carregarOverview();
+
       setSucessoLocacao("Imóvel disponível para alugar.");
     } catch (error) {
-      setErroLocacao(error.message || "Não foi possível desassociar o locatário.");
+      setErroLocacao(
+        error.message || "Não foi possível desassociar o locatário."
+      );
+    }
+  }
+
+  // ABRIR RESCISÃO E CONSULTAR RESUMO FINANCEIRO
+  async function abrirRescisao() {
+    if (!contratoAssociado?.rentalId) {
+      setErroRescisao(
+        "Não foi possível identificar a locação."
+      );
+      return;
+    }
+
+    setRescisaoAberta(true);
+    setCarregandoRescisao(true);
+    setResumoRescisao(null);
+    setErroRescisao("");
+    setMotivoRescisao("");
+    setAceitarDebitos(false);
+
+    try {
+      const resumo =
+        await window.api.rentals.getTerminationSummary(
+          contratoAssociado.rentalId
+        );
+
+      setResumoRescisao(resumo);
+    } catch (error) {
+      console.error(
+        "Erro ao consultar resumo da rescisão:",
+        error
+      );
+
+      setErroRescisao(
+        error.message ||
+        "Não foi possível consultar os dados da rescisão."
+      );
+    } finally {
+      setCarregandoRescisao(false);
+    }
+  }
+
+  // CONFIRMAR RESCISÃO
+  async function confirmarRescisao() {
+    if (
+      !contratoAssociado?.rentalId ||
+      !resumoRescisao?.canTerminate
+    ) {
+      return;
+    }
+
+    if (
+      resumoRescisao.hasPendingDebts &&
+      !aceitarDebitos
+    ) {
+      setErroRescisao(
+        "Confirme que está ciente dos débitos pendentes antes de continuar."
+      );
+      return;
+    }
+
+    setSalvandoRescisao(true);
+    setErroRescisao("");
+
+    try {
+      await window.api.rentals.terminate({
+        rentalId: contratoAssociado.rentalId,
+        notes: motivoRescisao,
+        hasDebts: resumoRescisao.hasPendingDebts,
+        allowPendingDebts: aceitarDebitos,
+      });
+
+      setRescisaoAberta(false);
+      setResumoRescisao(null);
+      setMotivoRescisao("");
+      setAceitarDebitos(false);
+
+      setSucessoLocacao(
+        "Contrato encerrado e imóvel liberado com sucesso!"
+      );
+
+      await carregarOverview();
+    } catch (error) {
+      console.error("Erro ao encerrar contrato:", error);
+
+      setErroRescisao(
+        error.message || "Não foi possível encerrar o contrato."
+      );
+    } finally {
+      setSalvandoRescisao(false);
     }
   }
 
@@ -192,7 +413,8 @@ function VisaoGeralImovel() {
           overflow: hidden;
         }
 
-        .galeria-conteudo img, .galeria-conteudo video {
+        .galeria-conteudo img,
+        .galeria-conteudo video {
           width: 100%;
           height: 100%;
           object-fit: contain;
@@ -253,7 +475,8 @@ function VisaoGeralImovel() {
           font-weight: 600;
         }
 
-        .form-locacao input, .form-locacao select {
+        .form-locacao input,
+        .form-locacao select {
           min-height: 40px;
           padding: 0 10px;
           border: 1px solid #c8cdd2;
@@ -305,6 +528,7 @@ function VisaoGeralImovel() {
           .form-locacao {
             grid-template-columns: repeat(2, 1fr);
           }
+
           .form-locacao button {
             grid-column: span 2;
           }
@@ -387,41 +611,47 @@ function VisaoGeralImovel() {
         }
 
         .confirmacao-exclusao {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, .35);
-            z-index: 10;
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, .35);
+          z-index: 1000;
+          padding: 16px;
+          overflow-y: auto;
         }
 
         .confirmacao-exclusao-conteudo {
-            width: min(420px, calc(100vw - 32px));
-            padding: 24px;
-            border-radius: 8px;
-            background: white;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+          width: min(420px, calc(100vw - 32px));
+          max-height: calc(100vh - 32px);
+          overflow-y: auto;
+          padding: 24px;
+          border-radius: 8px;
+          background: white;
+          box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+          box-sizing: border-box;
         }
 
         .confirmacao-exclusao-acoes {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 20px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+          margin-top: 20px;
+          flex-wrap: wrap;
         }
 
         .confirmacao-exclusao-acoes button {
-            min-height: 38px;
-            padding: 0 14px;
-            border: 0;
-            border-radius: 4px;
-            cursor: pointer;
+          min-height: 38px;
+          padding: 0 14px;
+          border: 0;
+          border-radius: 4px;
+          cursor: pointer;
         }
 
         .confirmacao-excluir {
-            color: white;
-            background: #d32f2f;
+          color: white;
+          background: #d32f2f;
         }
 
         .imovel-tags {
@@ -429,7 +659,6 @@ function VisaoGeralImovel() {
           gap: 8px;
         }
 
-        /* NAVEGAÇÃO POR ABAS */
         .abas-container {
           display: flex;
           border-bottom: 2px solid #e0e0e0;
@@ -453,7 +682,6 @@ function VisaoGeralImovel() {
           border-bottom-color: #1976d2;
         }
 
-
         .aba-conteudo {
           background: white;
           padding: 24px;
@@ -467,7 +695,8 @@ function VisaoGeralImovel() {
           text-align: left;
         }
 
-        .tabela-custom th, .tabela-custom td {
+        .tabela-custom th,
+        .tabela-custom td {
           padding: 12px;
           border-bottom: 1px solid #eee;
         }
@@ -476,35 +705,112 @@ function VisaoGeralImovel() {
           color: #444;
           font-size: 14px;
         }
+
+        .modal-rescisao-resumo p {
+          margin: 8px 0;
+        }
+
+        .modal-rescisao-tabela {
+          overflow-x: auto;
+        }
+
+        @media (max-width: 600px) {
+          .imovel-header-card {
+            flex-direction: column;
+          }
+
+          .imovel-header-img {
+            width: 100%;
+          }
+
+          .historico-locacao-item {
+            grid-template-columns: 1fr;
+          }
+
+          .confirmacao-exclusao-acoes {
+            justify-content: stretch;
+          }
+
+          .confirmacao-exclusao-acoes button {
+            flex: 1;
+          }
+        }
       `}</style>
 
       <div className="visao-geral-container">
-        <BotaoVoltar destino="/imoveis" texto="Voltar para imóveis" />
+        <BotaoVoltar
+          destino="/imoveis"
+          texto="Voltar para imóveis"
+        />
 
-
+        {/* CABEÇALHO DO IMÓVEL */}
         <div className="imovel-header-card">
-          {imovel.foto ? <img className="imovel-header-img" src={imovel.foto} alt={imovel.titulo} /> : <div className="imovel-header-img" aria-label="Imóvel sem foto" />}
+          {imovel.foto ? (
+            <img
+              className="imovel-header-img"
+              src={imovel.foto}
+              alt={imovel.titulo}
+            />
+          ) : (
+            <div
+              className="imovel-header-img"
+              aria-label="Imóvel sem foto"
+            />
+          )}
+
           <div className="imovel-header-info">
-            <h2 className="imovel-titulo">{imovel.titulo}</h2>
-            <p className="imovel-endereco">{imovel.endereco}</p>
-            <p className="imovel-descricao">{imovel.descricao || "Nenhuma descrição cadastrada."}</p>
-            <p className="imovel-descricao">
-              <strong>Proprietário:</strong> {proprietarioAtual?.name || "Nenhum proprietário associado"}
+            <h2 className="imovel-titulo">
+              {imovel.titulo}
+            </h2>
+
+            <p className="imovel-endereco">
+              {imovel.endereco}
             </p>
+
+            <p className="imovel-descricao">
+              {imovel.descricao || "Nenhuma descrição cadastrada."}
+            </p>
+
+            <p className="imovel-descricao">
+              <strong>Proprietário:</strong>{" "}
+              {proprietarioAtual?.name ||
+                "Nenhum proprietário associado"}
+            </p>
+
             <p className="imovel-detalhes">
-              <span><strong>Quartos:</strong> {imovel.quartos ?? "Não informado"}</span>
-              <span><strong>Tipo:</strong> {imovel.tipo || "Não informado"}</span>
+              <span>
+                <strong>Quartos:</strong>{" "}
+                {imovel.quartos ?? "Não informado"}
+              </span>
+
+              <span>
+                <strong>Tipo:</strong>{" "}
+                {imovel.tipo || "Não informado"}
+              </span>
             </p>
 
             <div className="imovel-tags">
-              <Badge texto={imovel.status} cor={imovel.status === "Disponível" ? "verde" : "vermelho"} />
+              <Badge
+                texto={imovel.status}
+                cor={
+                  imovel.status === "Disponível"
+                    ? "verde"
+                    : "vermelho"
+                }
+              />
+
               <Badge texto={valorFormatado} />
             </div>
           </div>
         </div>
 
-        <section className="galeria-imovel" aria-label="Fotos e vídeos do imóvel">
+        {/* GALERIA */}
+        <section
+          className="galeria-imovel"
+          aria-label="Fotos e vídeos do imóvel"
+        >
           <h3>Fotos e vídeos</h3>
+
           {imovel.midias.length === 0 ? (
             <p>Nenhuma foto ou vídeo cadastrado.</p>
           ) : (
@@ -515,46 +821,94 @@ function VisaoGeralImovel() {
                   type="button"
                   aria-label="Mídia anterior"
                   disabled={midiaAtiva === 0}
-                  onClick={() => setMidiaAtiva((atual) => Math.max(0, atual - 1))}
+                  onClick={() =>
+                    setMidiaAtiva((atual) =>
+                      Math.max(0, atual - 1)
+                    )
+                  }
                 >
                   ‹
                 </button>
+
                 <div className="galeria-conteudo">
                   {imovel.midias[midiaAtiva].tipo === "VIDEO" ? (
-                    <video controls src={imovel.midias[midiaAtiva].url}>
+                    <video
+                      controls
+                      src={imovel.midias[midiaAtiva].url}
+                    >
                       Seu navegador não suporta a reprodução de vídeo.
                     </video>
                   ) : (
                     <img
                       src={imovel.midias[midiaAtiva].url}
-                      alt={imovel.midias[midiaAtiva].nome || `Mídia ${midiaAtiva + 1} do imóvel`}
+                      alt={
+                        imovel.midias[midiaAtiva].nome ||
+                        `Mídia ${midiaAtiva + 1} do imóvel`
+                      }
                     />
                   )}
                 </div>
+
                 <button
                   className="galeria-navegacao"
                   type="button"
                   aria-label="Próxima mídia"
-                  disabled={midiaAtiva === imovel.midias.length - 1}
-                  onClick={() => setMidiaAtiva((atual) => Math.min(imovel.midias.length - 1, atual + 1))}
+                  disabled={
+                    midiaAtiva === imovel.midias.length - 1
+                  }
+                  onClick={() =>
+                    setMidiaAtiva((atual) =>
+                      Math.min(
+                        imovel.midias.length - 1,
+                        atual + 1
+                      )
+                    )
+                  }
                 >
                   ›
                 </button>
               </div>
-              <p className="galeria-legenda">{midiaAtiva + 1} de {imovel.midias.length}</p>
+
+              <p className="galeria-legenda">
+                {midiaAtiva + 1} de {imovel.midias.length}
+              </p>
             </>
           )}
         </section>
 
-        <section className="associacao-locacao" aria-label="Associar locatário">
+        {/* ASSOCIAÇÃO DE LOCATÁRIO */}
+        <section
+          className="associacao-locacao"
+          aria-label="Associar locatário"
+        >
           <h3>Locatário</h3>
+
           {contratoAssociado && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px", background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-              <p style={{ margin: 0 }}><strong>Locatário associado:</strong> {contratoAssociado.locatario}</p>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "12px",
+                background: "#f8fafc",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <p style={{ margin: 0 }}>
+                <strong>Locatário associado:</strong>{" "}
+                {contratoAssociado.locatario}
+              </p>
+
               {contratoAssociado.tenantId && (
                 <button
                   type="button"
-                  onClick={() => navigate(`/locatarios/${contratoAssociado.tenantId}`)}
+                  onClick={() =>
+                    navigate(
+                      `/locatarios/${contratoAssociado.tenantId}`
+                    )
+                  }
                   style={{
                     backgroundColor: "#2563eb",
                     color: "#ffffff",
@@ -571,43 +925,142 @@ function VisaoGeralImovel() {
               )}
             </div>
           )}
-          <form className="form-locacao" onSubmit={associarLocatario}>
-            <label>
+
+          <form
+            className="form-locacao"
+            onSubmit={associarLocatario}
+          >
+            <label className="ui-label ui-label-required">
               Locatário cadastrado
-              <select name="tenantId" value={locacao.tenantId} onChange={atualizarLocacao} required>
+
+              <select
+                name="tenantId"
+                value={locacao.tenantId}
+                onChange={atualizarLocacao}
+                required
+              >
                 <option value="">Selecione</option>
+
                 {locatarios.map((locatario) => (
-                  <option key={locatario.id} value={locatario.id}>{locatario.name}</option>
+                  <option
+                    key={locatario.id}
+                    value={locatario.id}
+                  >
+                    {locatario.name}
+                  </option>
                 ))}
               </select>
             </label>
-            <label>
+
+            <label className="ui-label ui-label-required">
               Início
-              <input name="startDate" type="date" value={locacao.startDate} onChange={atualizarLocacao} required />
+
+              <input
+                name="startDate"
+                type="date"
+                value={locacao.startDate}
+                onChange={atualizarLocacao}
+                required
+              />
             </label>
-            <label>
+
+            <label className="ui-label ui-label-optional">
               Fim do contrato
-              <input name="endDate" type="date" value={locacao.endDate} onChange={atualizarLocacao} />
+
+              <input
+                name="endDate"
+                type="date"
+                value={locacao.endDate}
+                onChange={atualizarLocacao}
+              />
             </label>
-            <label>
+
+            <label className="ui-label ui-label-required">
               Dia de vencimento
-              <input name="dueDay" type="number" min="1" max="31" value={locacao.dueDay} onChange={atualizarLocacao} required />
+
+              <input
+                name="dueDay"
+                type="number"
+                min="1"
+                max="31"
+                value={locacao.dueDay}
+                onChange={atualizarLocacao}
+                required
+              />
             </label>
-            <button type="submit" disabled={salvandoLocacao || locatarios.length === 0 || Boolean(contratoAssociado)}>
-              {contratoAssociado ? "Locatário associado" : salvandoLocacao ? "Salvando..." : "Associar"}
+
+            <button
+              type="submit"
+              disabled={
+                salvandoLocacao ||
+                locatarios.length === 0 ||
+                Boolean(contratoAssociado)
+              }
+            >
+              {contratoAssociado
+                ? "Locatário associado"
+                : salvandoLocacao
+                  ? "Salvando..."
+                  : "Associar"}
             </button>
           </form>
-          {locatarios.length === 0 && <p>Nenhum cliente do tipo locatário foi cadastrado.</p>}
-          {erroLocacao && <p role="alert">{erroLocacao}</p>}
-          {sucessoLocacao && <p role="status">{sucessoLocacao}</p>}
+
+          {locatarios.length === 0 && (
+            <p>Nenhum cliente do tipo locatário foi cadastrado.</p>
+          )}
+
+          {erroLocacao && (
+            <p role="alert">{erroLocacao}</p>
+          )}
+
+          {sucessoLocacao && (
+            <p role="status">{sucessoLocacao}</p>
+          )}
+
+          {/* AÇÕES DO CONTRATO */}
           {contratoAssociado && (
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "10px" }}>
-              <button type="button" className="botao-desassociar" onClick={() => setConfirmarDesassociacao(true)}>
-                Desassociar locatário
-              </button>
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginTop: "10px",
+              }}
+            >
               <button
                 type="button"
-                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                className="botao-desassociar"
+                onClick={() =>
+                  setDesassociacaoPendente(true)
+                }
+              >
+                Desassociar locatário
+              </button>
+
+              <button
+                type="button"
+                onClick={abrirRescisao}
+                style={{
+                  backgroundColor: "#dc2626",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "8px 16px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Encerrar contrato
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/vistorias?imovelId=${imovel.id}&tipo=ENTRY`
+                  )
+                }
                 style={{
                   backgroundColor: "#16a34a",
                   color: "#ffffff",
@@ -619,11 +1072,16 @@ function VisaoGeralImovel() {
                   fontSize: "14px",
                 }}
               >
-                Vistoria de Entrada (RN03)
+                Vistoria de Entrada
               </button>
+
               <button
                 type="button"
-                onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                onClick={() =>
+                  navigate(
+                    `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
+                  )
+                }
                 style={{
                   backgroundColor: "#ea580c",
                   color: "#ffffff",
@@ -635,11 +1093,14 @@ function VisaoGeralImovel() {
                   fontSize: "14px",
                 }}
               >
-                Vistoria de Saída (RN03)
+                Vistoria de Saída
               </button>
+
               <button
                 type="button"
-                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                onClick={() =>
+                  navigate(`/contratos?imovelId=${imovel.id}`)
+                }
                 style={{
                   backgroundColor: "#1877f2",
                   color: "#ffffff",
@@ -657,38 +1118,59 @@ function VisaoGeralImovel() {
           )}
         </section>
 
-        <div className="abas-container">
+        {/* ABAS */}
+        <div className="abas-padrao">
           <button
-            className={`aba-btn ${abaAtiva === "contratos" ? "ativa" : ""}`}
+            className={`aba-padrao ${
+              abaAtiva === "contratos" ? "ativa" : ""
+            }`}
             onClick={() => setAbaAtiva("contratos")}
           >
             Contratos ({imovel.contratos.length})
           </button>
+
           <button
-            className={`aba-btn ${abaAtiva === "pagamentos" ? "ativa" : ""}`}
+            className={`aba-padrao ${
+              abaAtiva === "pagamentos" ? "ativa" : ""
+            }`}
             onClick={() => setAbaAtiva("pagamentos")}
           >
             Pagamentos ({imovel.pagamentos.length})
           </button>
+
           <button
-            className={`aba-btn ${abaAtiva === "vistorias" ? "ativa" : ""}`}
+            className={`aba-padrao ${
+              abaAtiva === "vistorias" ? "ativa" : ""
+            }`}
             onClick={() => setAbaAtiva("vistorias")}
           >
             Vistorias & Manutenções ({imovel.vistorias.length})
           </button>
+
           <button
-            className={`aba-btn ${abaAtiva === "historico" ? "ativa" : ""}`}
+            className={`aba-padrao ${
+              abaAtiva === "historico" ? "ativa" : ""
+            }`}
             onClick={() => setAbaAtiva("historico")}
           >
             Histórico ({historicoLocacoes.length})
           </button>
-
         </div>
-        {confirmarDesassociacao && (
-          <div className="confirmacao-exclusao" role="dialog" aria-modal="true">
+
+        {/* MODAL DE DESASSOCIAÇÃO */}
+        {desassociacaoPendente && (
+          <div
+            className="confirmacao-exclusao"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="confirmacao-exclusao-conteudo">
               <h2>Desassociar locatário?</h2>
-              <p>O imóvel ficará disponível novamente para uma nova locação.</p>
+
+              <p>
+                O imóvel ficará disponível novamente para uma nova locação.
+              </p>
+
               <div
                 style={{
                   backgroundColor: "#fff7ed",
@@ -701,12 +1183,22 @@ function VisaoGeralImovel() {
                   textAlign: "left",
                 }}
               >
-                <strong>Regra de Negócio RN03:</strong> Caso as chaves tenham sido liberadas, a <strong>vistoria de saída</strong> com fotos e vídeos é obrigatória antes do encerramento da locação.
+                <strong>Atenção:</strong> Caso as chaves tenham sido
+                liberadas, a <strong>vistoria de saída</strong> com
+                fotos e vídeos é obrigatória antes do encerramento
+                da locação.
               </div>
+
               <div className="confirmacao-exclusao-acoes">
-                <button type="button" onClick={() => setConfirmarDesassociacao(false)}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDesassociacaoPendente(false)
+                  }
+                >
                   Cancelar
                 </button>
+
                 <button
                   type="button"
                   style={{
@@ -718,28 +1210,335 @@ function VisaoGeralImovel() {
                     fontWeight: "bold",
                     cursor: "pointer",
                   }}
-                  onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                  onClick={() => {
+                    setDesassociacaoPendente(false);
+                    navigate(
+                      `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
+                    );
+                  }}
                 >
                   Registrar Vistoria de Saída
                 </button>
-                <button type="button" className="confirmacao-excluir" onClick={desassociarLocatario}>
-                  Confirmar Desassociação
+
+                <button
+                  type="button"
+                  className="confirmacao-excluir"
+                  onClick={desassociarLocatario}
+                >
+                  Salvar Desassociação
                 </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* MODAL DE RESCISÃO */}
+        {rescisaoAberta && (
+          <div
+            className="confirmacao-exclusao"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-rescisao"
+          >
+            <div
+              className="confirmacao-exclusao-conteudo"
+              style={{
+                width: "min(560px, calc(100vw - 32px))",
+              }}
+            >
+              <h2 id="titulo-rescisao">
+                Encerrar contrato
+              </h2>
 
+              <p>
+                Confira as informações da locação antes de
+                confirmar o encerramento.
+              </p>
+
+              {carregandoRescisao && (
+                <p role="status">
+                  Consultando pagamentos e situação da locação...
+                </p>
+              )}
+
+              {erroRescisao && (
+                <p
+                  role="alert"
+                  style={{ color: "#dc2626" }}
+                >
+                  {erroRescisao}
+                </p>
+              )}
+
+              {resumoRescisao && (
+                <>
+                  {/* RESUMO FINANCEIRO */}
+                  <div
+                    className="modal-rescisao-resumo"
+                    style={{
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      padding: "14px",
+                      margin: "16px 0",
+                    }}
+                  >
+                    <p>
+                      <strong>Locatário:</strong>{" "}
+                      {resumoRescisao.tenantName ||
+                        contratoAssociado.locatario}
+                    </p>
+
+                    <p>
+                      <strong>Aluguel mensal:</strong>{" "}
+                      {formatarMoeda(
+                        resumoRescisao.monthlyRent
+                      )}
+                    </p>
+
+                    <p>
+                      <strong>Total pago:</strong>{" "}
+                      {formatarMoeda(
+                        resumoRescisao.totalPaid
+                      )}
+                    </p>
+
+                    <p>
+                      <strong>Débitos pendentes:</strong>{" "}
+                      {formatarMoeda(
+                        resumoRescisao.pendingAmount
+                      )}
+                    </p>
+                  </div>
+
+                  {/* DÉBITOS PENDENTES */}
+                  <h3>Débitos pendentes</h3>
+
+                  {!resumoRescisao.pendingDebts?.length ? (
+                    <p>
+                      Não existem débitos pendentes registrados.
+                    </p>
+                  ) : (
+                    <div className="modal-rescisao-tabela">
+                      <table className="tabela-custom">
+                        <thead>
+                          <tr>
+                            <th>Referência</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {resumoRescisao.pendingDebts.map(
+                            (debito, index) => (
+                              <tr
+                                key={`${debito.referenceMonth}-${index}`}
+                              >
+                                <td>
+                                  {debito.referenceMonth}
+                                </td>
+
+                                <td>{debito.dueDate}</td>
+
+                                <td>
+                                  {formatarMoeda(debito.amount)}
+                                </td>
+                              </tr>
+                            )
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* VISTORIA DE SAÍDA */}
+                  <div
+                    style={{
+                      margin: "16px 0",
+                      padding: "12px",
+                      borderRadius: "8px",
+                      background:
+                        resumoRescisao.exitInspectionRequired &&
+                        !resumoRescisao.hasExitInspection
+                          ? "#fff7ed"
+                          : "#f0fdf4",
+                      color:
+                        resumoRescisao.exitInspectionRequired &&
+                        !resumoRescisao.hasExitInspection
+                          ? "#9a3412"
+                          : "#166534",
+                    }}
+                  >
+                    <strong>Vistoria de saída:</strong>{" "}
+
+                    {resumoRescisao.hasExitInspection
+                      ? "Vistoria registrada."
+                      : resumoRescisao.exitInspectionRequired
+                        ? "Vistoria obrigatória ainda não registrada."
+                        : "Não há vistoria pendente."}
+
+                    {resumoRescisao.exitInspectionRequired &&
+                      !resumoRescisao.hasExitInspection && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRescisaoAberta(false);
+
+                            navigate(
+                              `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
+                            );
+                          }}
+                          style={{
+                            display: "block",
+                            marginTop: "10px",
+                            padding: "8px 12px",
+                            border: "none",
+                            borderRadius: "5px",
+                            background: "#ea580c",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Registrar vistoria de saída
+                        </button>
+                      )}
+                  </div>
+
+                  {/* CONFIRMAÇÃO DOS DÉBITOS */}
+                  {resumoRescisao.hasPendingDebts && (
+                    <label
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        alignItems: "flex-start",
+                        margin: "14px 0",
+                        fontSize: "13px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={aceitarDebitos}
+                        onChange={(event) =>
+                          setAceitarDebitos(
+                            event.target.checked
+                          )
+                        }
+                      />
+
+                      Estou ciente dos débitos pendentes e
+                      desejo prosseguir com o encerramento.
+                    </label>
+                  )}
+
+                  {/* OBSERVAÇÕES */}
+                  <label
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      marginTop: "14px",
+                    }}
+                  >
+                    Observações sobre o encerramento
+
+                    <textarea
+                      value={motivoRescisao}
+                      onChange={(event) =>
+                        setMotivoRescisao(event.target.value)
+                      }
+                      placeholder="Informe o motivo ou observações relevantes..."
+                      rows={3}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #cbd5e1",
+                        borderRadius: "6px",
+                        resize: "vertical",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </label>
+
+                  {/* MOTIVO DE BLOQUEIO */}
+                  {resumoRescisao.blockReason && (
+                    <p
+                      role="alert"
+                      style={{
+                        color: "#dc2626",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {resumoRescisao.blockReason}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* AÇÕES DO MODAL */}
+              <div className="confirmacao-exclusao-acoes">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRescisaoAberta(false);
+                    setErroRescisao("");
+                    setResumoRescisao(null);
+                  }}
+                  disabled={salvandoRescisao}
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  className="confirmacao-excluir"
+                  onClick={confirmarRescisao}
+                  disabled={
+                    carregandoRescisao ||
+                    salvandoRescisao ||
+                    !resumoRescisao?.canTerminate ||
+                    (
+                      resumoRescisao?.hasPendingDebts &&
+                      !aceitarDebitos
+                    )
+                  }
+                >
+                  {salvandoRescisao
+                    ? "Encerrando..."
+                    : "Confirmar encerramento"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DAS ABAS */}
         <div className="aba-conteudo">
+
+          {/* CONTRATOS */}
           {abaAtiva === "contratos" && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-              <span style={{ fontSize: "14px", color: "#64748b" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "14px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "14px",
+                  color: "#64748b",
+                }}
+              >
                 Histórico de locações e contratos do imóvel
               </span>
+
               <button
                 type="button"
-                onClick={() => navigate(`/contratos?imovelId=${imovel.id}`)}
+                onClick={() =>
+                  navigate(`/contratos?imovelId=${imovel.id}`)
+                }
                 style={{
                   backgroundColor: "#1877f2",
                   color: "#ffffff",
@@ -755,64 +1554,128 @@ function VisaoGeralImovel() {
               </button>
             </div>
           )}
-          {abaAtiva === "contratos" && imovel.contratos.length === 0 && <p>Nenhum registro encontrado.</p>}
-          {abaAtiva === "contratos" && imovel.contratos.length > 0 && (
-            <table className="tabela-custom">
-              <thead>
-                <tr>
-                  <th>Locatário</th>
-                  <th>Período</th>
-                  <th>Valor</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imovel.contratos.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.locatario}</td>
-                    <td>{item.inicio} até {item.fim}</td>
-                    <td>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td><Badge texto={item.status} cor={item.status === "Vigente" ? "verde" : "cinza"} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
 
-          {abaAtiva === "pagamentos" && imovel.pagamentos.length === 0 && <p>Nenhum registro encontrado.</p>}
-          {abaAtiva === "pagamentos" && imovel.pagamentos.length > 0 && (
-            <table className="tabela-custom">
-              <thead>
-                <tr>
-                  <th>Descrição</th>
-                  <th>Data do pagamento</th>
-                  <th>Valor</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imovel.pagamentos.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.mesReferencia}</td>
-                    <td>{item.vencimento}</td>
-                    <td>{item.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td><Badge texto={item.status} cor={item.status === "Pago" ? "verde" : "amarelo"} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          {abaAtiva === "contratos" &&
+            imovel.contratos.length === 0 && (
+              <p>Nenhum registro encontrado.</p>
+            )}
 
+          {abaAtiva === "contratos" &&
+            imovel.contratos.length > 0 && (
+              <table className="tabela-custom">
+                <thead>
+                  <tr>
+                    <th>Locatário</th>
+                    <th>Período</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {imovel.contratos.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.locatario}</td>
+                      <td>
+                        {item.inicio} até {item.fim}
+                      </td>
+                      <td>
+                        {item.valor.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </td>
+                      <td>
+                        <Badge
+                          texto={item.status}
+                          cor={
+                            item.status === "Vigente"
+                              ? "verde"
+                              : "cinza"
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+          {/* PAGAMENTOS */}
+          {abaAtiva === "pagamentos" &&
+            imovel.pagamentos.length === 0 && (
+              <p>Nenhum registro encontrado.</p>
+            )}
+
+          {abaAtiva === "pagamentos" &&
+            imovel.pagamentos.length > 0 && (
+              <table className="tabela-custom">
+                <thead>
+                  <tr>
+                    <th>Descrição</th>
+                    <th>Data do pagamento</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {imovel.pagamentos.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.mesReferencia}</td>
+                      <td>{item.vencimento}</td>
+                      <td>
+                        {item.valor.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
+                      </td>
+                      <td>
+                        <Badge
+                          texto={item.status}
+                          cor={
+                            item.status === "Pago"
+                              ? "verde"
+                              : "amarelo"
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+          {/* VISTORIAS E MANUTENÇÕES */}
           {abaAtiva === "vistorias" && (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-                <span style={{ fontSize: "14px", color: "#64748b" }}>
-                  Vistorias de entrada e saída com fotos e vídeos (RN03)
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "14px",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "14px",
+                    color: "#64748b",
+                  }}
+                >
+                  Vistorias de entrada e saída com fotos e vídeos
                 </span>
+
                 <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     type="button"
-                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=ENTRY`)}
+                    onClick={() =>
+                      navigate(
+                        `/vistorias?imovelId=${imovel.id}&tipo=ENTRY`
+                      )
+                    }
                     style={{
                       backgroundColor: "#16a34a",
                       color: "#ffffff",
@@ -826,9 +1689,14 @@ function VisaoGeralImovel() {
                   >
                     + Vistoria de Entrada
                   </button>
+
                   <button
                     type="button"
-                    onClick={() => navigate(`/vistorias?imovelId=${imovel.id}&tipo=EXIT`)}
+                    onClick={() =>
+                      navigate(
+                        `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
+                      )
+                    }
                     style={{
                       backgroundColor: "#ea580c",
                       color: "#ffffff",
@@ -846,7 +1714,9 @@ function VisaoGeralImovel() {
               </div>
 
               {imovel.vistorias.length === 0 ? (
-                <p>Nenhuma vistoria ou manutenção registrada para este imóvel.</p>
+                <p>
+                  Nenhuma vistoria ou manutenção registrada para este imóvel.
+                </p>
               ) : (
                 <table className="tabela-custom">
                   <thead>
@@ -858,12 +1728,15 @@ function VisaoGeralImovel() {
                       <th>Ações</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {imovel.vistorias.map((item) => (
                       <tr key={item.id}>
                         <td>{item.data}</td>
+
                         <td>
-                          {item.tipo === "Vistoria" && item.tipoVistoria ? (
+                          {item.tipo === "Vistoria" &&
+                          item.tipoVistoria ? (
                             <span
                               style={{
                                 display: "inline-block",
@@ -871,25 +1744,41 @@ function VisaoGeralImovel() {
                                 borderRadius: "10px",
                                 fontSize: "12px",
                                 fontWeight: "600",
-                                backgroundColor: item.tipoVistoria === "EXIT" ? "#ffedd5" : "#dcfce7",
-                                color: item.tipoVistoria === "EXIT" ? "#c2410c" : "#15803d",
+                                backgroundColor:
+                                  item.tipoVistoria === "EXIT"
+                                    ? "#ffedd5"
+                                    : "#dcfce7",
+                                color:
+                                  item.tipoVistoria === "EXIT"
+                                    ? "#c2410c"
+                                    : "#15803d",
                               }}
                             >
-                              {item.tipoVistoria === "EXIT" ? "Vistoria de Saída" : "Vistoria de Entrada"}
+                              {item.tipoVistoria === "EXIT"
+                                ? "Vistoria de Saída"
+                                : "Vistoria de Entrada"}
                             </span>
                           ) : (
                             item.tipo
                           )}
                         </td>
+
                         <td>{item.responsavel}</td>
                         <td>{item.observacao}</td>
+
                         <td>
                           {item.tipo === "Vistoria" ? (
                             <button
                               type="button"
                               onClick={() => {
-                                const qVistoria = item.inspectionId ? `&vistoriaId=${item.inspectionId}` : "";
-                                navigate(`/vistorias?imovelId=${imovel.id}&aba=consultar${qVistoria}`);
+                                const qVistoria =
+                                  item.inspectionId
+                                    ? `&vistoriaId=${item.inspectionId}`
+                                    : "";
+
+                                navigate(
+                                  `/vistorias?imovelId=${imovel.id}&aba=consultar${qVistoria}`
+                                );
                               }}
                               style={{
                                 backgroundColor: "#f1f5f9",
@@ -905,7 +1794,14 @@ function VisaoGeralImovel() {
                               Ver Mídias
                             </button>
                           ) : (
-                            <span style={{ fontSize: "12px", color: "#94a3b8" }}>—</span>
+                            <span
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                              }}
+                            >
+                              —
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -916,26 +1812,42 @@ function VisaoGeralImovel() {
             </div>
           )}
 
+          {/* HISTÓRICO */}
           {abaAtiva === "historico" && (
             <>
               <h3>Histórico de ligamento e desligamento</h3>
+
               {historicoLocacoes.length === 0 ? (
-                <p>Nenhum ligamento ou desligamento registrado.</p>
+                <p>
+                  Nenhum ligamento ou desligamento registrado.
+                </p>
               ) : (
                 <ul className="historico-locacao-lista">
                   {historicoLocacoes.map((contrato) => (
-                    <li className="historico-locacao-item" key={`historico-${contrato.id}`}>
-                      <span><strong>Locatário:</strong> {contrato.locatario}</span>
-                      <span><strong>Ligamento:</strong> {contrato.inicio}</span>
-                      <span><strong>Desligamento:</strong> {contrato.fim}</span>
+                    <li
+                      className="historico-locacao-item"
+                      key={`historico-${contrato.id}`}
+                    >
+                      <span>
+                        <strong>Locatário:</strong>{" "}
+                        {contrato.locatario}
+                      </span>
+
+                      <span>
+                        <strong>Ligamento:</strong>{" "}
+                        {contrato.inicio}
+                      </span>
+
+                      <span>
+                        <strong>Desligamento:</strong>{" "}
+                        {contrato.fim}
+                      </span>
                     </li>
                   ))}
                 </ul>
               )}
             </>
           )}
-
-
         </div>
       </div>
     </>

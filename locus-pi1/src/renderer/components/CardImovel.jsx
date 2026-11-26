@@ -2,9 +2,26 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Badge from "./Badge";
 
-function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onRemover }) {
+function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onExcluir }) {
     const [erroImagem, setErroImagem] = useState(false);
-    const corStatus = status === "Disponível" ? "verde" : "vermelho";
+
+    const statusFormatado = {
+        DISPONIVEL: "Disponível",
+        Disponível: "Disponível",
+        ALUGADO: "Alugado",
+        Alugado: "Alugado",
+        CADASTRADO: "Cadastrado",
+        Cadastrado: "Cadastrado",
+        VENDIDO: "Vendido",
+        Vendido: "Vendido",
+        INATIVO: "Inativo",
+        Inativo: "Inativo",
+    }[status] || status || "Disponível";
+
+    const corStatus = 
+        status === "DISPONIVEL" || status === "Disponível" ? "verde" :
+        status === "ALUGADO" || status === "Alugado" ? "vermelho" : "cinza";
+
     const alugado = status === "ALUGADO" || status === "Alugado";
 
     const valorNumerico = Number(valor) || 0;
@@ -69,7 +86,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         padding-top: 16px;
                     }
 
-                    .card-btn-editar, .card-btn-remover, .card-btn-vistorias {
+                    .card-btn-editar, .card-btn-excluir, .card-btn-vistorias {
                         flex: 1;
                         padding: 8px;
                         border: none;
@@ -102,16 +119,16 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         background-color: #e0e0e0;
                     }
 
-                    .card-btn-remover {
+                    .card-btn-excluir {
                         background-color: #ffeeee;
                         color: #d32f2f;
                     }
 
-                    .card-btn-remover:hover {
+                    .card-btn-excluir:hover {
                         background-color: #ffdddd;
                     }
 
-                    .card-btn-remover:disabled {
+                    .card-btn-excluir:disabled {
                         background-color: #e0e0e0;
                         color: #888888;
                         cursor: not-allowed;
@@ -140,7 +157,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                     <p className="card-imovel-endereco">{endereco}</p>
 
                     <div className="card-imovel-etiquetas">
-                        <Badge texto={status || "Disponível"} cor={corStatus} />
+                        <Badge texto={statusFormatado} cor={corStatus} />
                         <Badge texto={valorFormatado} />
                         {tipo && <Badge texto={tipo} />}
                     </div>
@@ -161,12 +178,12 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                             Vistorias
                         </Link>
                         <button 
-                            className="card-btn-remover"
-                            onClick={() => onRemover && onRemover(id)}
+                            className="card-btn-excluir"
+                            onClick={() => onExcluir && onExcluir(id)}
                             disabled={alugado}
-                            title="Remover imóvel"
+                            title="Excluir imóvel"
                         >
-                            Remover
+                            Excluir
                         </button>
                     </div>
                 </div>

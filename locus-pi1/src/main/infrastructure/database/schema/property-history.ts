@@ -14,6 +14,7 @@ export const propertyContracts = sqliteTable("property_contracts", {
   startDate: integer("start_date").notNull(),
   endDate: integer("end_date"),
   status: text("status", { enum: ["ACTIVE", "ENDED", "CANCELLED"] }).notNull(),
+  notes: text("notes"),
   createdAt: integer("created_at").notNull(),
 }, (table) => [
   index("property_contracts_property_date_idx").on(table.propertyId, table.startDate),

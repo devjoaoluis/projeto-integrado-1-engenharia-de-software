@@ -75,6 +75,9 @@ export class UpdateProperty {
       property.ownerId = dto.ownerId || null;
     }
     if (dto.status !== undefined) {
+      if (dto.status !== PropertyStatus.DISPONIVEL && dto.status !== PropertyStatus.ALUGADO) {
+        throw new Error("Status do imóvel inválido. O ciclo permite apenas DISPONIVEL e ALUGADO.");
+      }
       property.status = dto.status;
     }
 

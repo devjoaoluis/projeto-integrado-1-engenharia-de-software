@@ -1,6 +1,8 @@
+
 import { Outlet, useLocation } from "react-router-dom";
-import { User, Bell } from "lucide-react";
+import { User } from "lucide-react";
 import { Sidebar } from "../components/Sidebar";
+import NotificationBell from "../components/NotificationBell";
 
 const titulos = {
     "/home": "Home",
@@ -10,11 +12,19 @@ const titulos = {
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
     "/locatarios": "Locatários",
+    "/contatos": "Contatos",
 };
 
 function AppLayout() {
     const { pathname } = useLocation();
-    const titulo = titulos[pathname] ?? (pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" : pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" : "Locus");
+
+    const titulo =
+        titulos[pathname] ??
+        (pathname === "/imoveis/cadastrar"
+            ? "Cadastrar imóvel"
+            : pathname.startsWith("/imoveis/")
+                ? "Visão geral do imóvel"
+                : "Locus");
 
     return (
         <>
@@ -29,6 +39,7 @@ function AppLayout() {
                         flex: 1;
                         display: flex;
                         flex-direction: column;
+                        min-width: 0;
                     }
 
                     .topo {
@@ -47,7 +58,12 @@ function AppLayout() {
 
                     .topo-icones {
                         display: flex;
+                        align-items: center;
                         gap: 16px;
+                    }
+
+                    .topo-icones > svg {
+                        cursor: pointer;
                     }
 
                     .conteudo {
@@ -64,9 +80,10 @@ function AppLayout() {
                 <div className="principal">
                     <header className="topo">
                         <h1>{titulo}</h1>
+
                         <div className="topo-icones">
                             <User size={20} />
-                            <Bell size={20} />
+                            <NotificationBell />
                         </div>
                     </header>
 

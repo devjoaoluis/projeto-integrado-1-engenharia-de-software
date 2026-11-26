@@ -116,7 +116,7 @@ function CadastrarImovel() {
         setDados((antigo) => ({ ...antigo, [name]: value }));
     }
 
-    async function removerMidiaExistente(idMidia) {
+    async function excluirMidiaExistente(idMidia) {
         try {
             if (window.api?.propertyMedia?.delete) {
                 await window.api.propertyMedia.delete(idMidia);
@@ -127,8 +127,8 @@ function CadastrarImovel() {
             }
             setMidiasExistentes((prev) => prev.filter(m => (m.id || m) !== idMidia));
         } catch (error) {
-            console.error("Erro ao remover mídia:", error);
-            setErro(mensagemErro(error, "Não foi possível remover a mídia. Tente novamente."));
+            console.error("Erro ao excluir mídia:", error);
+            setErro(mensagemErro(error, "Não foi possível excluir a mídia. Tente novamente."));
         }
     }
 
@@ -328,7 +328,7 @@ function CadastrarImovel() {
                             required
                         />
                         <Campo
-                            label="Valor IPTU"
+                            label="Valor do IPTU (R$)"
                             name="valorIptu"
                             type="number"
                             min="0"
@@ -337,7 +337,7 @@ function CadastrarImovel() {
                             onChange={mudar}
                         />
                         <Campo
-                            label="Número de quartos"
+                            label="Quartos"
                             name="quartos"
                             type="number"
                             min="0"
@@ -387,16 +387,16 @@ function CadastrarImovel() {
                             onChange={mudar}
                         />
                         <Campo
-                            label="Situação Fiscal"
+                            label="Situação fiscal"
                             name="situacaoFiscal"
                             opcoes={SITUACOES_FISCAIS}
                             value={dados.situacaoFiscal}
                             onChange={mudar}
                         />
 
-                        <Campo label="nº" name="numero" value={dados.numero} onChange={mudar} required />
+                        <Campo label="Número" name="numero" value={dados.numero} onChange={mudar} required />
                         <Campo
-                            label="Situação Saneamento"
+                            label="Situação de saneamento"
                             name="situacaoSaneamento"
                             opcoes={SITUACOES_SANEAMENTO}
                             value={dados.situacaoSaneamento}
@@ -440,7 +440,7 @@ function CadastrarImovel() {
                                                     ) : (
                                                         <img src={urlSanitizada} alt="Mídia do imóvel" />
                                                     )}
-                                                    <button type="button" title="Remover mídia" onClick={() => removerMidiaExistente(id)}>×</button>
+                                                    <button type="button" title="Excluir mídia" onClick={() => excluirMidiaExistente(id)}>×</button>
                                                 </div>
                                             );
                                         })}

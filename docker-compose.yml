@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: locus-app
+    ports:
+      - "6080:6080" # Interface Web noVNC (abra http://localhost:6080 no navegador)
+      - "5900:5900" # Porta VNC nativa para clientes desktop (opcional)
+    environment:
+      - RESOLUTION=1280x800x24
+      - DOCKER_CONTAINER=true
+      - NO_SANDBOX=true
+    volumes:
+      # Persiste o banco SQLite, fotos de vistorias e documentos de locatários
+      - locus-data:/root/.config/locus-pi1
+    shm_size: 2gb
+    restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tester
+    container_name: locus-test
+    command: npm test
+
+  typecheck:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tester
+    container_name: locus-typecheck
+    command: npm run typecheck
+  package:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: locus-package
+    command: npm run package
+    volumes:
+      - ./dist-packages:/app/locus-pi1/out
+
+  frontend-web:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    container_name: locus-frontend-web
+    ports:
+      - "5173:5173"
+    profiles:
+      - web
+      - all
+
+volumes:
+  locus-data:
+    name: locus-pi1-data

@@ -42,7 +42,14 @@ export function Sidebar() {
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "20px 12px 12px",
-        minHeight: "100vh",
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        left: 0,
+        flexShrink: 0,
+        boxSizing: "border-box",
+        overflowY: "auto",
+        zIndex: 50,
       }}
     >
       <div>
@@ -80,14 +87,17 @@ export function Sidebar() {
         style={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           gap: "8px",
           backgroundColor: "#ffffff",
           color: "#1877f2",
           border: "none",
           borderRadius: "6px",
           padding: "10px 16px",
+          width: "100%",
           fontWeight: "bold",
           cursor: "pointer",
+          flexShrink: 0,
         }}
       >
         <LogOut size={18} color="#FF0000" />

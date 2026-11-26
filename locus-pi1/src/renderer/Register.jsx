@@ -8,7 +8,7 @@ export default function Register({ onSuccess }) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [repetirSenha, setRepetirSenha] = useState("");
   const [perguntaSeguranca, setPerguntaSeguranca] = useState("");
   const [respostaSeguranca, setRespostaSeguranca] = useState("");
   const [error, setError] = useState(null);
@@ -20,7 +20,7 @@ export default function Register({ onSuccess }) {
     e.preventDefault();
     setError(null);
 
-    if (senha !== confirmarSenha) {
+    if (senha !== repetirSenha) {
       setError("As senhas não coincidem.");
       return;
     }
@@ -162,8 +162,8 @@ export default function Register({ onSuccess }) {
 
               <Input
                 type="password"
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
+                value={repetirSenha}
+                onChange={(e) => setRepetirSenha(e.target.value)}
                 placeholder="Repetir Senha"
                 required
               />

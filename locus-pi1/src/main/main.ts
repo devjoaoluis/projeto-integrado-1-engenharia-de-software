@@ -4,6 +4,9 @@ import { registerInspectionEntryIpc } from "./ipc/inspection-entry.ipc";
 import { registerInspectionExitIpc } from "./ipc/inspection-exit.ipc";
 import { registerInspectionsIpc } from "./ipc/inspections.ipc";
 import { registerTenantDocumentsIpc } from "./ipc/tenant-documents.ipc";
+import { registerVisitsIpc } from "./ipc/visits.ipc";
+import { registerOverdueIpc } from "./ipc/overdue.ipc";
+import { registerLateFeeIpc } from "./ipc/late-fee.ipc";
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
@@ -15,9 +18,17 @@ import { registerClientsIpc } from './ipc/clients.ipc';
 import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
 import { registerRentalsIpc } from './ipc/rentals.ipc';
 import { databaseReady } from './infrastructure/database/db';
+import { SeedBuiltinContractTemplates } from './application/use-cases/SeedBuiltinContractTemplates';
+import { DrizzleContractTemplateRepository } from './infrastructure/repositories/DrizzleContractTemplateRepository';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
+}
+
+if (process.env.DOCKER_CONTAINER === 'true' || process.env.NO_SANDBOX === 'true') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
 }
 
 const createWindow = () => {
@@ -50,6 +61,7 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   await databaseReady;
+  await new SeedBuiltinContractTemplates(new DrizzleContractTemplateRepository()).execute();
   
   registerPropertiesIpc();
   registerPropertyMediaIpc();
@@ -64,6 +76,9 @@ app.on('ready', async () => {
   registerInspectionEntryIpc();
   registerInspectionExitIpc();
   registerTenantDocumentsIpc();
+  registerVisitsIpc();
+  registerOverdueIpc();
+  registerLateFeeIpc();
   createWindow();
 });
 

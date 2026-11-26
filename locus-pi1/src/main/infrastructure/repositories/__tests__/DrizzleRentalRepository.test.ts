@@ -55,7 +55,7 @@ describe("Rental SQLite persistence", () => {
       await initializeDatabase(bootstrap);
       assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
       assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
-      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 15);
+      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 18);
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {
@@ -108,17 +108,18 @@ describe("Rental SQLite persistence", () => {
     await assert.rejects(sqlite.execute("DELETE FROM properties"), /FOREIGN KEY/);
     await assert.rejects(sqlite.execute("DELETE FROM clients WHERE id = 'tenant'"), /FOREIGN KEY/);
   });
-  it("preserves contracts and payments when ending a rental", async () => {
+  it("preserves contracts and payments and persists termination notes when ending a rental", async () => {
     await repo.create(rental());
     const contract = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
     assert.notEqual(contract.id, "rental");
     await sqlite.execute({ sql: "INSERT INTO property_payments VALUES ('payment', 'property', ?, 1000, 10, 'Aluguel', 10)", args: [contract.id] });
-    await repo.cancel("rental", 20);
+    await repo.cancel("rental", 20, { notes: "Rescisão antecipada amigável", hasDebts: false });
     const saved = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
     assert.equal(saved.id, contract.id);
     assert.equal(saved.rental_id, null);
     assert.equal(saved.status, "ENDED");
     assert.equal(saved.end_date, 20);
+    assert.equal(saved.notes, "Rescisão antecipada amigável");
     assert.equal((await sqlite.execute("SELECT count(*) AS total FROM property_payments")).rows[0].total, 1);
     assert.equal(await repo.findById("rental"), null);
     assert.equal((await sqlite.execute("SELECT status FROM properties")).rows[0].status, "DISPONIVEL");

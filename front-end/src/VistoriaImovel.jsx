@@ -1,198 +1,241 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, FileText, Image, Video } from "lucide-react";
+
+const estiloCard = {
+  background: "#fff",
+  border: "1px solid #eaecf0",
+  borderRadius: "8px",
+  padding: "20px"
+};
+
+function formatarData(timestamp) {
+  if (!timestamp) return "-";
+
+  return new Date(timestamp).toLocaleDateString("pt-BR", {
+    timeZone: "UTC"
+  });
+}
 
 export default function VistoriaImovel() {
-  const { idImovel } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  // Estados para gerenciar as vistorias
-  const [tipoVistoria, setTipoVistoria] = useState('entrada'); // 'entrada' ou 'saida'
-  const [observacoes, setObservacoes] = useState('');
-  const [arquivos, setArquivos] = useState([]);
-  
-  // Simulando vistorias já salvas 
-  const [vistoriasRealizadas, setVistoriasRealizadas] = useState({
-    entrada: true, // Já realizada neste exemplo
-    saida: false   // Pendente
-  });
+  const [vistoria, setVistoria] = useState(null);
+  const [imovel, setImovel] = useState(null);
+  const [contrato, setContrato] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
-  const handleFileChange = (e) => {
-    const novosArquivos = Array.from(e.target.files);
-    setArquivos((prev) => [...prev, ...novosArquivos]);
-  };
+  useEffect(() => {
+    async function carregarDetalhes() {
+      try {
+        setCarregando(true);
+        setErro("");
 
-  const handleRemoverArquivo = (index) => {
-    setArquivos(arquivos.filter((_, i) => i !== index));
-  };
+        const resultado = await window.api.inspections.get(id);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+        setVistoria(resultado);
 
-    if (arquivos.length === 0) {
-      alert("É obrigatório anexar pelo menos uma foto ou vídeo para registrar a vistoria com respaldo jurídico!");
-      return;
+        const overview = await window.api.properties.overview(
+          resultado.propertyId
+        );
+
+        setImovel(overview.property);
+
+        const contratos = [
+          ...(overview.contracts?.current || []),
+          ...(overview.contracts?.previous || []),
+          ...(overview.contracts?.scheduled || [])
+        ];
+
+        setContrato(
+          contratos.find((item) => item.id === resultado.contractId) || null
+        );
+      } catch (error) {
+        console.error("Erro ao carregar vistoria:", error);
+        setErro(error.message || "Não foi possível carregar a vistoria.");
+      } finally {
+        setCarregando(false);
+      }
     }
 
-    // Lógica para salvar a vistoria (API / Estado global)
-    console.log(`Salvando vistoria de ${tipoVistoria} para o imóvel ${idImovel}`, {
-      observacoes,
-      arquivos,
-      data: new Date().toISOString()
-    });
+    carregarDetalhes();
+  }, [id]);
 
-    setVistoriasRealizadas((prev) => ({
-      ...prev,
-      [tipoVistoria]: true
-    }));
+  if (carregando) {
+    return <p>Carregando detalhes da vistoria...</p>;
+  }
 
-    alert(`Vistoria de ${tipoVistoria} registrada com sucesso!`);
-    setArquivos([]);
-    setObservacoes('');
-  };
+  if (erro) {
+    return (
+      <div style={estiloCard}>
+        <p style={{ color: "#b42318" }}>{erro}</p>
+
+        <button onClick={() => navigate("/vistorias")}>
+          Voltar para vistorias
+        </button>
+      </div>
+    );
+  }
+
+  if (!vistoria) return null;
+
+  const entrada = vistoria.type === "ENTRY";
 
   return (
-    <div className="vistoria-container">
-      <style>{`
-        .vistoria-container {
-          padding: 24px;
-          max-width: 800px;
-          margin: 0 auto;
-          font-family: Arial, sans-serif;
-          background: #f9f9f9;
-          border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .header-vistoria {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .form-group {
-          margin-bottom: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .form-group label {
-          font-weight: bold;
-          font-size: 14px;
-          color: #333;
-        }
-        .form-group select, .form-group textarea, .form-group input {
-          padding: 10px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          font-size: 14px;
-        }
-        .file-list {
-          margin-top: 10px;
-          list-style: none;
-          padding: 0;
-        }
-        .file-item {
-          display: flex;
-          justify-content: space-between;
-          background: #fff;
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          margin-bottom: 6px;
-          border-radius: 4px;
-          font-size: 13px;
-        }
-        .btn-remover {
-          color: #d32f2f;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-weight: bold;
-        }
-        .btn-salvar {
-          background-color: #1976d2;
-          color: white;
-          border: none;
-          padding: 12px 20px;
-          border-radius: 4px;
-          font-weight: bold;
-          cursor: pointer;
-          width: 100%;
-        }
-        .btn-salvar:hover {
-          background-color: #115293;
-        }
-        .aviso-rn03 {
-          background: #fff3cd;
-          color: #856404;
-          padding: 10px;
-          border-radius: 4px;
-          font-size: 13px;
-          margin-bottom: 16px;
-          border: 1px solid #ffeeba;
-        }
-      `}</style>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: "20px",
+      maxWidth: "950px",
+      margin: "0 auto"
+    }}>
+      <button
+        onClick={() => navigate("/vistorias")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          border: "none",
+          background: "none",
+          color: "#1877f2",
+          cursor: "pointer",
+          fontWeight: "600",
+          width: "fit-content"
+        }}
+      >
+        <ArrowLeft size={18} />
+        Voltar para vistorias
+      </button>
 
-      <div className="header-vistoria">
-        <h2>Registro de Vistoria (Entrada e Saída)</h2>
-        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', color: '#1976d2', cursor: 'pointer', fontWeight: 'bold' }}>
-          &larr; Voltar
-        </button>
+      <div style={estiloCard}>
+        <h2 style={{ marginTop: 0, color: "#344054" }}>
+          Detalhes da vistoria
+        </h2>
+
+        <span style={{
+          display: "inline-block",
+          padding: "6px 12px",
+          borderRadius: "20px",
+          background: entrada ? "#dbeafe" : "#fef3c7",
+          color: entrada ? "#1e40af" : "#92400e",
+          fontSize: "13px",
+          fontWeight: "600"
+        }}>
+          Vistoria de {entrada ? "Entrada" : "Saída"}
+        </span>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "20px",
+          marginTop: "25px"
+        }}>
+          <div>
+            <small style={{ color: "#667085" }}>Imóvel</small>
+            <p style={{ fontWeight: "600" }}>
+              {imovel?.title || vistoria.propertyId}
+            </p>
+          </div>
+
+          <div>
+            <small style={{ color: "#667085" }}>Endereço</small>
+            <p>{imovel?.address || "-"}</p>
+          </div>
+
+          <div>
+            <small style={{ color: "#667085" }}>Contrato</small>
+            <p style={{ fontWeight: "600" }}>
+              {contrato?.reference || vistoria.contractId}
+            </p>
+          </div>
+
+          <div>
+            <small style={{ color: "#667085" }}>Data</small>
+            <p>{formatarData(vistoria.inspectedAt)}</p>
+          </div>
+
+          <div>
+            <small style={{ color: "#667085" }}>Referência do relatório</small>
+            <p>{vistoria.reportReference || "Não informada"}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="aviso-rn03">
-        <strong></strong> A realização da vistoria (com upload de mídias) é obrigatória tanto na <strong>Entrada</strong> quanto na <strong>Saída</strong> do imóvel para garantir respaldo jurídico.
+      <div style={estiloCard}>
+        <h3 style={{ color: "#344054", marginTop: 0 }}>
+          Descrição da vistoria
+        </h3>
+
+        <p style={{
+          color: "#475467",
+          lineHeight: "1.7",
+          whiteSpace: "pre-wrap"
+        }}>
+          {vistoria.description}
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Tipo de Vistoria</label>
-          <select value={tipoVistoria} onChange={(e) => setTipoVistoria(e.target.value)}>
-            <option value="entrada">Vistoria de Entrada</option>
-            <option value="saida">Vistoria de Saída</option>
-          </select>
-        </div>
+      <div style={estiloCard}>
+        <h3 style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          color: "#344054",
+          marginTop: 0
+        }}>
+          <FileText size={19} />
+          Arquivos anexados
+        </h3>
 
-        <div className="form-group">
-          <label>Observações do Imóvel (Paredes, pisos, instalações, etc.)</label>
-          <textarea 
-            rows="4" 
-            value={observacoes} 
-            onChange={(e) => setObservacoes(e.target.value)}
-            placeholder="Descreva detalhadamente o estado atual do imóvel..."
-            required
-          />
-        </div>
+        {!vistoria.media?.length ? (
+          <p style={{ color: "#667085" }}>
+            Nenhum arquivo foi anexado a esta vistoria.
+          </p>
+        ) : (
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px"
+          }}>
+            {vistoria.media.map((arquivo) => (
+              <div
+                key={arquivo.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  background: "#f9fafb",
+                  padding: "12px",
+                  borderRadius: "6px"
+                }}
+              >
+                {arquivo.type === "VIDEO" ? (
+                  <Video size={20} color="#1877f2" />
+                ) : (
+                  <Image size={20} color="#1877f2" />
+                )}
 
-        <div className="form-group">
-          <label>Anexar Fotos e Vídeos (Obrigatório)</label>
-          <input 
-            type="file" 
-            multiple 
-            accept="image/*,video/*" 
-            onChange={handleFileChange} 
-          />
-          <small style={{ color: '#666', marginTop: '4px' }}>Você pode selecionar múltiplos arquivos (JPG, PNG, MP4, etc.)</small>
-        </div>
+                <div>
+                  <strong style={{ fontSize: "13px" }}>
+                    {arquivo.fileName}
+                  </strong>
 
-        {arquivos.length > 0 && (
-          <div className="form-group">
-            <label>Arquivos Selecionados ({arquivos.length})</label>
-            <ul className="file-list">
-              {arquivos.map((file, index) => (
-                <li key={index} className="file-item">
-                  <span>{file.name} ({Math.round(file.size / 1024)} KB)</span>
-                  <button type="button" className="btn-remover" onClick={() => handleRemoverArquivo(index)}>
-                    Remover
-                  </button>
-                </li>
-              ))}
-            </ul>
+                  <p style={{
+                    margin: "4px 0 0",
+                    color: "#667085",
+                    fontSize: "12px"
+                  }}>
+                    {(arquivo.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-
-        <button type="submit" className="btn-salvar">
-          Salvar Vistoria de {tipoVistoria.toUpperCase()}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

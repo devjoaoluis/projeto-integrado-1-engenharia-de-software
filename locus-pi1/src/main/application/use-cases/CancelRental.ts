@@ -1,40 +1,40 @@
 import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IInspectionRepository } from "../../domain/repositories/IInspectionRepository";
 import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
+import { TerminateRental } from "./TerminateRental";
+
+export interface CancelRentalOptions {
+  cancelledAt?: number;
+  allowPendingDebts?: boolean;
+  notes?: string | null;
+  hasDebts?: boolean;
+}
 
 export class CancelRental {
+  private terminateRental: TerminateRental;
+
   constructor(
     private rentalRepository: IRentalRepository,
     private inspectionRepository?: IInspectionRepository,
     private historyRepository?: IPropertyHistoryRepository,
-  ) {}
+  ) {
+    this.terminateRental = new TerminateRental(
+      rentalRepository,
+      inspectionRepository,
+      historyRepository
+    );
+  }
 
-  async execute(id: string): Promise<void> {
-    if (typeof id !== "string" || !id.trim()) throw new Error("Rental id is required");
-    if (!this.rentalRepository.cancel) throw new Error("Rental cancellation is not supported");
+  async execute(id: string, options?: CancelRentalOptions): Promise<void> {
+    if (typeof id !== "string" || !id.trim())
+      throw new Error("Rental id is required");
 
-    if (this.inspectionRepository) {
-      const rental = await this.rentalRepository.findById(id);
-      if (!rental) throw new Error(`Rental with id ${id} not found`);
-
-      // RN03: Se as chaves foram entregues, a vistoria de saída é obrigatória para encerrar a locação
-      if (rental.keysReleasedAt !== null) {
-        let contractId: string | null = null;
-        if (this.historyRepository) {
-          const history = await this.historyRepository.findByPropertyId(rental.propertyId);
-          const contract = history.contracts.find((c) => c.rentalId === rental.id);
-          if (contract) contractId = contract.id;
-        }
-        const inspections = contractId
-          ? await this.inspectionRepository.findByContractId(contractId)
-          : await this.inspectionRepository.findByPropertyId(rental.propertyId);
-        const hasExit = inspections.some((i) => i.type === "EXIT" && (!contractId || i.contractId === contractId));
-        if (!hasExit) {
-          throw new Error("RN03: A vistoria de saída é obrigatória para o encerramento da locação.");
-        }
-      }
-    }
-
-    await this.rentalRepository.cancel(id, Date.now());
+    await this.terminateRental.execute({
+      rentalId: id,
+      cancelledAt: options?.cancelledAt,
+      allowPendingDebts: options?.allowPendingDebts,
+      notes: options?.notes,
+      hasDebts: options?.hasDebts,
+    });
   }
 }

@@ -111,6 +111,18 @@ export class FillContractTemplate {
     const startDateFormatted = rental?.startDate ? formatDate(rental.startDate) : formatDate(now.getTime());
     const endDateFormatted = rental?.endDate ? formatDate(rental.endDate) : "Indeterminado";
 
+    let prazoMeses = "30";
+    let prazoDias = "30";
+    if (rental?.startDate && rental?.endDate) {
+      const startMs = typeof rental.startDate === "number" ? rental.startDate : new Date(rental.startDate).getTime();
+      const endMs = typeof rental.endDate === "number" ? rental.endDate : new Date(rental.endDate).getTime();
+      if (!isNaN(startMs) && !isNaN(endMs) && endMs > startMs) {
+        const diffDays = Math.round((endMs - startMs) / (1000 * 60 * 60 * 24));
+        prazoDias = String(diffDays);
+        prazoMeses = String(Math.max(1, Math.round(diffDays / 30)));
+      }
+    }
+
     const replacementMap: Record<string, string> = {
       // Imovel
       "imovel.titulo": property.title || "Imóvel Residencial",
@@ -155,16 +167,67 @@ export class FillContractTemplate {
       "aluguel.dia_vencimento": dueDay,
       "aluguel.inicio": startDateFormatted,
       "aluguel.fim": endDateFormatted,
+      "aluguel.prazo_meses": prazoMeses,
+      "aluguel.prazo_dias": prazoDias,
       "contrato.valor": rentFormatted,
       "contrato.vencimento": dueDay,
       "contrato.inicio": startDateFormatted,
       "contrato.fim": endDateFormatted,
+      "contrato.prazo_meses": prazoMeses,
+      "contrato.prazo_dias": prazoDias,
+      "prazo_meses": prazoMeses,
+      "prazo_dias": prazoDias,
 
       // Datas
       "data_atual": formatLongDate(now),
       "dia": String(now.getDate()),
       "mes": String(now.getMonth() + 1),
       "ano": String(now.getFullYear()),
+
+      // Atalhos diretos e variações comuns (nome, CPF, valor, datas, endereço)
+      "endereco": property.address || "",
+      "endereco_imovel": property.address || "",
+      "bairro": property.neighborhood || "Centro",
+      "bairro_imovel": property.neighborhood || "Centro",
+      "tipo_imovel": property.type || "Residencial",
+      "descricao_imovel": property.description || "Sem descrição adicional",
+      "valor": rentFormatted,
+      "aluguel": rentFormatted,
+      "preco": rentFormatted,
+      "valor_aluguel": rentFormatted,
+      "valor_imovel": rentFormatted,
+      "iptu": iptuFormatted,
+      "iptu_imovel": iptuFormatted,
+      "data": formatLongDate(now),
+      "data_inicio": startDateFormatted,
+      "data_fim": endDateFormatted,
+      "inicio_aluguel": startDateFormatted,
+      "fim_aluguel": endDateFormatted,
+      "inicio_contrato": startDateFormatted,
+      "fim_contrato": endDateFormatted,
+      "vencimento": dueDay,
+      "vencimento_aluguel": dueDay,
+      "vencimento_contrato": dueDay,
+      "nome_locatario": tenantName,
+      "cpf_locatario": tenantCpf,
+      "cpfcnpj_locatario": tenantCpf,
+      "telefone_locatario": tenantPhone,
+      "email_locatario": tenantEmail,
+      "nome_locador": ownerName,
+      "cpf_locador": ownerCpf,
+      "cpfcnpj_locador": ownerCpf,
+      "telefone_locador": ownerPhone,
+      "email_locador": ownerEmail,
+      "nome_proprietario": ownerName,
+      "cpf_proprietario": ownerCpf,
+      "cpfcnpj_proprietario": ownerCpf,
+      "telefone_proprietario": ownerPhone,
+      "email_proprietario": ownerEmail,
+      "nome_fiador": guarantorName,
+      "cpf_fiador": guarantorCpf,
+      "cpfcnpj_fiador": guarantorCpf,
+      "telefone_fiador": guarantorPhone,
+      "email_fiador": guarantorEmail,
     };
 
     // Also support snake_case equivalents e.g. {{imovel_endereco}}, {{locatario_nome}}, etc.

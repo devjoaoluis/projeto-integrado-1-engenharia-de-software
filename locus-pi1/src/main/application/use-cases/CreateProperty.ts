@@ -56,7 +56,7 @@ export class CreateProperty {
       sanitationStatus: dto.sanitationStatus || null,
       registrationDate: dto.registrationDate || null,
       ownerId: dto.ownerId ?? null,
-      status: PropertyStatus.CADASTRADO,
+      status: PropertyStatus.DISPONIVEL,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };

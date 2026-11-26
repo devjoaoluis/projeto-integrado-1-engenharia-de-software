@@ -25,7 +25,7 @@ function Imoveis() {
     const [filtrosAplicados, setFiltrosAplicados] = useState(filtros);
     const [carregando, setCarregando] = useState(false);
     const [erro, setErro] = useState("");
-    const [imovelParaRemover, setImovelParaRemover] = useState(null);
+    const [imovelParaExcluir, setImovelParaExcluir] = useState(null);
     const [removendo, setRemovendo] = useState(false);
 
     useEffect(() => {
@@ -107,17 +107,17 @@ function Imoveis() {
         setPagina(1);
     }
 
-    async function confirmarRemocao() {
-        if (!imovelParaRemover) return;
-        const imovelId = imovelParaRemover.id;
-        setImovelParaRemover(null);
+    async function excluirConfirmado() {
+        if (!imovelParaExcluir) return;
+        const imovelId = imovelParaExcluir.id;
+        setImovelParaExcluir(null);
         setRemovendo(true);
         try {
             setErro("");
             await window.api.properties.delete(imovelId);
             await carregarImoveis();
         } catch (error) {
-            console.error("Erro ao remover:", error);
+            console.error("Erro ao excluir:", error);
             setErro(mensagemErro(error, "Não foi possível excluir o imóvel."));
         } finally {
             setRemovendo(false);
@@ -143,20 +143,31 @@ function Imoveis() {
                     .principal { min-width: 0; }
                     .imoveis-grade .card-imovel { min-width: 0; overflow-wrap: anywhere; }
                     .paginacao { flex-wrap: wrap; }
-                    @media (max-width: 1100px) {
-                        .imoveis-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-                        .imoveis-filtros label:first-child { grid-column: span 2; }
-                    }
 
                     .imoveis-topo {
                         display: flex;
                         justify-content: space-between;
-                        align-items: center;
+                        align-items: flex-start;
                         margin-bottom: 24px;
+                        gap: 16px;
+                        flex-wrap: wrap;
+                    }
+
+                    .imoveis-titulo {
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #0f172a;
+                        margin: 0;
+                    }
+
+                    .imoveis-subtitulo {
+                        font-size: 14px;
+                        color: #64748b;
+                        margin: 4px 0 0 0;
                     }
 
                     .imoveis-acao {
-                        width: 200px;
+                        min-width: 180px;
                     }
 
                     .imoveis-grade {
@@ -168,49 +179,100 @@ function Imoveis() {
                     .imoveis-filtros {
                         display: grid;
                         grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) auto auto;
-                        gap: 10px;
+                        gap: 12px;
                         align-items: end;
                         margin-bottom: 24px;
-                        padding: 16px;
-                        background: #f5f7fa;
+                        padding: 18px 20px;
+                        background: #ffffff;
+                        border: 1px solid #e2e8f0;
                         border-radius: 8px;
+                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
                     }
 
-                    .imoveis-filtros label {
-                        min-width: 0;
+                    .filtro-campo {
                         display: flex;
                         flex-direction: column;
                         gap: 6px;
-                        color: #555;
-                        font-size: 12px;
-                        font-weight: 600;
+                        min-width: 0;
                     }
 
-                    .imoveis-filtros input, .imoveis-filtros select {
+                    .filtro-label {
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: #334155;
+                        display: block;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .filtro-input {
                         width: 100%;
                         min-width: 0;
                         box-sizing: border-box;
-                        min-height: 38px;
-                        padding: 0 10px;
-                        border: 1px solid #c8cdd2;
-                        border-radius: 4px;
-                        background: white;
+                        height: 40px;
+                        padding: 0 12px;
+                        border: 1px solid #cbd5e1;
+                        border-radius: 6px;
+                        background: #ffffff;
+                        color: #1e293b;
+                        font-size: 14px;
+                        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+                    }
+
+                    .filtro-input:focus {
+                        outline: none;
+                        border-color: #2563eb;
+                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+                    }
+
+                    .filtro-input::placeholder {
+                        color: #94a3b8;
+                        font-size: 13px;
                     }
 
                     .filtro-botao {
-                        min-height: 38px;
-                        padding: 0 14px;
+                        height: 40px;
+                        padding: 0 18px;
                         border: none;
-                        border-radius: 4px;
-                        background: #1976d2;
-                        color: white;
+                        border-radius: 6px;
                         cursor: pointer;
                         font-weight: 600;
+                        font-size: 14px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: background-color 0.15s ease, border-color 0.15s ease;
+                        white-space: nowrap;
+                    }
+
+                    .filtro-buscar {
+                        background: #2563eb;
+                        color: #ffffff;
+                    }
+
+                    .filtro-buscar:hover {
+                        background: #1d4ed8;
                     }
 
                     .filtro-limpar {
-                        background: #e5e7eb;
-                        color: #333;
+                        background: #f1f5f9;
+                        color: #475569;
+                        border: 1px solid #cbd5e1;
+                    }
+
+                    .filtro-limpar:hover {
+                        background: #e2e8f0;
+                        color: #1e293b;
+                    }
+
+                    @media (max-width: 1100px) {
+                        .imoveis-filtros {
+                            grid-template-columns: repeat(2, minmax(0, 1fr));
+                        }
+                        .filtro-campo-busca {
+                            grid-column: span 2;
+                        }
                     }
 
                     .imoveis-erro {
@@ -237,7 +299,8 @@ function Imoveis() {
                         align-items: center;
                         justify-content: center;
                         background: rgba(0, 0, 0, .35);
-                        z-index: 10;
+                        z-index: 1000;
+                        backdrop-filter: blur(2px);
                     }
 
                     .confirmacao-exclusao-conteudo {
@@ -271,44 +334,107 @@ function Imoveis() {
             </style>
 
             <div className="imoveis-topo">
+                <div>
+                    <h1 className="imoveis-titulo">Imóveis</h1>
+                    <p className="imoveis-subtitulo">Consulte, filtre e gerencie os imóveis cadastrados no sistema.</p>
+                </div>
                 <div className="imoveis-acao">
                     <Button
-                        texto="Cadastrar imóvel"
+                        texto="+ Cadastrar imóvel"
                         type="button"
                         onClick={() => navigate("/imoveis/cadastrar", { state: null })}
                     />
                 </div>
             </div>
 
-            <form className="imoveis-filtros" onSubmit={aplicarFiltros}>
-                <label>
-                    Buscar por endereço ou bairro
-                    <input name="q" value={filtros.q} onChange={atualizarFiltro} placeholder="Ex.: Centro ou Rua A" />
-                </label>
-                <label>
-                    Preço mínimo
-                    <input name="priceMin" type="number" min="0" step="0.01" value={filtros.priceMin} onChange={atualizarFiltro} />
-                </label>
-                <label>
-                    Preço máximo
-                    <input name="priceMax" type="number" min="0" step="0.01" value={filtros.priceMax} onChange={atualizarFiltro} />
-                </label>
-                <label>
-                    Quartos (mínimo)
-                    <input name="bedrooms" type="number" min="0" step="1" value={filtros.bedrooms} onChange={atualizarFiltro} />
-                </label>
-                <label>
-                    Situação
-                    <select name="status" value={filtros.status} onChange={atualizarFiltro}>
+            <form className="imoveis-filtros" onSubmit={aplicarFiltros} role="search" aria-label="Filtros de busca de imóveis">
+                <div className="filtro-campo filtro-campo-busca">
+                    <label htmlFor="filtro-busca" className="filtro-label">
+                        Endereço ou bairro
+                    </label>
+                    <input
+                        id="filtro-busca"
+                        className="filtro-input"
+                        name="q"
+                        type="search"
+                        value={filtros.q}
+                        onChange={atualizarFiltro}
+                        placeholder="Ex.: Centro ou Rua das Flores"
+                    />
+                </div>
+
+                <div className="filtro-campo">
+                    <label htmlFor="filtro-preco-min" className="filtro-label">
+                        Preço mín. (R$)
+                    </label>
+                    <input
+                        id="filtro-preco-min"
+                        className="filtro-input"
+                        name="priceMin"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={filtros.priceMin}
+                        onChange={atualizarFiltro}
+                        placeholder="0,00"
+                    />
+                </div>
+
+                <div className="filtro-campo">
+                    <label htmlFor="filtro-preco-max" className="filtro-label">
+                        Preço máx. (R$)
+                    </label>
+                    <input
+                        id="filtro-preco-max"
+                        className="filtro-input"
+                        name="priceMax"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={filtros.priceMax}
+                        onChange={atualizarFiltro}
+                        placeholder="Sem limite"
+                    />
+                </div>
+
+                <div className="filtro-campo">
+                    <label htmlFor="filtro-quartos" className="filtro-label">
+                        Quartos (mín.)
+                    </label>
+                    <input
+                        id="filtro-quartos"
+                        className="filtro-input"
+                        name="bedrooms"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={filtros.bedrooms}
+                        onChange={atualizarFiltro}
+                        placeholder="Todos"
+                    />
+                </div>
+
+                <div className="filtro-campo">
+                    <label htmlFor="filtro-situacao" className="filtro-label">
+                        Situação
+                    </label>
+                    <select
+                        id="filtro-situacao"
+                        className="filtro-input"
+                        name="status"
+                        value={filtros.status}
+                        onChange={atualizarFiltro}
+                    >
                         <option value="">Todas</option>
-                        <option value="CADASTRADO">Cadastrado</option>
                         <option value="DISPONIVEL">Disponível</option>
                         <option value="ALUGADO">Alugado</option>
+                        <option value="CADASTRADO">Cadastrado</option>
                         <option value="VENDIDO">Vendido</option>
                         <option value="INATIVO">Inativo</option>
                     </select>
-                </label>
-                <button className="filtro-botao" type="submit">Buscar</button>
+                </div>
+
+                <button className="filtro-botao filtro-buscar" type="submit">Buscar</button>
                 <button className="filtro-botao filtro-limpar" type="button" onClick={limparFiltros}>Limpar</button>
             </form>
 
@@ -322,8 +448,20 @@ function Imoveis() {
                 </div>
             )}
 
-            {carregando && <p role="status">Carregando imóveis...</p>}
-            {!carregando && !erro && imoveis.length === 0 && <p>Nenhum imóvel encontrado.</p>}
+            {carregando && <p role="status" style={{ color: "#64748b", textAlign: "center", padding: "30px 0" }}>Carregando imóveis...</p>}
+            {!carregando && !erro && imoveis.length === 0 && (
+                <div style={{ textAlign: "center", padding: "48px 24px", background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
+                    <p style={{ fontSize: "16px", fontWeight: "600", color: "#334155", margin: 0 }}>Nenhum imóvel encontrado</p>
+                    <p style={{ fontSize: "14px", color: "#64748b", margin: "6px 0 16px 0" }}>Tente ajustar os filtros de busca ou cadastre um novo imóvel.</p>
+                    <button
+                        type="button"
+                        onClick={limparFiltros}
+                        style={{ background: "#f1f5f9", color: "#2563eb", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 16px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+                    >
+                        Limpar filtros
+                    </button>
+                </div>
+            )}
 
             <div className="imoveis-grade">
                 {imoveis.map((imovel) => (
@@ -337,23 +475,23 @@ function Imoveis() {
                         status={imovel.status} 
                         foto={imovel.foto} 
                         onEditar={() => handleEditar(imovel)}
-                        onRemover={() => {
+                        onExcluir={() => {
                             if (removendo) return;
                             setErro("");
-                            setImovelParaRemover(imovel);
+                            setImovelParaExcluir(imovel);
                         }}
                     />
                 ))}
             </div>
 
-            {imovelParaRemover && (
+            {imovelParaExcluir && (
                 <div className="confirmacao-exclusao" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmacao-exclusao">
                     <div className="confirmacao-exclusao-conteudo">
                         <h2 id="titulo-confirmacao-exclusao">Excluir imóvel?</h2>
-                        <p>Tem certeza que deseja excluir “{imovelParaRemover.title}”?</p>
+                        <p>Tem certeza que deseja excluir “{imovelParaExcluir.title}”? Esta ação não pode ser desfeita.</p>
                         <div className="confirmacao-exclusao-acoes">
-                            <button type="button" onClick={() => setImovelParaRemover(null)}>Cancelar</button>
-                            <button type="button" className="confirmacao-excluir" onClick={confirmarRemocao}>Excluir</button>
+                            <button type="button" onClick={() => setImovelParaExcluir(null)}>Cancelar</button>
+                            <button type="button" className="confirmacao-excluir" onClick={excluirConfirmado}>Excluir</button>
                         </div>
                     </div>
                 </div>
