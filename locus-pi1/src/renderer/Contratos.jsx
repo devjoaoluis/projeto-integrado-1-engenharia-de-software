@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
@@ -42,6 +43,14 @@ function formatarDataBr(dataStr) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function textoParaNomeArquivo(valor) {
+  return String(valor || "Documento")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 export default function Contratos() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -68,33 +77,72 @@ export default function Contratos() {
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [mensagemErro, setMensagemErro] = useState("");
 
+  // Modelo atualmente selecionado
+  const modeloAtual = modelos.find(
+    (modelo) => modelo.id === modeloSelecionadoId
+  );
+
+  const nomeModeloAtual =
+    modeloSelecionadoId === "padrao"
+      ? "Contrato de Locação Residencial Padrão"
+      : modeloAtual?.name || "Documento";
+
   // Carrega listas iniciais
   useEffect(() => {
     async function carregarListas() {
       try {
         setMensagemErro("");
-        const [listaImoveis, listaClientes, listaModelos, padrao] = await Promise.all([
+
+        const [
+          listaImoveis,
+          listaClientes,
+          listaModelos,
+          listaModelosBuiltin,
+          padrao,
+        ] = await Promise.all([
           window.api.properties.list(),
           window.api.clients.list(),
           window.api.contractTemplates.list(),
+          window.api.contracts.getBuiltinTemplates(),
           window.api.contracts.getDefaultTemplate(),
         ]);
+
         setImoveis(listaImoveis || []);
-        setLocatarios((listaClientes || []).filter((c) => c.type === "TENANT"));
-        setModelos(listaModelos || []);
+
+        setLocatarios(
+          (listaClientes || []).filter((c) => c.type === "TENANT")
+        );
+
+        // Combina os modelos cadastrados no banco com os modelos predefinidos.
+        // O Map evita duplicações caso os modelos built-in já estejam na lista.
+        const modelosUnicos = new Map();
+
+        [...(listaModelos || []), ...(listaModelosBuiltin || [])].forEach(
+          (modelo) => {
+            if (modelo?.id) {
+              modelosUnicos.set(modelo.id, modelo);
+            }
+          }
+        );
+
+        setModelos(Array.from(modelosUnicos.values()));
         setModeloPadrao(padrao || "");
 
         if (imovelIdParam) {
           setImovelSelecionadoId(imovelIdParam);
         } else if (listaImoveis && listaImoveis.length > 0) {
-          const preferencial = listaImoveis.find((i) => i.status === "ALUGADO") || listaImoveis[0];
+          const preferencial =
+            listaImoveis.find((i) => i.status === "ALUGADO") ||
+            listaImoveis[0];
+
           setImovelSelecionadoId(preferencial.id);
         }
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
-        setMensagemErro("Erro ao carregar lista de imóveis ou clientes.");
+        setMensagemErro("Erro ao carregar lista de imóveis, clientes ou modelos.");
       }
     }
+
     carregarListas();
   }, [imovelIdParam]);
 
@@ -105,7 +153,7 @@ export default function Contratos() {
     setDataFimVigencia("");
   };
 
-  // Recarrega montagem do contrato sempre que mudar imóvel, locatário, modelo ou datas
+  // Recarrega montagem do documento sempre que mudar imóvel, locatário, modelo ou datas
   useEffect(() => {
     if (!imovelSelecionadoId) {
       setDadosMontados(null);
@@ -117,6 +165,7 @@ export default function Contratos() {
       setCarregandoDados(true);
       setMensagemErro("");
       setMensagemSucesso("");
+
       try {
         const startTimestamp = inputDateParaTimestamp(dataInicioVigencia);
         const endTimestamp = inputDateParaTimestamp(dataFimVigencia);
@@ -124,42 +173,79 @@ export default function Contratos() {
         const payload = {
           propertyId: imovelSelecionadoId,
           tenantId: locatarioSelecionadoId || undefined,
-          templateId: modeloSelecionadoId !== "padrao" ? modeloSelecionadoId : undefined,
-          customTemplateContent: modeloSelecionadoId === "padrao" ? modeloPadrao : undefined,
-          ...(startTimestamp ? { startDate: startTimestamp, dataInicio: dataInicioVigencia } : {}),
-          ...(endTimestamp ? { endDate: endTimestamp, dataFim: dataFimVigencia } : {}),
+
+          // Se for o modelo padrão, utiliza o conteúdo padrão.
+          // Para os demais modelos, envia o ID correspondente.
+          templateId:
+            modeloSelecionadoId !== "padrao"
+              ? modeloSelecionadoId
+              : undefined,
+
+          customTemplateContent:
+            modeloSelecionadoId === "padrao"
+              ? modeloPadrao
+              : undefined,
+
+          ...(startTimestamp
+            ? {
+                startDate: startTimestamp,
+                dataInicio: dataInicioVigencia,
+              }
+            : {}),
+
+          ...(endTimestamp
+            ? {
+                endDate: endTimestamp,
+                dataFim: dataFimVigencia,
+              }
+            : {}),
         };
 
         const resultado = await window.api.contracts.assembleData(payload);
+
         setDadosMontados(resultado);
 
-        // Preenche automaticamente as datas a partir da locação ativa caso o utilizador ainda não tenha editado
+        // Preenche automaticamente as datas a partir da locação ativa
+        // caso o usuário ainda não tenha editado.
         const rental = resultado?.rental;
+
         const inicioInicial =
           dataInicioVigencia ||
-          timestampParaInputDate(rental?.startDate ?? rental?.dataInicio);
+          timestampParaInputDate(
+            rental?.startDate ?? rental?.dataInicio
+          );
+
         const fimInicial =
           dataFimVigencia ||
-          timestampParaInputDate(rental?.endDate ?? rental?.terminationDate ?? rental?.dataFim);
+          timestampParaInputDate(
+            rental?.endDate ??
+              rental?.terminationDate ??
+              rental?.dataFim
+          );
 
         if (!dataInicioVigencia && inicioInicial) {
           setDataInicioVigencia(inicioInicial);
         }
+
         if (!dataFimVigencia && fimInicial) {
           setDataFimVigencia(fimInicial);
         }
 
-        // Garante substituição de placeholders de vigência caso o template ainda os contenha
+        // Substitui placeholders de vigência caso o template ainda os contenha.
         let textoFinal = resultado.filledContent || "";
+
         if (inicioInicial) {
           const inicioBr = formatarDataBr(inicioInicial);
+
           textoFinal = textoFinal.replace(
             /\{\{\s*(startDate|dataInicio|data_inicio|inicioVigencia)\s*\}\}/gi,
             inicioBr
           );
         }
+
         if (fimInicial) {
           const fimBr = formatarDataBr(fimInicial);
+
           textoFinal = textoFinal.replace(
             /\{\{\s*(endDate|dataFim|data_fim|fimVigencia|dataTermino)\s*\}\}/gi,
             fimBr
@@ -172,8 +258,10 @@ export default function Contratos() {
           setLocatarioSelecionadoId(resultado.tenant.id);
         }
       } catch (err) {
-        console.error("Erro ao montar dados do contrato:", err);
-        setMensagemErro(err.message || "Não foi possível preencher os dados do contrato.");
+        console.error("Erro ao montar dados do documento:", err);
+        setMensagemErro(
+          err.message || "Não foi possível preencher os dados do documento."
+        );
       } finally {
         setCarregandoDados(false);
       }
@@ -192,12 +280,18 @@ export default function Contratos() {
   // Exportar PDF
   async function exportarPdf() {
     if (!conteudoContrato.trim()) {
-      setMensagemErro("O conteúdo do contrato está vazio.");
+      setMensagemErro("O conteúdo do documento está vazio.");
       return;
     }
 
-    if (dataInicioVigencia && dataFimVigencia && dataFimVigencia <= dataInicioVigencia) {
-      setMensagemErro("A Data de Fim deve ser posterior à Data de Início da vigência.");
+    if (
+      dataInicioVigencia &&
+      dataFimVigencia &&
+      dataFimVigencia <= dataInicioVigencia
+    ) {
+      setMensagemErro(
+        "A Data de Fim deve ser posterior à Data de Início da vigência."
+      );
       return;
     }
 
@@ -208,15 +302,16 @@ export default function Contratos() {
     try {
       const imovel = dadosMontados?.property;
       const locatario = dadosMontados?.tenant;
-      const nomeBase = locatario
-        ? `Contrato_${locatario.name.replace(/\s+/g, "_")}`
-        : imovel
-        ? `Contrato_${imovel.title.replace(/\s+/g, "_")}`
-        : "Contrato_Locacao";
+
+      const identificador = locatario?.name || imovel?.title || "Documento";
+
+      const nomeBase = `${textoParaNomeArquivo(
+        nomeModeloAtual
+      )}_${textoParaNomeArquivo(identificador)}`;
 
       const resultado = await window.api.contracts.exportPdf({
         content: conteudoContrato,
-        title: "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+        title: nomeModeloAtual.toUpperCase(),
         defaultFileName: `${nomeBase}.pdf`,
         propertyId: imovelSelecionadoId || undefined,
         tenantId: locatarioSelecionadoId || undefined,
@@ -226,32 +321,53 @@ export default function Contratos() {
       });
 
       if (resultado.success) {
-        setMensagemSucesso(`Contrato gerado e salvo com sucesso em: ${resultado.filePath}`);
+        setMensagemSucesso(
+          `Documento gerado e salvo com sucesso em: ${resultado.filePath}`
+        );
       }
     } catch (err) {
       console.error("Erro ao exportar PDF:", err);
-      setMensagemErro(err.message || "Erro ao exportar o documento PDF.");
+      setMensagemErro(
+        err.message || "Erro ao exportar o documento PDF."
+      );
     } finally {
       setExportandoPdf(false);
     }
   }
 
   const datasInvalidas = Boolean(
-    dataInicioVigencia && dataFimVigencia && dataFimVigencia <= dataInicioVigencia
+    dataInicioVigencia &&
+      dataFimVigencia &&
+      dataFimVigencia <= dataInicioVigencia
   );
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", paddingBottom: "40px" }}>
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        paddingBottom: "40px",
+      }}
+    >
       <div style={{ marginBottom: "16px" }}>
         <BotaoVoltar fallbackTo="/home" />
       </div>
 
       <header style={{ marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "26px", fontWeight: "bold", color: "#0f172a", marginBottom: "4px" }}>
+        <h1
+          style={{
+            fontSize: "26px",
+            fontWeight: "bold",
+            color: "#0f172a",
+            marginBottom: "4px",
+          }}
+        >
           Contratos de Locação
         </h1>
+
         <p style={{ color: "#64748b", fontSize: "14px" }}>
-          Gere contratos em PDF automaticamente preenchidos com os dados do imóvel, proprietário e locatário.
+          Gere documentos em PDF automaticamente preenchidos com os dados
+          disponíveis do imóvel, proprietário e locatário.
         </p>
       </header>
 
@@ -262,7 +378,7 @@ export default function Contratos() {
           onClick={() => setAbaAtiva("gerar")}
         >
           <FileText size={18} />
-          Gerar Contrato (Preenchimento Automático)
+          Gerar Documento (Preenchimento Automático)
         </button>
       </div>
 
@@ -310,9 +426,21 @@ export default function Contratos() {
       )}
 
       {abaAtiva === "gerar" && (
-        <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: "24px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "360px 1fr",
+            gap: "24px",
+          }}
+        >
           {/* Painel Esquerdo: Seleção dos Parâmetros */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
             {/* 1. Imóvel */}
             <div
               style={{
@@ -323,7 +451,14 @@ export default function Contratos() {
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
-              <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "16px" }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#1e293b",
+                  marginBottom: "16px",
+                }}
+              >
                 1. Selecione o Imóvel
               </h2>
 
@@ -338,6 +473,7 @@ export default function Contratos() {
               >
                 Imóvel:
               </label>
+
               <select
                 value={imovelSelecionadoId}
                 onChange={(e) => handleTrocarImovel(e.target.value)}
@@ -352,6 +488,7 @@ export default function Contratos() {
                 }}
               >
                 <option value="">Selecione um imóvel...</option>
+
                 {imoveis.map((imovel) => (
                   <option key={imovel.id} value={imovel.id}>
                     {imovel.title} - {imovel.address} ({imovel.status})
@@ -381,19 +518,28 @@ export default function Contratos() {
                     <Building2 size={16} color="#1877f2" />
                     {dadosMontados.property.title}
                   </div>
+
                   <div>
-                    <strong>Endereço:</strong> {dadosMontados.property.address}
+                    <strong>Endereço:</strong>{" "}
+                    {dadosMontados.property.address}
                   </div>
+
                   <div>
-                    <strong>Bairro:</strong> {dadosMontados.property.neighborhood || "Centro"}
+                    <strong>Bairro:</strong>{" "}
+                    {dadosMontados.property.neighborhood || "Centro"}
                   </div>
+
                   <div>
                     <strong>Valor:</strong>{" "}
-                    {Number(dadosMontados.property.price).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
+                    {Number(dadosMontados.property.price).toLocaleString(
+                      "pt-BR",
+                      {
+                        style: "currency",
+                        currency: "BRL",
+                      }
+                    )}
                   </div>
+
                   {dadosMontados.owner && (
                     <div
                       style={{
@@ -402,7 +548,8 @@ export default function Contratos() {
                         paddingTop: "6px",
                       }}
                     >
-                      <strong>Proprietário:</strong> {dadosMontados.owner.name} (
+                      <strong>Proprietário:</strong>{" "}
+                      {dadosMontados.owner.name} (
                       {dadosMontados.owner.cpfCnpj || "Sem CPF"})
                     </div>
                   )}
@@ -420,7 +567,14 @@ export default function Contratos() {
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
-              <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "16px" }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#1e293b",
+                  marginBottom: "16px",
+                }}
+              >
                 2. Locatário Associado
               </h2>
 
@@ -440,7 +594,10 @@ export default function Contratos() {
                 </div>
               ) : null}
 
-              <label className="ui-label ui-label-required">Locatário:</label>
+              <label className="ui-label ui-label-required">
+                Locatário:
+              </label>
+
               <select
                 className="ui-control"
                 value={locatarioSelecionadoId}
@@ -456,6 +613,7 @@ export default function Contratos() {
                 }}
               >
                 <option value="">Selecione o locatário...</option>
+
                 {locatarios.map((loc) => (
                   <option key={loc.id} value={loc.id}>
                     {loc.name} {loc.cpfCnpj ? `(${loc.cpfCnpj})` : ""}
@@ -485,20 +643,26 @@ export default function Contratos() {
                     <User size={16} color="#1877f2" />
                     {dadosMontados.tenant.name}
                   </div>
+
                   <div>
-                    <strong>CPF/CNPJ:</strong> {dadosMontados.tenant.cpfCnpj || "Não informado"}
+                    <strong>CPF/CNPJ:</strong>{" "}
+                    {dadosMontados.tenant.cpfCnpj || "Não informado"}
                   </div>
+
                   <div>
-                    <strong>Telefone:</strong> {dadosMontados.tenant.phone || "Não informado"}
+                    <strong>Telefone:</strong>{" "}
+                    {dadosMontados.tenant.phone || "Não informado"}
                   </div>
+
                   <div>
-                    <strong>E-mail:</strong> {dadosMontados.tenant.email || "Não informado"}
+                    <strong>E-mail:</strong>{" "}
+                    {dadosMontados.tenant.email || "Não informado"}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 3. Vigência do Contrato (Campos editáveis antes de exportar PDF) */}
+            {/* 3. Vigência do Contrato */}
             <div
               style={{
                 background: "#ffffff",
@@ -508,11 +672,27 @@ export default function Contratos() {
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
-              <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "6px" }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#1e293b",
+                  marginBottom: "6px",
+                }}
+              >
                 3. Vigência do Contrato
               </h2>
-              <p style={{ fontSize: "12px", color: "#64748b", marginTop: 0, marginBottom: "14px" }}>
-                Ajuste as datas de início e término antes de exportar ou salvar o PDF.
+
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  marginTop: 0,
+                  marginBottom: "14px",
+                }}
+              >
+                Ajuste as datas de início e término antes de exportar ou salvar
+                o PDF.
               </p>
 
               <label
@@ -527,6 +707,7 @@ export default function Contratos() {
               >
                 Data de Início:
               </label>
+
               <input
                 id="contrato-data-inicio"
                 type="date"
@@ -556,6 +737,7 @@ export default function Contratos() {
               >
                 Data de Fim:
               </label>
+
               <input
                 id="contrato-data-fim"
                 type="date"
@@ -566,7 +748,9 @@ export default function Contratos() {
                   width: "100%",
                   padding: "10px",
                   borderRadius: "6px",
-                  border: datasInvalidas ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                  border: datasInvalidas
+                    ? "1px solid #ef4444"
+                    : "1px solid #cbd5e1",
                   fontSize: "14px",
                   backgroundColor: "#f8fafc",
                   boxSizing: "border-box",
@@ -574,7 +758,14 @@ export default function Contratos() {
               />
 
               {datasInvalidas && (
-                <p style={{ marginTop: "8px", marginBottom: 0, fontSize: "12px", color: "#dc2626" }}>
+                <p
+                  style={{
+                    marginTop: "8px",
+                    marginBottom: 0,
+                    fontSize: "12px",
+                    color: "#dc2626",
+                  }}
+                >
                   A Data de Fim deve ser posterior à Data de Início.
                 </p>
               )}
@@ -590,12 +781,69 @@ export default function Contratos() {
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
               }}
             >
-              <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "16px" }}>
+              <h2
+                style={{
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  color: "#1e293b",
+                  marginBottom: "16px",
+                }}
+              >
                 4. Modelo de Contrato
               </h2>
 
-              <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 12px" }}>
-                Utilizando o <strong>Modelo Padrão de Locação Residencial</strong> do sistema.
+              <label
+                htmlFor="modelo-contrato"
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#475569",
+                  marginBottom: "6px",
+                }}
+              >
+                Selecione o modelo:
+              </label>
+
+              <select
+                id="modelo-contrato"
+                value={modeloSelecionadoId}
+                onChange={(e) => setModeloSelecionadoId(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "14px",
+                  backgroundColor: "#f8fafc",
+                  boxSizing: "border-box",
+                }}
+              >
+                <option value="padrao">
+                  Modelo Padrão de Locação Residencial
+                </option>
+
+                {modelos
+                  .filter((modelo) =>
+                    modelo.id?.startsWith("builtin-")
+                  )
+                  .map((modelo) => (
+                    <option key={modelo.id} value={modelo.id}>
+                      {modelo.name}
+                    </option>
+                  ))}
+              </select>
+
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#64748b",
+                  marginTop: "8px",
+                  marginBottom: 0,
+                }}
+              >
+                O documento selecionado será preenchido automaticamente com
+                os dados disponíveis no sistema.
               </p>
 
               {imovelSelecionadoId && (
@@ -624,15 +872,26 @@ export default function Contratos() {
                     <ClipboardCheck size={16} />
                     <span>Vistoria *</span>
                   </div>
+
                   {dadosMontados?.rental ? (
                     <>
-                      <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
-                        Após assinar o contrato, realize a vistoria de entrada com fotos para liberar as chaves.
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "12px",
+                          color: "#15803d",
+                        }}
+                      >
+                        Após assinar o contrato, realize a vistoria de entrada
+                        com fotos para liberar as chaves.
                       </p>
+
                       <button
                         type="button"
                         onClick={() =>
-                          navigate(`/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`)
+                          navigate(
+                            `/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`
+                          )
                         }
                         style={{
                           marginTop: "4px",
@@ -652,14 +911,23 @@ export default function Contratos() {
                     </>
                   ) : (
                     <>
-                      <p style={{ margin: 0, fontSize: "12px", color: "#15803d" }}>
-                        O locatário ainda não foi associado formalmente a este imóvel no sistema.
-                        Associe-o na tela do imóvel para que o contrato fique ativo e habilitado para
-                        vistorias.
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "12px",
+                          color: "#15803d",
+                        }}
+                      >
+                        O locatário ainda não foi associado formalmente a este
+                        imóvel no sistema. Associe-o na tela do imóvel para que
+                        o contrato fique ativo e habilitado para vistorias.
                       </p>
+
                       <button
                         type="button"
-                        onClick={() => navigate(`/imoveis/${imovelSelecionadoId}`)}
+                        onClick={() =>
+                          navigate(`/imoveis/${imovelSelecionadoId}`)
+                        }
                         style={{
                           marginTop: "4px",
                           backgroundColor: "#2563eb",
@@ -703,10 +971,22 @@ export default function Contratos() {
               }}
             >
               <div>
-                <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a" }}>
-                  Pré-visualização do Contrato Preenchido
+                <h2
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    color: "#0f172a",
+                  }}
+                >
+                  Pré-visualização do Documento Preenchido
                 </h2>
-                <span style={{ fontSize: "13px", color: "#64748b" }}>
+
+                <span
+                  style={{
+                    fontSize: "13px",
+                    color: "#64748b",
+                  }}
+                >
                   {carregandoDados
                     ? "Atualizando campos..."
                     : "Dados substituídos automaticamente. Você pode editar o texto antes de exportar."}
@@ -716,14 +996,24 @@ export default function Contratos() {
               <button
                 type="button"
                 onClick={exportarPdf}
-                disabled={exportandoPdf || !conteudoContrato.trim() || datasInvalidas}
+                disabled={
+                  exportandoPdf ||
+                  !conteudoContrato.trim() ||
+                  datasInvalidas
+                }
                 style={{
                   padding: "12px 24px",
-                  backgroundColor: exportandoPdf || datasInvalidas ? "#94a3b8" : "#1877f2",
+                  backgroundColor:
+                    exportandoPdf || datasInvalidas
+                      ? "#94a3b8"
+                      : "#1877f2",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
-                  cursor: exportandoPdf || datasInvalidas ? "not-allowed" : "pointer",
+                  cursor:
+                    exportandoPdf || datasInvalidas
+                      ? "not-allowed"
+                      : "pointer",
                   fontWeight: "bold",
                   fontSize: "15px",
                   display: "flex",
@@ -734,11 +1024,14 @@ export default function Contratos() {
                 }}
               >
                 <FileDown size={20} />
-                {exportandoPdf ? "Gerando PDF..." : "Exportar em PDF para Assinatura"}
+
+                {exportandoPdf
+                  ? "Gerando PDF..."
+                  : "Exportar em PDF para Assinatura"}
               </button>
             </div>
 
-            {/* Document Sheet Preview */}
+            {/* Pré-visualização do documento */}
             <div
               style={{
                 flex: 1,
@@ -754,7 +1047,7 @@ export default function Contratos() {
               <textarea
                 value={conteudoContrato}
                 onChange={(e) => setConteudoContrato(e.target.value)}
-                placeholder="Selecione um imóvel e locatário para visualizar o contrato preenchido automaticamente..."
+                placeholder="Selecione um imóvel e locatário para visualizar o documento preenchido automaticamente..."
                 style={{
                   width: "100%",
                   minHeight: "550px",
@@ -768,6 +1061,7 @@ export default function Contratos() {
                   fontFamily: "Courier New, monospace",
                   resize: "vertical",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  boxSizing: "border-box",
                 }}
               />
             </div>
