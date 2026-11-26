@@ -23,4 +23,8 @@ contextBridge.exposeInMainWorld("api", {
     update: (data: any) => ipcRenderer.invoke("clients:update", data),
     delete: (id: string) => ipcRenderer.invoke("clients:delete", id),
   },
+  lateFee: {
+    calculate: (data: { originalAmount: number; dueDate: string | Date; calculationDate?: string | Date }) =>
+      ipcRenderer.invoke("late-fee:calculate", data),
+  },
 });
