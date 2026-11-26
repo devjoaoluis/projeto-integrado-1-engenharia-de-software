@@ -336,4 +336,9 @@ contextBridge.exposeInMainWorld("api", {
     ) =>
       ipcRenderer.invoke("owners:export-payout-pdf", params),
   },
+
+  lateFee: {
+    calculate: (data: { originalAmount: number; dueDate: string | Date; calculationDate?: string | Date }) =>
+      ipcRenderer.invoke("late-fee:calculate", data),
+  },
 });
