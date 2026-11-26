@@ -3,7 +3,8 @@ import fs from "node:fs/promises";
 import { AssembleContractData, AssembleContractDataInput } from "../application/use-cases/AssembleContractData";
 import { FillContractTemplate, FillContractTemplateInput } from "../application/use-cases/FillContractTemplate";
 import { GenerateContractPdf, GenerateContractPdfInput } from "../application/use-cases/GenerateContractPdf";
-import { DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "../application/use-cases/defaultContractTemplate";
+import { BUILTIN_CONTRACT_TEMPLATES, DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "../application/use-cases/defaultContractTemplate";
+import { SeedBuiltinContractTemplates } from "../application/use-cases/SeedBuiltinContractTemplates";
 import { UpdateContractDates, UpdateContractDatesInput } from "../application/use-cases/UpdateContractDates";
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
 import { DrizzleClientRepository } from "../infrastructure/repositories/DrizzleClientRepository";
@@ -90,5 +91,15 @@ export function registerContractsIpc() {
 
   ipcMain.handle("contracts:get-default-template", async () => {
     return DEFAULT_RENTAL_CONTRACT_TEMPLATE;
+  });
+
+  const seedBuiltin = new SeedBuiltinContractTemplates(templateRepo);
+
+  ipcMain.handle("contracts:get-builtin-templates", async () => {
+    return BUILTIN_CONTRACT_TEMPLATES;
+  });
+
+  ipcMain.handle("contracts:seed-builtin-templates", async () => {
+    return seedBuiltin.execute();
   });
 }
