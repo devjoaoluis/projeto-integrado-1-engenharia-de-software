@@ -2,7 +2,15 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { FillContractTemplate } from "../FillContractTemplate";
 import { AssembleContractData } from "../AssembleContractData";
-import { DEFAULT_RENTAL_CONTRACT_TEMPLATE } from "../defaultContractTemplate";
+import { SeedBuiltinContractTemplates } from "../SeedBuiltinContractTemplates";
+import {
+  BUILTIN_CONTRACT_TEMPLATES,
+  COMMERCIAL_INSPECTION_REPORT_TEMPLATE,
+  COMMERCIAL_RENTAL_CONTRACT_TEMPLATE,
+  DEFAULT_RENTAL_CONTRACT_TEMPLATE,
+  TENANT_OBLIGATIONS_NOTICE_TEMPLATE,
+  UTILITY_POWER_OF_ATTORNEY_TEMPLATE,
+} from "../defaultContractTemplate";
 import { ContractTemplate } from "../../../domain/entities/ContractTemplate";
 import { IContractTemplateRepository } from "../../../domain/repositories/IContractTemplateRepository";
 import { IPropertyRepository } from "../../../domain/repositories/IPropertyRepository";
@@ -429,6 +437,260 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial, etc.)
       assert.ok(assembled.filledContent.includes("555.666.777-88"));
       assert.ok(assembled.filledContent.includes("Lucas Inquilino"));
       assert.ok(assembled.filledContent.includes("Ana Beatriz Proprietária"));
+    });
+  });
+
+  describe("Novos textos-base cadastrados (Comercial, Laudo, Procuração, Termo)", () => {
+    it("preenche todas as variáveis automáticas em todos os modelos built-in sem deixar marcadores pendentes", () => {
+      assert.equal(BUILTIN_CONTRACT_TEMPLATES.length, 5);
+
+      const expectedIds = [
+        "builtin-contrato-residencial",
+        "builtin-contrato-comercial",
+        "builtin-laudo-vistoria-comercial",
+        "builtin-procuracao-enel-saae",
+        "builtin-termo-obrigacoes-locatario",
+      ];
+      assert.deepEqual(
+        BUILTIN_CONTRACT_TEMPLATES.map((t) => t.id),
+        expectedIds
+      );
+
+      for (const tpl of BUILTIN_CONTRACT_TEMPLATES) {
+        const result = fillTemplate.execute({
+          templateContent: tpl.content,
+          property: mockProperty,
+          owner: mockOwner,
+          tenant: mockTenant,
+          rental: mockRental,
+          currentDate: new Date("2026-07-28T12:00:00Z"),
+        });
+
+        const unreplaced = result.filledContent.match(/\{\{([a-zA-Z0-9_.]+)\}\}/g);
+        assert.equal(
+          unreplaced,
+          null,
+          `Tags não substituídas no modelo ${tpl.id}: ${unreplaced?.join(", ")}`
+        );
+        assert.ok(result.filledContent.includes("Tech Solutions Informática ME"));
+        assert.ok(result.filledContent.includes("98.765.432/0001-11"));
+        assert.ok(result.filledContent.includes("28 de julho de 2026"));
+      }
+    });
+
+    it("preenche corretamente Contrato Comercial, Laudo de Vistoria, Procuração e Termo com dados reais e preserva lacunas", () => {
+      const comercial = fillTemplate.execute({
+        templateContent: COMMERCIAL_RENTAL_CONTRACT_TEMPLATE,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        rental: mockRental,
+        currentDate: new Date("2026-07-28T12:00:00Z"),
+      });
+      assert.ok(comercial.filledContent.includes("CONTRATO DE LOCAÇÃO PARA FINS NÃO RESIDENCIAIS"));
+      assert.ok(comercial.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
+      assert.ok(comercial.filledContent.includes("12.345.678/0001-99"));
+      assert.ok(comercial.filledContent.includes("Av. Paulista, 1000, Sala 501"));
+      assert.ok(comercial.filledContent.includes("4.500,00"));
+      assert.ok(comercial.filledContent.includes("todo dia 5 de cada mês"));
+      assert.ok(comercial.filledContent.includes("01/03/2026"));
+      assert.ok(comercial.filledContent.includes("28/02/2027"));
+      assert.ok(comercial.filledContent.includes("12 meses"));
+      assert.ok(comercial.filledContent.includes("____________"));
+
+      const laudo = fillTemplate.execute({
+        templateContent: COMMERCIAL_INSPECTION_REPORT_TEMPLATE,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        rental: mockRental,
+        currentDate: new Date("2026-07-28T12:00:00Z"),
+      });
+      assert.ok(laudo.filledContent.includes("LAUDO DE VISTORIA DE IMÓVEL COMERCIAL"));
+      assert.ok(laudo.filledContent.includes("Av. Paulista, 1000, Sala 501"));
+      assert.ok(laudo.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
+      assert.ok(laudo.filledContent.includes("Tech Solutions Informática ME"));
+
+      const procuracao = fillTemplate.execute({
+        templateContent: UTILITY_POWER_OF_ATTORNEY_TEMPLATE,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        rental: mockRental,
+        currentDate: new Date("2026-07-28T12:00:00Z"),
+      });
+      assert.ok(procuracao.filledContent.includes("PROCURAÇÃO"));
+      assert.ok(procuracao.filledContent.includes("ENEL e SAAE"));
+      assert.ok(procuracao.filledContent.includes("Av. Paulista, 1000, Sala 501"));
+      assert.ok(procuracao.filledContent.includes("Tech Solutions Informática ME"));
+
+      const termo = fillTemplate.execute({
+        templateContent: TENANT_OBLIGATIONS_NOTICE_TEMPLATE,
+        property: mockProperty,
+        owner: mockOwner,
+        tenant: mockTenant,
+        rental: mockRental,
+        currentDate: new Date("2026-07-28T12:00:00Z"),
+      });
+      assert.ok(termo.filledContent.includes("TERMO DE CIÊNCIA E OBRIGAÇÕES DO LOCATÁRIO"));
+      assert.ok(termo.filledContent.includes("Lei do Inquilinato"));
+      assert.ok(termo.filledContent.includes("Tech Solutions Informática ME"));
+      assert.ok(termo.filledContent.includes("Empreendimentos Imobiliários Silva Ltda"));
+    });
+
+    it("semeia os modelos built-in de forma idempotente e permite montagem via AssembleContractData", async () => {
+      const templateRepo = new MockContractTemplateRepository();
+      const seed = new SeedBuiltinContractTemplates(templateRepo);
+
+      const firstRun = await seed.execute();
+      assert.equal(firstRun.length, 5);
+      assert.equal((await templateRepo.findAll()).length, 5);
+
+      const secondRun = await seed.execute();
+      assert.equal(secondRun.length, 0);
+      assert.equal((await templateRepo.findAll()).length, 5);
+
+      const propRepo = new MockPropertyRepo();
+      propRepo.props.push({
+        id: "prop-com-seed",
+        title: "Sala Comercial 06",
+        address: "Rua Júlio Cavalcante, nº 50 - Sala 06",
+        neighborhood: "Flores",
+        type: "Comercial",
+        bedrooms: 0,
+        description: "Sala comercial nova",
+        price: 1200,
+        iptu: 100,
+        status: PropertyStatus.ALUGADO,
+        ownerId: "owner-seed",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      const ownerRepo = new MockContactRepo();
+      ownerRepo.contacts.push({
+        id: "owner-seed",
+        name: "Maria Locadora",
+        cpfCnpj: "11122233344",
+        phone: "88999990000",
+        email: "locadora@email.com",
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      const clientRepo = new MockClientRepo();
+      clientRepo.clients.push({
+        id: "tenant-seed",
+        name: "Ana Locatária",
+        cpfCnpj: "55566677788",
+        phone: "88988881111",
+        email: "ana@email.com",
+        type: "TENANT",
+        guarantorId: null,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      const rentalRepo = new MockRentalRepo();
+      rentalRepo.rentals.push({
+        id: "rent-seed",
+        propertyId: "prop-com-seed",
+        tenantId: "tenant-seed",
+        monthlyRent: 1200,
+        startDate: new Date("2026-07-28T12:00:00Z").getTime(),
+        endDate: new Date("2027-07-28T12:00:00Z").getTime(),
+        dueDay: 28,
+        parentRentalId: null,
+        formalConsent: null,
+        contractSigned: true,
+        signaturesNotarized: true,
+        initialPaymentsPaid: true,
+        keysReleasedAt: 1000,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      const assemble = new AssembleContractData(
+        propRepo as unknown as IPropertyRepository,
+        clientRepo as unknown as IClientRepository,
+        ownerRepo as unknown as IContactRepository,
+        undefined,
+        rentalRepo as unknown as IRentalRepository,
+        templateRepo
+      );
+
+      const assembled = await assemble.execute({
+        propertyId: "prop-com-seed",
+        templateId: "builtin-contrato-comercial",
+      });
+
+      assert.equal(assembled.templateName, "Contrato de Locação Comercial (Fins Não Residenciais)");
+      assert.ok(assembled.filledContent.includes("Rua Júlio Cavalcante, nº 50 - Sala 06"));
+      assert.ok(assembled.filledContent.includes("Flores"));
+      assert.ok(assembled.filledContent.includes("1.200,00"));
+      assert.ok(assembled.filledContent.includes("Maria Locadora"));
+      assert.ok(assembled.filledContent.includes("Ana Locatária"));
+      assert.ok(assembled.filledContent.includes("28/07/2026"));
+      assert.ok(assembled.filledContent.includes("28/07/2027"));
+    });
+
+    it("expõe os novos modelos built-in e seed idempotente via IPC de contratos", async () => {
+      const { createClient } = await import("@libsql/client");
+      const { drizzle } = await import("drizzle-orm/libsql");
+      const { initializeDatabase } = await import("../../../infrastructure/database/initializeDatabase");
+
+      const sqlite = createClient({ url: "file::memory:" });
+      const dbModule = require.resolve("../../../infrastructure/database/db");
+      const previousDb = require.cache[dbModule];
+      require.cache[dbModule] = { exports: { db: drizzle(sqlite) } } as NodeModule;
+
+      const electronModule = require.resolve("electron");
+      const previousElectron = require.cache[electronModule];
+      const handlers = new Map<string, (event: unknown, data?: unknown) => Promise<unknown>>();
+      require.cache[electronModule] = {
+        exports: {
+          ipcMain: {
+            handle: (name: string, handler: (event: unknown, data?: unknown) => Promise<unknown>) =>
+              handlers.set(name, handler),
+          },
+          dialog: { showSaveDialog: async () => ({ canceled: true }) },
+        },
+      } as NodeModule;
+
+      try {
+        await initializeDatabase(sqlite);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate IPC and DB
+        const { registerContractsIpc } = require("../../../ipc/contracts.ipc");
+        // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate IPC and DB
+        const { registerContractTemplatesIpc } = require("../../../ipc/contract-templates.ipc");
+        registerContractsIpc();
+        registerContractTemplatesIpc();
+
+        const getBuiltins = handlers.get("contracts:get-builtin-templates");
+        const seedBuiltins = handlers.get("contracts:seed-builtin-templates");
+        const listTemplates = handlers.get("contract-templates:list");
+        assert.ok(getBuiltins);
+        assert.ok(seedBuiltins);
+        assert.ok(listTemplates);
+
+        const builtins = (await getBuiltins({})) as Array<{ id: string }>;
+        assert.equal(builtins.length, 5);
+
+        const seededFirst = (await seedBuiltins({})) as Array<{ id: string }>;
+        assert.equal(seededFirst.length, 5);
+
+        const seededSecond = (await seedBuiltins({})) as Array<{ id: string }>;
+        assert.equal(seededSecond.length, 0);
+
+        const listed = (await listTemplates({})) as Array<{ id: string }>;
+        assert.equal(listed.length, 5);
+      } finally {
+        sqlite.close();
+        if (previousDb) require.cache[dbModule] = previousDb;
+        else delete require.cache[dbModule];
+        if (previousElectron) require.cache[electronModule] = previousElectron;
+        else delete require.cache[electronModule];
+      }
     });
   });
 });

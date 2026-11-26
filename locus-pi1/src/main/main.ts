@@ -17,6 +17,8 @@ import { registerClientsIpc } from './ipc/clients.ipc';
 import { registerPropertyOverviewIpc } from './ipc/property-overview.ipc';
 import { registerRentalsIpc } from './ipc/rentals.ipc';
 import { databaseReady } from './infrastructure/database/db';
+import { SeedBuiltinContractTemplates } from './application/use-cases/SeedBuiltinContractTemplates';
+import { DrizzleContractTemplateRepository } from './infrastructure/repositories/DrizzleContractTemplateRepository';
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -58,6 +60,7 @@ const createWindow = () => {
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   await databaseReady;
+  await new SeedBuiltinContractTemplates(new DrizzleContractTemplateRepository()).execute();
   
   registerPropertiesIpc();
   registerPropertyMediaIpc();
