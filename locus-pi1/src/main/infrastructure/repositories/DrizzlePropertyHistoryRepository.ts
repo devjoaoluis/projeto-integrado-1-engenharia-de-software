@@ -18,6 +18,17 @@ export class DrizzlePropertyHistoryRepository implements IPropertyHistoryReposit
     return (await db.select().from(propertyContracts).where(eq(propertyContracts.id, id)).get()) ?? null;
   }
 
+  async findAllContracts(): Promise<PropertyContract[]> {
+  return db
+    .select()
+    .from(propertyContracts)
+    .orderBy(
+      desc(propertyContracts.createdAt),
+      desc(propertyContracts.id)
+    )
+    .all();
+}
+
   async findContractsByTenantId(tenantId: string): Promise<PropertyContract[]> {
     return db.select().from(propertyContracts).where(eq(propertyContracts.tenantId, tenantId)).orderBy(desc(propertyContracts.startDate), desc(propertyContracts.createdAt)).all();
   }
