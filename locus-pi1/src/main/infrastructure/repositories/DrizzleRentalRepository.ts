@@ -19,7 +19,7 @@ export class DrizzleRentalRepository implements IRentalRepository {
       }
       const result = await tx.update(properties).set({ status: "ALUGADO", updatedAt: rental.updatedAt })
         .where(and(eq(properties.id, rental.propertyId), inArray(properties.status,
-          rental.parentRentalId ? ["ALUGADO"] : ["CADASTRADO", "DISPONIVEL"]))).run();
+          rental.parentRentalId ? ["ALUGADO"] : ["DISPONIVEL"]))).run();
       if (result.rowsAffected !== 1) throw new Error("Property is not available for this rental");
       await tx.insert(rentals).values(rental).run();
       await tx.insert(propertyContracts).values({

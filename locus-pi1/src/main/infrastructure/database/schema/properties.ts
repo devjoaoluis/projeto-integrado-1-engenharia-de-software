@@ -16,10 +16,10 @@ export const properties = sqliteTable("properties", {
   registrationDate: text("registration_date"),
   ownerId: text("owner_id").references(() => owners.id, { onDelete: "restrict" }),
   status: text("status", {
-    enum: ["CADASTRADO", "DISPONIVEL", "VENDIDO", "ALUGADO", "INATIVO"],
+    enum: ["DISPONIVEL", "ALUGADO"],
   })
     .notNull()
-    .default("CADASTRADO"),
+    .default("DISPONIVEL"),
   searchNormalized: text("search_normalized"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),

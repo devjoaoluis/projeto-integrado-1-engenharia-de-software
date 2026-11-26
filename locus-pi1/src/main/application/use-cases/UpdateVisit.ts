@@ -81,6 +81,25 @@ export class UpdateVisit {
       status = dto.status;
     }
 
+    const scheduledAtChanged = scheduledAt !== current.scheduledAt;
+
+    if (status === "AGENDADA") {
+      if (scheduledAtChanged && scheduledAt < Date.now()) {
+        throw new Error("Não é permitido agendar visitas em datas ou horários anteriores ao momento atual.");
+      }
+
+      const existingVisits = await this.visitRepository.findAll({
+        propertyId,
+        status: "AGENDADA",
+      });
+      const hasConflict = existingVisits.some(
+        (v) => v.id !== current.id && v.scheduledAt === scheduledAt
+      );
+      if (hasConflict) {
+        throw new Error("Já existe uma visita agendada para este imóvel no mesmo horário.");
+      }
+    }
+
     let notes = current.notes;
     if (dto.notes !== undefined) {
       notes = dto.notes ? dto.notes.trim() : null;

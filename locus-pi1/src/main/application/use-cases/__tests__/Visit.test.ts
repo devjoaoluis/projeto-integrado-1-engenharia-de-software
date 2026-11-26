@@ -190,13 +190,13 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
     const visit = await createVisit.execute({
       propertyId: "prop-1",
       clientId: "client-1",
-      date: "2026-11-20",
+      date: "2027-11-20",
       time: "14:30",
     });
 
     assert.ok(visit.id);
     assert.equal(visit.status, "AGENDADA");
-    const parsed = new Date("2026-11-20T14:30:00").getTime();
+    const parsed = new Date("2027-11-20T14:30:00").getTime();
     assert.equal(visit.scheduledAt, parsed);
   });
 
@@ -296,21 +296,100 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
     const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
     const listUpcoming = new ListUpcomingVisits(visitRepo);
 
-    const now = 1750000000000;
-    // Visita no passado (não deve vir no lembrete)
-    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: now - 3600000 });
-    // Visitas no futuro
-    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: now + 7200000 }); // +2 horas
-    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: now + 3600000 }); // +1 hora
+    const baseFuture = Date.now() + 1000000;
+    // Visita anterior ao corte do lembrete (mas válida e futura na criação)
+    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: baseFuture + 1000 });
+    // Visitas após o corte do lembrete
+    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: baseFuture + 7200000 }); // +2 horas
+    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: baseFuture + 3600000 }); // +1 hora
 
-    const upcoming = await listUpcoming.execute(10, now);
+    const upcoming = await listUpcoming.execute(10, baseFuture + 100000);
 
     assert.equal(upcoming.length, 2);
     // Ordenada por ordem cronológica (mais próxima primeiro)
-    assert.equal(upcoming[0].scheduledAt, now + 3600000);
-    assert.equal(upcoming[1].scheduledAt, now + 7200000);
+    assert.equal(upcoming[0].scheduledAt, baseFuture + 3600000);
+    assert.equal(upcoming[1].scheduledAt, baseFuture + 7200000);
     assert.equal(upcoming[0].clientName, "Mariana Silva");
     assert.equal(upcoming[0].propertyTitle, "Apartamento Centro");
+  });
+
+  it("deve rejeitar agendamento de visitas em datas ou horários no passado", async () => {
+    const { visitRepo, propertyRepo, clientRepo } = makeFixture();
+    const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
+
+    await assert.rejects(
+      createVisit.execute({
+        propertyId: "prop-1",
+        clientId: "client-1",
+        scheduledAt: Date.now() - 60000,
+      }),
+      /Não é permitido agendar visitas em datas ou horários anteriores ao momento atual/
+    );
+  });
+
+  it("deve rejeitar cadastro de nova visita com status 'CANCELADA'", async () => {
+    const { visitRepo, propertyRepo, clientRepo } = makeFixture();
+    const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
+
+    await assert.rejects(
+      createVisit.execute({
+        propertyId: "prop-1",
+        clientId: "client-1",
+        scheduledAt: Date.now() + 100000,
+        status: "CANCELADA",
+      }),
+      /Não é permitido cadastrar uma nova visita com status 'Cancelada'/
+    );
+  });
+
+  it("deve rejeitar conflito de horário para o mesmo imóvel com visita agendada", async () => {
+    const { visitRepo, propertyRepo, clientRepo } = makeFixture();
+    const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
+
+    const scheduledTime = Date.now() + 200000;
+    await createVisit.execute({
+      propertyId: "prop-1",
+      clientId: "client-1",
+      scheduledAt: scheduledTime,
+    });
+
+    await assert.rejects(
+      createVisit.execute({
+        propertyId: "prop-1",
+        clientId: "client-1",
+        scheduledAt: scheduledTime,
+      }),
+      /Já existe uma visita agendada para este imóvel no mesmo horário/
+    );
+  });
+
+  it("deve rejeitar remarcação para o passado ou com conflito de horário no UpdateVisit", async () => {
+    const { visitRepo, propertyRepo, clientRepo } = makeFixture();
+    const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
+    const updateVisit = new UpdateVisit(visitRepo, propertyRepo, clientRepo);
+
+    const time1 = Date.now() + 200000;
+    const time2 = Date.now() + 400000;
+
+    await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: time1 });
+    const v2 = await createVisit.execute({ propertyId: "prop-1", clientId: "client-1", scheduledAt: time2 });
+
+    // Rejeita remarcar v2 para o mesmo horário exato de v1
+    await assert.rejects(
+      updateVisit.execute({ id: v2.id, scheduledAt: time1 }),
+      /Já existe uma visita agendada para este imóvel no mesmo horário/
+    );
+
+    // Rejeita remarcar v2 para o passado
+    await assert.rejects(
+      updateVisit.execute({ id: v2.id, scheduledAt: Date.now() - 50000 }),
+      /Não é permitido agendar visitas em datas ou horários anteriores ao momento atual/
+    );
+
+    // Permite atualizar outros campos de v2 sem gerar falso conflito consigo mesma
+    const updated = await updateVisit.execute({ id: v2.id, notes: "Nota atualizada" });
+    assert.equal(updated.notes, "Nota atualizada");
+    assert.equal(updated.scheduledAt, time2);
   });
 
   it("deve excluir uma visita com sucesso via DeleteVisit", async () => {

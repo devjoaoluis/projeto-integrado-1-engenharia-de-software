@@ -18,7 +18,7 @@ export async function initializeDatabase(client: Client): Promise<void> {
     bedrooms INTEGER,
     description TEXT,
     price REAL NOT NULL,
-    status TEXT DEFAULT 'CADASTRADO' NOT NULL,
+    status TEXT DEFAULT 'DISPONIVEL' NOT NULL,
     search_normalized TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
@@ -178,4 +178,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   await client.execute("CREATE INDEX IF NOT EXISTS idx_status_neighborhood ON properties (status, neighborhood)");
   await client.execute("CREATE INDEX IF NOT EXISTS idx_price ON properties (price)");
   await client.execute("CREATE INDEX IF NOT EXISTS idx_bedrooms ON properties (bedrooms)");
+
+  // Migra imóveis legados com status CADASTRADO para DISPONIVEL
+  await client.execute("UPDATE properties SET status = 'DISPONIVEL' WHERE status = 'CADASTRADO'");
 }

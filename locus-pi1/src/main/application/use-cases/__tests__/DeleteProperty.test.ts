@@ -57,7 +57,7 @@ describe("DeleteProperty Use Case", () => {
     const media = new MockPropertyMediaRepository();
     const storage = new MockFileStorage();
     await properties.create({ id: "blocked", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100,
-      description: null, status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
+      description: null, status: PropertyStatus.DISPONIVEL, createdAt: 1, updatedAt: 1 });
     await media.create({ id: "m", propertyId: "blocked", type: MediaType.IMAGE, fileName: "x.jpg", filePath: "x.jpg", mimeType: "image/jpeg", size: 1, createdAt: 1 });
     properties.delete = async () => { throw new Error("FOREIGN KEY constraint failed"); };
     await assert.rejects(new DeleteProperty(properties, media, storage).execute("blocked"), /FOREIGN KEY/);
@@ -72,7 +72,7 @@ describe("DeleteProperty Use Case", () => {
     const useCase = new DeleteProperty(propRepo, mediaRepo, storage);
 
     await propRepo.create({ id: "prop1", title: "T", address: "A", neighborhood: null, bedrooms: null, price: 100,
-      description: null, ownerId: "owner-1", status: PropertyStatus.CADASTRADO, createdAt: 1, updatedAt: 1 });
+      description: null, ownerId: "owner-1", status: PropertyStatus.DISPONIVEL, createdAt: 1, updatedAt: 1 });
     await mediaRepo.create({ id: "m1", propertyId: "prop1", type: MediaType.IMAGE, fileName: "x.jpg", filePath: "path/to/x.jpg", mimeType: "image/jpeg", size: 100, createdAt: 1 });
 
     await useCase.execute("prop1");
