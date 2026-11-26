@@ -67,7 +67,7 @@ export default function App() {
             <Route path="/contratos" element={<Contratos />} />
             <Route path="/pagamentos" element={<div>Pagamentos</div>} />
             <Route path="/visitas" element={<AgendamentoVisitas/>} />
-            <Route path="/vistorias" element={<div>Vistorias</div>} />
+            <Route path="/vistorias" element={<Vistorias />} />
             <Route path="/imoveis/cadastrar" element={<CadastrarImovel />} />
           </Route>
 
