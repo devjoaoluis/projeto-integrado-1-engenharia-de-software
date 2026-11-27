@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, CheckCircle, X } from "lucide-react";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 import BotaoVoltar from "../../../shared/common/components/BotaoVoltar";
 
 const POR_PAGINA = 5;
@@ -61,8 +61,16 @@ function Pilula({ status }) {
   const isEmDia = status === "Em dia";
   const isAtrasado = status === "Atrasado";
 
-  const bg = isEmDia ? "var(--color-success-container)" : isAtrasado ? "var(--color-error-container)" : "var(--color-warning-container)";
-  const color = isEmDia ? "var(--color-success)" : isAtrasado ? "var(--color-error)" : "var(--color-warning)";
+  const bg = isEmDia
+    ? "var(--color-success-container)"
+    : isAtrasado
+      ? "var(--color-error-container)"
+      : "var(--color-warning-container)";
+  const color = isEmDia
+    ? "var(--color-success)"
+    : isAtrasado
+      ? "var(--color-error)"
+      : "var(--color-warning)";
 
   return (
     <span
@@ -122,7 +130,6 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
     try {
       setLoading(true);
 
-      // Prioriza obter o resumo financeiro estruturado via rentals:get-termination-summary se disponível
       if (window.api && window.api.rentals && typeof window.api.rentals.getTerminationSummary === "function") {
         try {
           const summary = await window.api.rentals.getTerminationSummary(locatario.id);
@@ -142,7 +149,7 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
 
       const debitosPendentes = (pagamentosRes || []).filter(
         (p) => (String(p.clientId) === String(locatario.id) || String(p.tenantId) === String(locatario.id)) &&
-               (p.status === "PENDENTE" || p.status === "ATRASADO" || p.status === "PENDING")
+          (p.status === "PENDENTE" || p.status === "ATRASADO" || p.status === "PENDING")
       );
 
       setPagamentos(debitosPendentes);
@@ -295,6 +302,8 @@ export default function Locatarios() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [form, setForm] = useState(formVazio);
   const [editando, setEditando] = useState(null);
+  const [avisoForm, setAvisoForm] = useState("");
+  const [avisoCpf, setAvisoCpf] = useState("");
   const [locatarioParaRescindir, setLocatarioParaRescindir] = useState(null);
 
   const carregarDados = async () => {
@@ -416,6 +425,23 @@ export default function Locatarios() {
   }
 
   function atualizarForm(campo, valor) {
+    if (avisoForm) setAvisoForm("");
+
+    if (campo === "cpfCnpj") {
+      const textoBruto = String(valor || "");
+      const possuiCaractereInvalido = /\D/.test(textoBruto);
+
+      if (possuiCaractereInvalido) {
+        setAvisoCpf("Digite apenas números no campo CPF/CNPJ.");
+      } else if (avisoCpf) {
+        setAvisoCpf("");
+      }
+
+      const apenasNumeros = textoBruto.replace(/\D/g, "").slice(0, 14);
+      setForm((atual) => ({ ...atual, cpfCnpj: apenasNumeros }));
+      return;
+    }
+
     setForm((atual) => ({ ...atual, [campo]: valor }));
   }
 
@@ -427,16 +453,20 @@ export default function Locatarios() {
     const telefoneValor = form.telefone || "";
 
     if (!form.nome || !form.nome.trim()) {
-      alert("Por favor, preencha o Nome completo.");
+      setAvisoForm("Por favor, preencha o Nome completo.");
       return;
     }
 
     if (documentoLimpo.length !== 11 && documentoLimpo.length !== 14) {
-      alert(`O CPF/CNPJ deve conter exatamente 11 ou 14 dígitos. O valor atual tem ${documentoLimpo.length} dígitos.`);
+      setAvisoForm(
+        `O CPF/CNPJ deve conter exatamente 11 ou 14 dígitos. O valor atual tem ${documentoLimpo.length} dígitos.`
+      );
       return;
     }
 
     try {
+      setAvisoForm("");
+      setAvisoCpf("");
       const dadosParaEnviar = {
         name: form.nome.trim(),
         cpfCnpj: documentoLimpo,
@@ -473,20 +503,21 @@ export default function Locatarios() {
       setEditando(null);
       setMostrarForm(false);
       setPagina(1);
-      if (atrasoManual) setAlertaAberto(true);
 
       window.dispatchEvent(new Event("locus:locatarios-atualizados"));
     } catch (err) {
       console.error("Erro detalhado ao salvar locatário:", err);
-      alert("Erro ao salvar o locatário na base de dados. Verifique o console (F12).");
+      setAvisoForm("Erro ao salvar o locatário na base de dados. Verifique o console (F12).");
     }
   }
 
   function editar(locatario) {
+    setAvisoForm("");
+    setAvisoCpf("");
     setEditando(locatario.id);
     setForm({
       nome: locatario.nome || locatario.name || "",
-      cpfCnpj: locatario.cpf || locatario.cpfCnpj || "",
+      cpfCnpj: String(locatario.cpf || locatario.cpfCnpj || "").replace(/\D/g, "").slice(0, 14),
       telefone: locatario.telefone || locatario.phone || "",
       email: locatario.email || "",
       status: locatario.status || "Em dia",
@@ -495,6 +526,8 @@ export default function Locatarios() {
   }
 
   function cancelarEdicao() {
+    setAvisoForm("");
+    setAvisoCpf("");
     setEditando(null);
     setForm(formVazio);
     setMostrarForm(false);
@@ -515,7 +548,13 @@ export default function Locatarios() {
             : "ui-action ui-action--primary ui-action--large"}
           onClick={() => {
             if (mostrarForm) cancelarEdicao();
-            else setMostrarForm(true);
+            else {
+              setAvisoForm("");
+              setAvisoCpf("");
+              setEditando(null);
+              setForm(formVazio);
+              setMostrarForm(true);
+            }
           }}
         >
           {mostrarForm ? "← Voltar" : "Novo locatário"}
@@ -527,6 +566,25 @@ export default function Locatarios() {
           <h2 style={{ fontSize: "var(--font-title-lg)", marginBottom: "var(--space-4)", color: "var(--color-on-surface)" }}>
             {editando ? "Editar locatário" : "Cadastrar novo locatário"}
           </h2>
+
+          {avisoForm && (
+            <div
+              role="alert"
+              style={{
+                backgroundColor: "var(--color-error-container)",
+                border: "1px solid var(--color-error)",
+                color: "var(--color-error)",
+                padding: "var(--space-3)",
+                borderRadius: "var(--radius-xs)",
+                marginBottom: "var(--space-4)",
+                fontSize: "var(--font-body-md)",
+                fontWeight: "500"
+              }}
+            >
+              {avisoForm}
+            </div>
+          )}
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
             <div>
               <label className="ui-label ui-label-required">Nome completo</label>
@@ -544,12 +602,35 @@ export default function Locatarios() {
               <input
                 className="ui-control"
                 type="text"
+                inputMode="numeric"
+                maxLength={14}
                 placeholder="Ex: 12345678901"
                 value={form.cpfCnpj}
                 onChange={(e) => atualizarForm("cpfCnpj", e.target.value)}
                 required
-                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)" }}
+                style={{
+                  width: "100%",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-xs)",
+                  border: avisoCpf
+                    ? "1px solid var(--color-error)"
+                    : "1px solid var(--color-outline-variant)"
+                }}
               />
+              {avisoCpf && (
+                <p
+                  role="alert"
+                  style={{
+                    marginTop: "var(--space-1)",
+                    marginBottom: 0,
+                    fontSize: "var(--font-body-sm)",
+                    color: "var(--color-error)",
+                    fontWeight: "500"
+                  }}
+                >
+                  {avisoCpf}
+                </p>
+              )}
             </div>
             <div>
               <label className="ui-label ui-label-optional">Telefone</label>
@@ -641,72 +722,89 @@ export default function Locatarios() {
             </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", marginTop: "var(--space-2)" }}>
-              {visiveis.map((l, i) => (
-                <div
-                  key={l.id}
-                  onClick={() => navigate(`/locatarios/${l.id}`)}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: COLUNAS,
-                    gap: "var(--space-3)",
-                    alignItems: "center",
-                    padding: "var(--space-3) var(--space-4)",
-                    borderRadius: "var(--radius-sm)",
-                    backgroundColor: l.status === "Atrasado" ? "var(--color-error-container)" : (i % 2 === 0 ? "var(--color-primary-container)" : "var(--color-on-surface-variant)"),
-                    fontSize: "var(--font-body-md)",
-                    color: "var(--color-on-surface)",
-                    cursor: "pointer",
-                    border: l.status === "Atrasado" ? "1px solid var(--color-error)" : "1px solid transparent",
-                    transition: "border-color 0.2s"
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error)" : "var(--color-primary-container)"}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error-container)" : "transparent"}
-                >
-                  <span style={{ fontWeight: "500", color: "var(--color-on-surface)" }}>
-                    {l.nome}
-                  </span>
-                  <span style={{ color: "var(--color-on-surface)" }}>{l.imovel || "—"}</span>
-                  <span style={{ color: "var(--color-on-surface)" }}>{l.telefone || "—"}</span>
-                  <span>
-                    <Pilula status={l.status} />
-                  </span>
-                  <span>
-                    <button
-                      className="ui-action ui-action--neutral"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/locatarios/${l.id}`);
-                      }}
-                    >
-                      Dossiê
-                    </button>
-                  </span>
-                  <span style={{ display: "flex", gap: "var(--space-1)", alignItems: "center" }}>
-                    <button
-                      className="ui-action ui-action--primary"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        editar(l);
-                      }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="ui-action ui-action--destructive"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLocatarioParaRescindir(l);
-                      }}
-                      title="Encerrar Contrato / Quebra de Contrato"
-                    >
-                      Rescindir
-                    </button>
-                  </span>
-                </div>
-              ))}
+              {visiveis.map((l) => {
+                const isAtrasado = l.status === "Atrasado";
+                const bgLinha = isAtrasado
+                  ? "var(--color-error-container)"
+                  : "var(--color-primary-container)";
+
+                return (
+                  <div
+                    key={l.id}
+                    onClick={() => navigate(`/locatarios/${l.id}`)}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: COLUNAS,
+                      gap: "var(--space-3)",
+                      alignItems: "center",
+                      padding: "var(--space-3) var(--space-4)",
+                      borderRadius: "var(--radius-sm)",
+                      backgroundColor: bgLinha,
+                      fontSize: "var(--font-body-md)",
+                      color: "var(--color-on-surface)",
+                      cursor: "pointer",
+                      border: isAtrasado
+                        ? "1px solid var(--color-error)"
+                        : "1px solid var(--color-outline-variant)",
+                      transition: "border-color 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = isAtrasado
+                        ? "var(--color-error)"
+                        : "var(--color-primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = isAtrasado
+                        ? "var(--color-error)"
+                        : "var(--color-outline-variant)";
+                    }}
+                  >
+                    <span style={{ fontWeight: "500", color: "var(--color-on-surface)" }}>
+                      {l.nome}
+                    </span>
+                    <span style={{ color: "var(--color-on-surface)" }}>{l.imovel || "—"}</span>
+                    <span style={{ color: "var(--color-on-surface)" }}>{l.telefone || "—"}</span>
+                    <span>
+                      <Pilula status={l.status} />
+                    </span>
+                    <span>
+                      <button
+                        className="ui-action ui-action--neutral"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/locatarios/${l.id}`);
+                        }}
+                      >
+                        Dossiê
+                      </button>
+                    </span>
+                    <span style={{ display: "flex", gap: "var(--space-1)", alignItems: "center" }}>
+                      <button
+                        className="ui-action ui-action--primary"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          editar(l);
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="ui-action ui-action--destructive"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLocatarioParaRescindir(l);
+                        }}
+                        title="Encerrar Contrato / Quebra de Contrato"
+                      >
+                        Rescindir
+                      </button>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
