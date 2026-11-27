@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adaptPropertyOverview } from "../domain/propertyOverview.mjs";
@@ -462,7 +461,7 @@ function VisaoGeralImovel() {
           display: grid;
           grid-template-columns: 2fr repeat(3, 1fr) auto;
           gap: var(--space-3);
-          align-items: end;
+          align-items: start;
           margin-top: 2px;
         }
 
@@ -493,6 +492,7 @@ function VisaoGeralImovel() {
           color: var(--color-on-primary);
           cursor: pointer;
           font-weight: 600;
+          white-space: nowrap;
         }
 
         .botao-desassociar {
@@ -529,8 +529,12 @@ function VisaoGeralImovel() {
             grid-template-columns: repeat(2, 1fr);
           }
 
-          .form-locacao button {
+          .form-locacao > div:last-child {
             grid-column: span 2;
+          }
+
+          .form-locacao button {
+            width: 100%;
           }
         }
 
@@ -989,20 +993,39 @@ function VisaoGeralImovel() {
               />
             </label>
 
-            <button
-              type="submit"
-              disabled={
-                salvandoLocacao ||
-                locatarios.length === 0 ||
-                Boolean(contratoAssociado)
-              }
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-1)",
+              }}
             >
-              {contratoAssociado
-                ? "Locatário associado"
-                : salvandoLocacao
-                  ? "Salvando..."
-                  : "Associar"}
-            </button>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: "var(--font-body-sm)",
+                  fontWeight: 600,
+                  visibility: "hidden",
+                }}
+              >
+                Ação
+              </span>
+
+              <button
+                type="submit"
+                disabled={
+                  salvandoLocacao ||
+                  locatarios.length === 0 ||
+                  Boolean(contratoAssociado)
+                }
+              >
+                {contratoAssociado
+                  ? "Locatário associado"
+                  : salvandoLocacao
+                    ? "Salvando..."
+                    : "Associar"}
+              </button>
+            </div>
           </form>
 
           {locatarios.length === 0 && (
@@ -1175,49 +1198,21 @@ function VisaoGeralImovel() {
                 style={{
                   backgroundColor: "var(--color-warning-container)",
                   border: "1px solid var(--color-warning)",
-                  padding: "var(--space-2) var(--space-3)",
-                  borderRadius: "var(--radius-sm)",
-                  margin: "var(--space-3) 0",
+                  padding: "var(--space-3)",
+                  borderRadius: "var(--radius-xs)",
+                  color: "var(--color-warning)",
                   fontSize: "var(--font-body-md)",
-                  color: "var(--color-on-surface)",
-                  textAlign: "left",
                 }}
               >
-                <strong>Atenção:</strong> Caso as chaves tenham sido
-                liberadas, a <strong>vistoria de saída</strong> com
-                fotos e vídeos é obrigatória antes do encerramento
-                da locação.
+                Esta ação desassocia o locatário atual e marca o imóvel como disponível.
               </div>
 
               <div className="confirmacao-exclusao-acoes">
                 <button
                   type="button"
-                  onClick={() =>
-                    setDesassociacaoPendente(false)
-                  }
+                  onClick={() => setDesassociacaoPendente(false)}
                 >
                   Cancelar
-                </button>
-
-                <button
-                  type="button"
-                  style={{
-                    backgroundColor: "var(--color-warning)",
-                    color: "var(--color-on-warning)",
-                    border: "none",
-                    borderRadius: "var(--radius-sm)",
-                    padding: "var(--space-2) var(--space-3)",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    setDesassociacaoPendente(false);
-                    navigate(
-                      `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
-                    );
-                  }}
-                >
-                  Registrar Vistoria de Saída
                 </button>
 
                 <button
@@ -1225,7 +1220,7 @@ function VisaoGeralImovel() {
                   className="confirmacao-excluir"
                   onClick={desassociarLocatario}
                 >
-                  Salvar Desassociação
+                  Confirmar desassociação
                 </button>
               </div>
             </div>
@@ -1238,253 +1233,105 @@ function VisaoGeralImovel() {
             className="confirmacao-exclusao"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="titulo-rescisao"
           >
-            <div
-              className="confirmacao-exclusao-conteudo"
-              style={{
-                width: "min(560px, calc(100vw - 32px))",
-              }}
-            >
-              <h2 id="titulo-rescisao">
-                Encerrar contrato
-              </h2>
+            <div className="confirmacao-exclusao-conteudo">
+              <h2>Encerrar contrato</h2>
 
-              <p>
-                Confira as informações da locação antes de
-                confirmar o encerramento.
-              </p>
+              {carregandoRescisao ? (
+                <p>Consultando resumo financeiro da locação...</p>
+              ) : (
+                <div className="modal-rescisao-resumo">
+                  {resumoRescisao && (
+                    <>
+                      <p>
+                        <strong>Locatário:</strong>{" "}
+                        {resumoRescisao.tenantName || contratoAssociado?.locatario}
+                      </p>
 
-              {carregandoRescisao && (
-                <p role="status">
-                  Consultando pagamentos e situação da locação...
-                </p>
-              )}
+                      <p>
+                        <strong>Débitos pendentes:</strong>{" "}
+                        {resumoRescisao.hasPendingDebts
+                          ? formatarMoeda(resumoRescisao.pendingTotal)
+                          : formatarMoeda(0)}
+                      </p>
 
-              {erroRescisao && (
-                <p
-                  role="alert"
-                  style={{ color: "var(--color-error)" }}
-                >
-                  {erroRescisao}
-                </p>
-              )}
+                      {Array.isArray(resumoRescisao.pendingDebts) &&
+                        resumoRescisao.pendingDebts.length > 0 && (
+                          <div className="modal-rescisao-tabela">
+                            <table className="tabela-custom">
+                              <thead>
+                                <tr>
+                                  <th>Referência</th>
+                                  <th>Valor</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {resumoRescisao.pendingDebts.map((debito, idx) => (
+                                  <tr key={debito.id || idx}>
+                                    <td>{debito.description || debito.reference || `Débito #${idx + 1}`}</td>
+                                    <td>{formatarMoeda(debito.amount ?? debito.value)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
 
-              {resumoRescisao && (
-                <>
-                  {/* RESUMO FINANCEIRO */}
-                  <div
-                    className="modal-rescisao-resumo"
-                    style={{
-                      background: "var(--color-primary-container)",
-                      border: "1px solid var(--color-outline-variant)",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "var(--space-3)",
-                      margin: "var(--space-4) 0",
-                    }}
-                  >
-                    <p>
-                      <strong>Locatário:</strong>{" "}
-                      {resumoRescisao.tenantName ||
-                        contratoAssociado.locatario}
-                    </p>
-
-                    <p>
-                      <strong>Aluguel mensal:</strong>{" "}
-                      {formatarMoeda(
-                        resumoRescisao.monthlyRent
-                      )}
-                    </p>
-
-                    <p>
-                      <strong>Total pago:</strong>{" "}
-                      {formatarMoeda(
-                        resumoRescisao.totalPaid
-                      )}
-                    </p>
-
-                    <p>
-                      <strong>Débitos pendentes:</strong>{" "}
-                      {formatarMoeda(
-                        resumoRescisao.pendingAmount
-                      )}
-                    </p>
-                  </div>
-
-                  {/* DÉBITOS PENDENTES */}
-                  <h3>Débitos pendentes</h3>
-
-                  {!resumoRescisao.pendingDebts?.length ? (
-                    <p>
-                      Não existem débitos pendentes registrados.
-                    </p>
-                  ) : (
-                    <div className="modal-rescisao-tabela">
-                      <table className="tabela-custom">
-                        <thead>
-                          <tr>
-                            <th>Referência</th>
-                            <th>Vencimento</th>
-                            <th>Valor</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          {resumoRescisao.pendingDebts.map(
-                            (debito, index) => (
-                              <tr
-                                key={`${debito.referenceMonth}-${index}`}
-                              >
-                                <td>
-                                  {debito.referenceMonth}
-                                </td>
-
-                                <td>{debito.dueDate}</td>
-
-                                <td>
-                                  {formatarMoeda(debito.amount)}
-                                </td>
-                              </tr>
-                            )
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* VISTORIA DE SAÍDA */}
-                  <div
-                    style={{
-                      margin: "var(--space-4) 0",
-                      padding: "var(--space-3)",
-                      borderRadius: "var(--radius-sm)",
-                      background:
-                        resumoRescisao.exitInspectionRequired &&
-                        !resumoRescisao.hasExitInspection
-                          ? "var(--color-warning-container)"
-                          : "var(--color-success-container)",
-                      color:
-                        resumoRescisao.exitInspectionRequired &&
-                        !resumoRescisao.hasExitInspection
-                          ? "var(--color-primary)"
-                          : "var(--color-success)",
-                    }}
-                  >
-                    <strong>Vistoria de saída:</strong>{" "}
-
-                    {resumoRescisao.hasExitInspection
-                      ? "Vistoria registrada."
-                      : resumoRescisao.exitInspectionRequired
-                        ? "Vistoria obrigatória ainda não registrada."
-                        : "Não há vistoria pendente."}
-
-                    {resumoRescisao.exitInspectionRequired &&
-                      !resumoRescisao.hasExitInspection && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRescisaoAberta(false);
-
-                            navigate(
-                              `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
-                            );
-                          }}
+                      {resumoRescisao.hasPendingDebts && (
+                        <label
                           style={{
-                            display: "block",
-                            marginTop: "var(--space-2)",
-                            padding: "var(--space-2) var(--space-3)",
-                            border: "none",
-                            borderRadius: "var(--radius-xs)",
-                            background: "var(--color-warning)",
-                            color: "var(--color-on-primary)",
-                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-2)",
+                            marginTop: "var(--space-3)",
+                            fontSize: "var(--font-body-md)",
                           }}
                         >
-                          Registrar vistoria de saída
-                        </button>
+                          <input
+                            type="checkbox"
+                            checked={aceitarDebitos}
+                            onChange={(e) => setAceitarDebitos(e.target.checked)}
+                          />
+                          Estou ciente dos débitos pendentes e desejo encerrar mesmo assim.
+                        </label>
                       )}
-                  </div>
-
-                  {/* CONFIRMAÇÃO DOS DÉBITOS */}
-                  {resumoRescisao.hasPendingDebts && (
-                    <label
-                      style={{
-                        display: "flex",
-                        gap: "var(--space-2)",
-                        alignItems: "flex-start",
-                        margin: "var(--space-3) 0",
-                        fontSize: "var(--font-body-md)",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={aceitarDebitos}
-                        onChange={(event) =>
-                          setAceitarDebitos(
-                            event.target.checked
-                          )
-                        }
-                      />
-
-                      Estou ciente dos débitos pendentes e
-                      desejo prosseguir com o encerramento.
-                    </label>
+                    </>
                   )}
 
-                  {/* OBSERVAÇÕES */}
                   <label
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       gap: "var(--space-1)",
                       marginTop: "var(--space-3)",
+                      fontSize: "var(--font-body-md)",
                     }}
                   >
-                    Observações sobre o encerramento
-
+                    Motivo / Observações
                     <textarea
-                      value={motivoRescisao}
-                      onChange={(event) =>
-                        setMotivoRescisao(event.target.value)
-                      }
-                      placeholder="Informe o motivo ou observações relevantes..."
                       rows={3}
-                      style={{
-                        width: "100%",
-                        padding: "var(--space-2)",
-                        border: "1px solid var(--color-outline-variant)",
-                        borderRadius: "var(--radius-sm)",
-                        resize: "vertical",
-                        boxSizing: "border-box",
-                      }}
+                      value={motivoRescisao}
+                      onChange={(e) => setMotivoRescisao(e.target.value)}
+                      placeholder="Informe o motivo do encerramento..."
                     />
                   </label>
 
-                  {/* MOTIVO DE BLOQUEIO */}
-                  {resumoRescisao.blockReason && (
+                  {erroRescisao && (
                     <p
                       role="alert"
-                      style={{
-                        color: "var(--color-error)",
-                        fontSize: "var(--font-body-md)",
-                      }}
+                      style={{ color: "var(--color-error)", marginTop: "var(--space-2)" }}
                     >
-                      {resumoRescisao.blockReason}
+                      {erroRescisao}
                     </p>
                   )}
-                </>
+                </div>
               )}
 
-              {/* AÇÕES DO MODAL */}
               <div className="confirmacao-exclusao-acoes">
                 <button
                   type="button"
-                  onClick={() => {
-                    setRescisaoAberta(false);
-                    setErroRescisao("");
-                    setResumoRescisao(null);
-                  }}
                   disabled={salvandoRescisao}
+                  onClick={() => setRescisaoAberta(false)}
                 >
                   Cancelar
                 </button>
@@ -1492,383 +1339,19 @@ function VisaoGeralImovel() {
                 <button
                   type="button"
                   className="confirmacao-excluir"
-                  onClick={confirmarRescisao}
                   disabled={
-                    carregandoRescisao ||
                     salvandoRescisao ||
-                    !resumoRescisao?.canTerminate ||
-                    (
-                      resumoRescisao?.hasPendingDebts &&
-                      !aceitarDebitos
-                    )
+                    carregandoRescisao ||
+                    !resumoRescisao?.canTerminate
                   }
+                  onClick={confirmarRescisao}
                 >
-                  {salvandoRescisao
-                    ? "Encerrando..."
-                    : "Confirmar encerramento"}
+                  {salvandoRescisao ? "Encerrando..." : "Confirmar encerramento"}
                 </button>
               </div>
             </div>
           </div>
         )}
-
-        {/* CONTEÚDO DAS ABAS */}
-        <div className="aba-conteudo">
-
-          {/* CONTRATOS */}
-          {abaAtiva === "contratos" && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "var(--space-3)",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "var(--font-body-md)",
-                  color: "var(--color-on-surface)",
-                }}
-              >
-                Histórico de locações e contratos do imóvel
-              </span>
-
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(`/contratos?imovelId=${imovel.id}`)
-                }
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-on-primary)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "var(--space-1) var(--space-3)",
-                  fontWeight: "bold",
-                  fontSize: "var(--font-body-md)",
-                  cursor: "pointer",
-                }}
-              >
-                + Gerar Contrato em PDF
-              </button>
-            </div>
-          )}
-
-          {abaAtiva === "contratos" &&
-            imovel.contratos.length === 0 && (
-              <p>Nenhum registro encontrado.</p>
-            )}
-
-          {abaAtiva === "contratos" &&
-            imovel.contratos.length > 0 && (
-              <table className="tabela-custom">
-                <thead>
-                  <tr>
-                    <th>Locatário</th>
-                    <th>Período</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {imovel.contratos.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.locatario}</td>
-                      <td>
-                        {item.inicio} até {item.fim}
-                      </td>
-                      <td>
-                        {item.valor.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </td>
-                      <td>
-                        <Badge
-                          texto={item.status}
-                          cor={
-                            item.status === "Vigente"
-                              ? "verde"
-                              : "cinza"
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-          {/* PAGAMENTOS */}
-          {abaAtiva === "pagamentos" && (
-            <div style={{ marginBottom: "var(--space-3)" }}>
-              <button
-                type="button"
-                onClick={() => navigate(`/pagamentos?propertyId=${imovel.id}`)}
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-on-primary)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "var(--space-2) var(--space-3)",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
-              >
-                Ver parcelas e histórico financeiro
-              </button>
-            </div>
-          )}
-
-          {abaAtiva === "pagamentos" &&
-            imovel.pagamentos.length === 0 && (
-              <p>Nenhum registro encontrado.</p>
-            )}
-
-          {abaAtiva === "pagamentos" &&
-            imovel.pagamentos.length > 0 && (
-              <table className="tabela-custom">
-                <thead>
-                  <tr>
-                    <th>Descrição</th>
-                    <th>Data do pagamento</th>
-                    <th>Valor</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {imovel.pagamentos.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.mesReferencia}</td>
-                      <td>{item.vencimento}</td>
-                      <td>
-                        {item.valor.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </td>
-                      <td>
-                        <Badge
-                          texto={item.status}
-                          cor={
-                            item.status === "Pago"
-                              ? "verde"
-                              : "amarelo"
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-
-          {/* VISTORIAS E MANUTENÇÕES */}
-          {abaAtiva === "vistorias" && (
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "var(--space-3)",
-                  flexWrap: "wrap",
-                  gap: "var(--space-2)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "var(--font-body-md)",
-                    color: "var(--color-on-surface)",
-                  }}
-                >
-                  Vistorias de entrada e saída com fotos e vídeos
-                </span>
-
-                <div style={{ display: "flex", gap: "var(--space-2)" }}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        `/vistorias?imovelId=${imovel.id}&tipo=ENTRY`
-                      )
-                    }
-                    style={{
-                      backgroundColor: "var(--color-success)",
-                      color: "var(--color-on-success)",
-                      border: "none",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "var(--space-2) var(--space-3)",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      fontSize: "var(--font-body-md)",
-                    }}
-                  >
-                    + Vistoria de Entrada
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      navigate(
-                        `/vistorias?imovelId=${imovel.id}&tipo=EXIT`
-                      )
-                    }
-                    style={{
-                      backgroundColor: "var(--color-warning)",
-                      color: "var(--color-on-warning)",
-                      border: "none",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "var(--space-2) var(--space-3)",
-                      fontWeight: "bold",
-                      cursor: "pointer",
-                      fontSize: "var(--font-body-md)",
-                    }}
-                  >
-                    + Vistoria de Saída
-                  </button>
-                </div>
-              </div>
-
-              {imovel.vistorias.length === 0 ? (
-                <p>
-                  Nenhuma vistoria ou manutenção registrada para este imóvel.
-                </p>
-              ) : (
-                <table className="tabela-custom">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Tipo</th>
-                      <th>Situação / Laudo</th>
-                      <th>Observação</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {imovel.vistorias.map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.data}</td>
-
-                        <td>
-                          {item.tipo === "Vistoria" &&
-                          item.tipoVistoria ? (
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "var(--space-1) var(--space-2)",
-                                borderRadius: "var(--radius-md)",
-                                fontSize: "var(--font-body-sm)",
-                                fontWeight: "600",
-                                backgroundColor:
-                                  item.tipoVistoria === "EXIT"
-                                    ? "var(--color-warning-container)"
-                                    : "var(--color-success-container)",
-                                color:
-                                  item.tipoVistoria === "EXIT"
-                                    ? "var(--color-primary)"
-                                    : "var(--color-success)",
-                              }}
-                            >
-                              {item.tipoVistoria === "EXIT"
-                                ? "Vistoria de Saída"
-                                : "Vistoria de Entrada"}
-                            </span>
-                          ) : (
-                            item.tipo
-                          )}
-                        </td>
-
-                        <td>{item.responsavel}</td>
-                        <td>{item.observacao}</td>
-
-                        <td>
-                          {item.tipo === "Vistoria" ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const qVistoria =
-                                  item.inspectionId
-                                    ? `&vistoriaId=${item.inspectionId}`
-                                    : "";
-
-                                navigate(
-                                  `/vistorias?imovelId=${imovel.id}&aba=consultar${qVistoria}`
-                                );
-                              }}
-                              style={{
-                                backgroundColor: "var(--color-primary-container)",
-                                color: "var(--color-on-surface)",
-                                border: "1px solid var(--color-outline-variant)",
-                                borderRadius: "var(--radius-xs)",
-                                padding: "var(--space-1) var(--space-2)",
-                                fontSize: "var(--font-body-sm)",
-                                fontWeight: "600",
-                                cursor: "pointer",
-                              }}
-                            >
-                              Ver Mídias
-                            </button>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "var(--font-body-sm)",
-                                color: "var(--color-on-surface)",
-                              }}
-                            >
-                              —
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )}
-
-          {/* HISTÓRICO */}
-          {abaAtiva === "historico" && (
-            <>
-              <h3>Histórico de ligamento e desligamento</h3>
-
-              {historicoLocacoes.length === 0 ? (
-                <p>
-                  Nenhum ligamento ou desligamento registrado.
-                </p>
-              ) : (
-                <ul className="historico-locacao-lista">
-                  {historicoLocacoes.map((contrato) => (
-                    <li
-                      className="historico-locacao-item"
-                      key={`historico-${contrato.id}`}
-                    >
-                      <span>
-                        <strong>Locatário:</strong>{" "}
-                        {contrato.locatario}
-                      </span>
-
-                      <span>
-                        <strong>Ligamento:</strong>{" "}
-                        {contrato.inicio}
-                      </span>
-
-                      <span>
-                        <strong>Desligamento:</strong>{" "}
-                        {contrato.fim}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
       </div>
     </>
   );
