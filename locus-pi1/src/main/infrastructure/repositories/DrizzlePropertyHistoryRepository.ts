@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../database/db";
 import { propertyContracts, propertyPayments, propertyInspections, propertyMaintenances } from "../database/schema/property-history";
 import { PropertyContract, PropertyHistory, PropertyPayment, PropertyInspection, PropertyMaintenance } from "../../domain/entities/PropertyHistory";
@@ -16,6 +16,21 @@ export class DrizzlePropertyHistoryRepository implements IPropertyHistoryReposit
 
   async findContractById(id: string): Promise<PropertyContract | null> {
     return (await db.select().from(propertyContracts).where(eq(propertyContracts.id, id)).get()) ?? null;
+  }
+
+  async findPaymentById(id: string): Promise<PropertyPayment | null> {
+    return (await db.select().from(propertyPayments).where(eq(propertyPayments.id, id)).get()) ?? null;
+  }
+
+  async reversePayment(id: string, reversedAt: number, reversedBy: string | null, reason: string): Promise<PropertyPayment> {
+    const result = await db
+      .update(propertyPayments)
+      .set({ reversedAt, reversedBy, reversalReason: reason })
+      .where(and(eq(propertyPayments.id, id), isNull(propertyPayments.reversedAt)))
+      .returning()
+      .get();
+    if (!result) throw new Error("O recebimento não foi encontrado ou já foi desfeito.");
+    return result;
   }
 
   async findAllContracts(): Promise<PropertyContract[]> {

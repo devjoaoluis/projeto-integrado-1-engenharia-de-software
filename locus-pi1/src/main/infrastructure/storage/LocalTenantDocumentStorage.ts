@@ -23,7 +23,8 @@ export class LocalTenantDocumentStorage implements ITenantDocumentStorage {
   private resolveSafe(relativePath: string): string {
     const root = path.resolve(this.rootDirectory);
     const target = path.resolve(root, relativePath);
-    if (!target.startsWith(root) || target === root) {
+    const relative = path.relative(root, target);
+    if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
       throw new Error("Acesso a caminho de arquivo não autorizado.");
     }
     return target;

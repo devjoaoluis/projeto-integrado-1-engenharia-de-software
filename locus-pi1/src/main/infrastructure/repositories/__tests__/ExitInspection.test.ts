@@ -201,7 +201,7 @@ it("registers only the exit recording IPC handler", async () => {
   } as NodeModule;
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-    require("../../../ipc/inspection-exit.ipc").registerInspectionExitIpc();
+    require("../../../ipc/inspections/inspection-exit.ipc").registerInspectionExitIpc();
     assert.deepEqual([...handlers.keys()], ["inspections:record-exit"]);
     const exit = (await handlers.get("inspections:record-exit")({}, input())) as { id: string };
     assert.equal((await get.execute(exit.id)).contractId, "contract");

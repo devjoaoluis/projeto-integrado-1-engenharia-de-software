@@ -1,4 +1,9 @@
-import { Visit, VisitStatus } from "../../domain/entities/Visit";
+import {
+  Visit,
+  VisitReminderLeadMinutes,
+  VisitStatus,
+  VISIT_REMINDER_LEADS_MINUTES,
+} from "../../domain/entities/Visit";
 import { IVisitRepository } from "../../domain/repositories/IVisitRepository";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
@@ -12,6 +17,7 @@ export interface UpdateVisitDTO {
   time?: string;
   status?: VisitStatus;
   notes?: string | null;
+  reminderLeadMinutes?: VisitReminderLeadMinutes | null;
 }
 
 export class UpdateVisit {
@@ -81,6 +87,17 @@ export class UpdateVisit {
       status = dto.status;
     }
 
+    let reminderLeadMinutes = current.reminderLeadMinutes;
+    if (dto.reminderLeadMinutes !== undefined) {
+      if (
+        dto.reminderLeadMinutes !== null &&
+        !(VISIT_REMINDER_LEADS_MINUTES as readonly number[]).includes(dto.reminderLeadMinutes)
+      ) {
+        throw new Error("Antecedência de notificação inválida.");
+      }
+      reminderLeadMinutes = dto.reminderLeadMinutes;
+    }
+
     const scheduledAtChanged = scheduledAt !== current.scheduledAt;
 
     if (status === "AGENDADA") {
@@ -89,14 +106,18 @@ export class UpdateVisit {
       }
 
       const existingVisits = await this.visitRepository.findAll({
-        propertyId,
         status: "AGENDADA",
+        fromTimestamp: scheduledAt,
+        toTimestamp: scheduledAt,
       });
-      const hasConflict = existingVisits.some(
-        (v) => v.id !== current.id && v.scheduledAt === scheduledAt
+      const conflict = existingVisits.find(
+        (visit) => visit.id !== current.id && visit.scheduledAt === scheduledAt
       );
-      if (hasConflict) {
-        throw new Error("Já existe uma visita agendada para este imóvel no mesmo horário.");
+      if (conflict) {
+        const conflictTime = new Date(conflict.scheduledAt).toLocaleString("pt-BR");
+        throw new Error(
+          `Horário ocupado: ${conflict.clientName} já tem uma visita para "${conflict.propertyTitle}" em ${conflictTime}.`
+        );
       }
     }
 
@@ -105,11 +126,18 @@ export class UpdateVisit {
       notes = dto.notes ? dto.notes.trim() : null;
     }
 
+    const notificationSettingsChanged =
+      scheduledAtChanged ||
+      reminderLeadMinutes !== current.reminderLeadMinutes ||
+      (current.status !== "AGENDADA" && status === "AGENDADA");
+
     const updatedVisit: Visit = {
       ...current,
       propertyId,
       clientId,
       scheduledAt,
+      reminderLeadMinutes,
+      notificationSent: notificationSettingsChanged ? false : current.notificationSent,
       status,
       notes,
       updatedAt: Date.now(),

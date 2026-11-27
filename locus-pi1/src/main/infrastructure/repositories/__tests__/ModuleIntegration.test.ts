@@ -22,8 +22,11 @@ async function journal() {
 describe("HU08 and HU11 integration", () => {
   it("keeps ordered migrations and cumulative snapshots consistent with both runtime modules", async () => {
     const entries = (await journal()).entries;
-    assert.deepEqual(entries.slice(-2).map(entry => [entry.idx, entry.tag]), [
+    assert.deepEqual(entries.slice(7, 9).map(entry => [entry.idx, entry.tag]), [
       [7, "0007_inspection_module"], [8, "0008_contract_templates"],
+    ]);
+    assert.deepEqual(entries.slice(-2).map(entry => [entry.idx, entry.tag]), [
+      [16, "0016_unified_notifications"], [17, "0017_finance_installments_and_rules"],
     ]);
     const previous = JSON.parse(await fs.readFile(path.join(migrations, "meta/0007_snapshot.json"), "utf8"));
     const latest = JSON.parse(await fs.readFile(path.join(migrations, "meta/0008_snapshot.json"), "utf8"));

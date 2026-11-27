@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { Visit, VisitStatus } from "../../domain/entities/Visit";
+import {
+  Visit,
+  VisitReminderLeadMinutes,
+  VisitStatus,
+  VISIT_REMINDER_LEADS_MINUTES,
+} from "../../domain/entities/Visit";
 import { IVisitRepository } from "../../domain/repositories/IVisitRepository";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
@@ -12,6 +17,7 @@ export interface CreateVisitDTO {
   time?: string; // "HH:MM"
   notes?: string | null;
   status?: VisitStatus;
+  reminderLeadMinutes?: VisitReminderLeadMinutes | null;
 }
 
 export class CreateVisit {
@@ -59,6 +65,14 @@ export class CreateVisit {
       throw new Error("Não é permitido agendar visitas em datas ou horários anteriores ao momento atual.");
     }
 
+    const reminderLeadMinutes = dto.reminderLeadMinutes === undefined ? 30 : dto.reminderLeadMinutes;
+    if (
+      reminderLeadMinutes !== null &&
+      !(VISIT_REMINDER_LEADS_MINUTES as readonly number[]).includes(reminderLeadMinutes)
+    ) {
+      throw new Error("Antecedência de notificação inválida.");
+    }
+
     // Valida se o imóvel existe
     const property = await this.propertyRepository.findById(dto.propertyId.trim());
     if (!property) {
@@ -71,13 +85,19 @@ export class CreateVisit {
       throw new Error(`Cliente com id ${dto.clientId} não encontrado.`);
     }
 
-    // Valida conflito de horário no mesmo imóvel para visitas agendadas
-    const existingVisits = await this.visitRepository.findAll({
-      propertyId: dto.propertyId.trim(),
-      status: "AGENDADA",
-    });
-    if (existingVisits.some((v) => v.scheduledAt === scheduledAt)) {
-      throw new Error("Já existe uma visita agendada para este imóvel no mesmo horário.");
+    if ((dto.status ?? "AGENDADA") === "AGENDADA") {
+      const existingVisits = await this.visitRepository.findAll({
+        status: "AGENDADA",
+        fromTimestamp: scheduledAt,
+        toTimestamp: scheduledAt,
+      });
+      const conflict = existingVisits.find((visit) => visit.scheduledAt === scheduledAt);
+      if (conflict) {
+        const conflictTime = new Date(conflict.scheduledAt).toLocaleString("pt-BR");
+        throw new Error(
+          `Horário ocupado: ${conflict.clientName} já tem uma visita para "${conflict.propertyTitle}" em ${conflictTime}.`
+        );
+      }
     }
 
     const now = Date.now();
@@ -86,6 +106,8 @@ export class CreateVisit {
       propertyId: dto.propertyId.trim(),
       clientId: dto.clientId.trim(),
       scheduledAt,
+      reminderLeadMinutes,
+      notificationSent: false,
       status: dto.status ?? "AGENDADA",
       notes: dto.notes ? dto.notes.trim() : null,
       createdAt: now,

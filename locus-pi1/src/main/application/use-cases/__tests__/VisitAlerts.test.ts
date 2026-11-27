@@ -46,6 +46,25 @@ class MockVisitRepository implements IVisitRepository {
       .slice(0, limit);
   }
 
+  async markNotificationSent(
+    id: string,
+    scheduledAt: number,
+    reminderLeadMinutes: 30 | 1440 | 2880 | 10080,
+    now: number
+  ): Promise<boolean> {
+    const visit = this.visits.find((item) => item.id === id);
+    if (
+      !visit ||
+      visit.notificationSent ||
+      visit.status !== "AGENDADA" ||
+      visit.scheduledAt !== scheduledAt ||
+      visit.reminderLeadMinutes !== reminderLeadMinutes ||
+      visit.scheduledAt <= now
+    ) return false;
+    visit.notificationSent = true;
+    return true;
+  }
+
   async update(visit: Visit): Promise<Visit> {
     const idx = this.visits.findIndex((v) => v.id === visit.id);
     if (idx !== -1) {
@@ -139,31 +158,33 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     clientPhone: "(11) 99999-8888",
     clientEmail: "carlos@email.com",
     scheduledAt,
+    reminderLeadMinutes: 30,
+    notificationSent: false,
     status,
     notes: "Interesse em locação comercial",
     createdAt: now - 86400000,
     updatedAt: now - 86400000,
   });
 
-  it("deve gerar alerta de urgência CRITICAL (estágio NOW) para visita no horário exato", async () => {
+  it("deve gerar um alerta quando atingir a antecedência configurada", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
-    // Visita marcada para daqui a 5 minutos (janela -15 a +15 min)
-    const scheduledAt = now + 5 * 60 * 1000;
+    // O envio acontece no limite inclusivo de 30 minutos.
+    const scheduledAt = now + 30 * 60 * 1000;
     visitRepo.visits.push(createSampleVisit("v-now", scheduledAt));
 
     const alerts = await getAlerts.execute({ now });
     assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].stage, "NOW");
-    assert.equal(alerts[0].urgency, "CRITICAL");
-    assert.ok(alerts[0].title.includes("Visita agora"));
+    assert.equal(alerts[0].stage, "SCHEDULED_REMINDER");
+    assert.equal(alerts[0].urgency, "HIGH");
+    assert.ok(alerts[0].title.includes("Lembrete de visita"));
     assert.ok(alerts[0].message.includes("Carlos Eduardo"));
     assert.ok(alerts[0].message.includes("Cobertura Jardins"));
     assert.equal(alerts[0].property.title, "Cobertura Jardins");
     assert.equal(alerts[0].client.phone, "(11) 99999-8888");
   });
 
-  it("deve gerar alerta de urgência HIGH (estágio IMMINENT_1H) para visita dentro da próxima hora", async () => {
+  it("não deve alertar antes da antecedência configurada nem depois do horário da visita", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
     // Visita marcada para daqui a 35 minutos
@@ -171,42 +192,42 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     visitRepo.visits.push(createSampleVisit("v-imminent", scheduledAt));
 
     const alerts = await getAlerts.execute({ now });
-    assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].stage, "IMMINENT_1H");
-    assert.equal(alerts[0].urgency, "HIGH");
-    assert.ok(alerts[0].title.includes("Visita em breve"));
-    assert.ok(alerts[0].message.includes("Faltam 35 minutos"));
+    assert.equal(alerts.length, 0);
+
+    const expiredAlerts = await getAlerts.execute({ now: scheduledAt });
+    assert.equal(expiredAlerts.length, 0);
   });
 
-  it("deve gerar alerta de urgência MEDIUM (estágio TODAY) para visita no mesmo dia com mais de 1h de antecedência", async () => {
+  it("deve respeitar a antecedência de um dia escolhida na visita", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
     // Visita hoje daqui a 3 horas
     const scheduledAt = now + 3 * 60 * 60 * 1000;
-    visitRepo.visits.push(createSampleVisit("v-today", scheduledAt));
+    visitRepo.visits.push({ ...createSampleVisit("v-today", scheduledAt), reminderLeadMinutes: 1440 });
 
     const alerts = await getAlerts.execute({ now });
     assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].stage, "TODAY");
-    assert.equal(alerts[0].urgency, "MEDIUM");
-    assert.ok(alerts[0].title.includes("Visita hoje"));
+    assert.equal(alerts[0].stage, "SCHEDULED_REMINDER");
+    assert.equal(alerts[0].urgency, "LOW");
   });
 
-  it("deve gerar alerta de urgência LOW (estágio UPCOMING_24H) para visita no dia seguinte dentro de 24h", async () => {
+  it("deve reconhecer a antecedência de dois dias e de uma semana", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
     // Visita amanhã às 10:00 (daqui a 20 horas)
     const scheduledAt = now + 20 * 60 * 60 * 1000;
-    visitRepo.visits.push(createSampleVisit("v-24h", scheduledAt));
+    visitRepo.visits.push({ ...createSampleVisit("v-24h", scheduledAt), reminderLeadMinutes: 2880 });
+    visitRepo.visits.push({
+      ...createSampleVisit("v-week", now + 6 * 86400000),
+      reminderLeadMinutes: 10080,
+    });
 
     const alerts = await getAlerts.execute({ now });
-    assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].stage, "UPCOMING_24H");
-    assert.equal(alerts[0].urgency, "LOW");
-    assert.ok(alerts[0].title.includes("Visita amanhã"));
+    assert.equal(alerts.length, 2);
+    assert.ok(alerts.every((alert) => alert.stage === "SCHEDULED_REMINDER"));
   });
 
-  it("deve gerar alerta OVERDUE para visita de hoje cujo horário expirou e segue pendente", async () => {
+  it("não deve gerar lembrete depois do horário da visita", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
     // Visita hoje há 40 minutos atrás que não foi marcada como realizada
@@ -214,10 +235,7 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     visitRepo.visits.push(createSampleVisit("v-overdue", scheduledAt));
 
     const alerts = await getAlerts.execute({ now });
-    assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].stage, "OVERDUE");
-    assert.equal(alerts[0].urgency, "MEDIUM");
-    assert.ok(alerts[0].title.includes("Visita pendente"));
+    assert.equal(alerts.length, 0);
   });
 
   it("não deve gerar alertas para visitas com status REALIZADA ou CANCELADA", async () => {
@@ -230,20 +248,30 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     assert.equal(alerts.length, 0);
   });
 
+  it("não deve alertar visitas sem lembrete ou já notificadas", async () => {
+    const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
+    visitRepo.visits.push(
+      { ...createSampleVisit("v-disabled", now + 10 * 60 * 1000), reminderLeadMinutes: null },
+      { ...createSampleVisit("v-sent", now + 10 * 60 * 1000), notificationSent: true }
+    );
+
+    assert.equal((await getAlerts.execute({ now })).length, 0);
+  });
+
   it("deve priorizar ordenação por urgência (CRITICAL > HIGH > MEDIUM > LOW)", async () => {
     const getAlerts = new GetVisitAlerts(visitRepo, reminderRepo);
 
     // Adiciona em ordem não ordenada
-    visitRepo.visits.push(createSampleVisit("v-24h", now + 20 * 60 * 60 * 1000)); // LOW
-    visitRepo.visits.push(createSampleVisit("v-now", now + 2 * 60 * 1000));        // CRITICAL
-    visitRepo.visits.push(createSampleVisit("v-imm", now + 30 * 60 * 1000));       // HIGH
-    visitRepo.visits.push(createSampleVisit("v-today", now + 4 * 60 * 60 * 1000));  // MEDIUM
+    visitRepo.visits.push({ ...createSampleVisit("v-24h", now + 20 * 60 * 60 * 1000), reminderLeadMinutes: 10080 });
+    visitRepo.visits.push(createSampleVisit("v-now", now + 2 * 60 * 1000));
+    visitRepo.visits.push(createSampleVisit("v-imm", now + 30 * 60 * 1000));
+    visitRepo.visits.push({ ...createSampleVisit("v-today", now + 4 * 60 * 60 * 1000), reminderLeadMinutes: 10080 });
 
     const alerts = await getAlerts.execute({ now });
     assert.equal(alerts.length, 4);
-    assert.equal(alerts[0].urgency, "CRITICAL");
+    assert.equal(alerts[0].urgency, "HIGH");
     assert.equal(alerts[1].urgency, "HIGH");
-    assert.equal(alerts[2].urgency, "MEDIUM");
+    assert.equal(alerts[2].urgency, "LOW");
     assert.equal(alerts[3].urgency, "LOW");
   });
 
@@ -260,7 +288,7 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     assert.equal(alerts[0].isDismissed, false);
 
     // Descarta o alerta
-    await dismiss.execute({ visitId: "v-dismiss", stage: "IMMINENT_1H" });
+    await dismiss.execute({ visitId: "v-dismiss", stage: "SCHEDULED_REMINDER" });
 
     // Consulta padrão (não inclui descartados)
     alerts = await getAlerts.execute({ now });
@@ -284,11 +312,12 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     assert.equal(dispatched.length, 1);
     assert.equal(notifier.notifiedAlerts.length, 1);
     assert.equal(notifier.notifiedAlerts[0].visitId, "v-service-1");
-    assert.equal(notifier.notifiedAlerts[0].stage, "IMMINENT_1H");
+    assert.equal(notifier.notifiedAlerts[0].stage, "SCHEDULED_REMINDER");
 
     // Registro deve estar gravado no repositório de lembretes
-    const isTriggered = await reminderRepo.isTriggered("v-service-1", "IMMINENT_1H");
+    const isTriggered = await reminderRepo.isTriggered("v-service-1", "SCHEDULED_REMINDER");
     assert.equal(isTriggered, true);
+    assert.equal(visitRepo.visits[0].notificationSent, true);
 
     // Segunda checagem imediata não deve re-disparar a mesma notificação (evita spam)
     const secondDispatched = await service.checkAndDispatch(now);
@@ -296,32 +325,31 @@ describe("HU-09: Lembretes de Visitas (RF09) - Backend", () => {
     assert.equal(notifier.notifiedAlerts.length, 1);
   });
 
-  it("VisitReminderService: deve disparar nova notificação quando a visita progredir para novo estágio", async () => {
+  it("VisitReminderService: deve enviar uma única notificação conforme antecedência escolhida", async () => {
     const service = new VisitReminderService(visitRepo, reminderRepo, notifier);
 
     // Visita agendada para as 12:00
     const scheduledAt = baseDate.getTime() + 2 * 60 * 60 * 1000;
-    visitRepo.visits.push(createSampleVisit("v-service-2", scheduledAt));
+    visitRepo.visits.push({
+      ...createSampleVisit("v-service-2", scheduledAt),
+      reminderLeadMinutes: 1440,
+    });
 
-    // Às 10:00 (now): estágio TODAY (> 60min)
+    // O lembrete configurado para um dia antes já está vencido.
     const dispatchedAt10 = await service.checkAndDispatch(now);
     assert.equal(dispatchedAt10.length, 1);
-    assert.equal(dispatchedAt10[0].stage, "TODAY");
+    assert.equal(dispatchedAt10[0].stage, "SCHEDULED_REMINDER");
     assert.equal(notifier.notifiedAlerts.length, 1);
 
-    // Às 11:30 (daqui a 1h30min): faltam 30 minutos -> estágio IMMINENT_1H
     const timeAt1130 = now + 90 * 60 * 1000;
     const dispatchedAt1130 = await service.checkAndDispatch(timeAt1130);
-    assert.equal(dispatchedAt1130.length, 1);
-    assert.equal(dispatchedAt1130[0].stage, "IMMINENT_1H");
-    assert.equal(notifier.notifiedAlerts.length, 2);
+    assert.equal(dispatchedAt1130.length, 0);
+    assert.equal(notifier.notifiedAlerts.length, 1);
 
-    // Às 12:00 (horário exato): estágio NOW
     const timeAt1200 = scheduledAt;
     const dispatchedAt1200 = await service.checkAndDispatch(timeAt1200);
-    assert.equal(dispatchedAt1200.length, 1);
-    assert.equal(dispatchedAt1200[0].stage, "NOW");
-    assert.equal(notifier.notifiedAlerts.length, 3);
+    assert.equal(dispatchedAt1200.length, 0);
+    assert.equal(notifier.notifiedAlerts.length, 1);
   });
 
   it("VisitReminderService: deve iniciar e parar o monitoramento em background", () => {

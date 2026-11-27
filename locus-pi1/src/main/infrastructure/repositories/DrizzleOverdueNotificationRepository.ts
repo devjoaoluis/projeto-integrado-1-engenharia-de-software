@@ -1,7 +1,5 @@
-import { and, desc, eq, gte } from "drizzle-orm";
-import crypto from "node:crypto";
-import { db } from "../database/db";
-import { overdueNotifications } from "../database/schema/overdue-notifications";
+import { DrizzleNotificationRepository } from "./DrizzleNotificationRepository";
+import { AppNotification } from "../../domain/entities/AppNotification";
 import { OverdueNotification } from "../../domain/entities/OverdueRent";
 import {
   IOverdueNotificationRepository,
@@ -9,90 +7,60 @@ import {
 } from "../../domain/repositories/IOverdueNotificationRepository";
 
 export class DrizzleOverdueNotificationRepository implements IOverdueNotificationRepository {
-  async create(notification: OverdueNotification): Promise<OverdueNotification> {
-    const record = {
-      id: notification.id || crypto.randomUUID(),
-      rentalId: notification.rentalId,
-      contractId: notification.contractId ?? null,
-      tenantId: notification.tenantId,
-      referenceMonth: notification.referenceMonth,
-      dueDate: notification.dueDate,
-      daysOverdue: notification.daysOverdue,
-      originalAmount: notification.originalAmount,
-      interestAmount: notification.interestAmount,
-      fineAmount: notification.fineAmount,
-      totalAmount: notification.totalAmount,
-      message: notification.message,
-      channel: notification.channel || "SYSTEM",
-      createdAt: notification.createdAt || Date.now(),
-    };
+  private readonly notifications = new DrizzleNotificationRepository();
 
-    await db.insert(overdueNotifications).values(record);
-    return record as OverdueNotification;
+  async create(notification: OverdueNotification): Promise<OverdueNotification> {
+    await this.notifications.createIfAbsent({
+      id: notification.id,
+      category: "OVERDUE",
+      title: "Locatário em atraso",
+      message: notification.message,
+      target: `/pagamentos?tenantId=${encodeURIComponent(notification.tenantId)}`,
+      entityId: notification.rentalId,
+      data: { ...notification },
+      createdAt: notification.createdAt,
+      readAt: null,
+      deletedAt: null,
+    });
+    return notification;
   }
 
   async findByRentalAndMonth(
     rentalId: string,
     referenceMonth: string
   ): Promise<OverdueNotification[]> {
-    const rows = await db
-      .select()
-      .from(overdueNotifications)
-      .where(
-        and(
-          eq(overdueNotifications.rentalId, rentalId),
-          eq(overdueNotifications.referenceMonth, referenceMonth)
-        )
-      )
-      .orderBy(desc(overdueNotifications.createdAt))
-      .all();
-
-    return rows as OverdueNotification[];
+    return this.list({ rentalId, referenceMonth });
   }
 
   async findLatestForRentalMonth(
     rentalId: string,
     referenceMonth: string
   ): Promise<OverdueNotification | null> {
-    const row = await db
-      .select()
-      .from(overdueNotifications)
-      .where(
-        and(
-          eq(overdueNotifications.rentalId, rentalId),
-          eq(overdueNotifications.referenceMonth, referenceMonth)
-        )
-      )
-      .orderBy(desc(overdueNotifications.createdAt))
-      .limit(1)
-      .get();
-
-    return (row as OverdueNotification) ?? null;
+    return (await this.findByRentalAndMonth(rentalId, referenceMonth))[0] ?? null;
   }
 
   async list(filter?: OverdueNotificationFilter): Promise<OverdueNotification[]> {
-    const conditions = [];
+    const records = await this.notifications.list(100);
+    return records
+      .filter((record) => record.category === "OVERDUE")
+      .map((record) => this.toOverdueNotification(record))
+      .filter((record) =>
+        (!filter?.rentalId || record.rentalId === filter.rentalId)
+        && (!filter?.tenantId || record.tenantId === filter.tenantId)
+        && (!filter?.referenceMonth || record.referenceMonth === filter.referenceMonth)
+        && (!filter?.since || record.createdAt >= filter.since)
+      )
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }
 
-    if (filter?.rentalId) {
-      conditions.push(eq(overdueNotifications.rentalId, filter.rentalId));
-    }
-    if (filter?.tenantId) {
-      conditions.push(eq(overdueNotifications.tenantId, filter.tenantId));
-    }
-    if (filter?.referenceMonth) {
-      conditions.push(eq(overdueNotifications.referenceMonth, filter.referenceMonth));
-    }
-    if (filter?.since) {
-      conditions.push(gte(overdueNotifications.createdAt, filter.since));
-    }
-
-    const query = db.select().from(overdueNotifications);
-
-    const rows = conditions.length > 0
-      ? await query.where(and(...conditions)).orderBy(desc(overdueNotifications.createdAt)).all()
-      : await query.orderBy(desc(overdueNotifications.createdAt)).all();
-
-    return rows as OverdueNotification[];
+  private toOverdueNotification(record: AppNotification): OverdueNotification {
+    const data = record.data as unknown as OverdueNotification;
+    return {
+      ...data,
+      id: typeof data.id === "string" ? data.id : record.id,
+      message: record.message,
+      createdAt: record.createdAt,
+    };
   }
 }
 

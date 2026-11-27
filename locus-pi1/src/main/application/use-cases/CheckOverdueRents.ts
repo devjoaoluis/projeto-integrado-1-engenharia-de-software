@@ -2,12 +2,13 @@ import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
+import { IFinancialRepository } from "../../domain/repositories/IFinancialRepository";
 import {
   OverdueCheckResult,
   OverdueDebtItem,
   OverdueSummary,
-  calculateOverdueCharges,
 } from "../../domain/entities/OverdueRent";
+import { ListPayments } from "./ListPayments";
 
 export interface CheckOverdueRentsOptions {
   rentalId?: string;
@@ -16,207 +17,82 @@ export interface CheckOverdueRentsOptions {
 }
 
 export class CheckOverdueRents {
+  private readonly listPayments: ListPayments;
+
   constructor(
     private rentalRepository: IRentalRepository,
     private historyRepository: IPropertyHistoryRepository,
     private clientRepository?: IClientRepository,
-    private propertyRepository?: IPropertyRepository
-  ) {}
+    private propertyRepository?: IPropertyRepository,
+    financialRepository?: IFinancialRepository,
+  ) {
+    this.listPayments = new ListPayments(
+      rentalRepository,
+      historyRepository,
+      clientRepository,
+      propertyRepository,
+      financialRepository,
+    );
+  }
 
   async execute(options?: CheckOverdueRentsOptions): Promise<OverdueCheckResult> {
     const currentTimestamp = options?.currentTimestamp ?? Date.now();
-
-    // Buscar aluguéis para verificar
-    let rentalsToCheck = await this.rentalRepository.findAll();
-
-    // Filtrar aluguéis válidos (não encerrados antes do início)
-    rentalsToCheck = rentalsToCheck.filter(
-      (r) => !r.endDate || r.endDate >= r.startDate
-    );
-
-    if (options?.rentalId) {
-      rentalsToCheck = rentalsToCheck.filter((r) => r.id === options.rentalId);
-    }
-
-    if (options?.tenantId) {
-      rentalsToCheck = rentalsToCheck.filter((r) => r.tenantId === options.tenantId);
-    }
-
+    const rentals = (await this.rentalRepository.findAll())
+      .filter((rental) => !rental.endDate || rental.endDate >= rental.startDate)
+      .filter((rental) => !options?.rentalId || rental.id === options.rentalId)
+      .filter((rental) => !options?.tenantId || rental.tenantId === options.tenantId);
+    const paymentItems = await this.listPayments.execute(options?.tenantId, currentTimestamp);
     const debts: OverdueDebtItem[] = [];
     const overdueRentalIds = new Set<string>();
 
-    for (const rental of rentalsToCheck) {
-      const history = await this.historyRepository.findByPropertyId(rental.propertyId);
-      const contract = history.contracts.find((c) => c.rentalId === rental.id) ?? null;
-      const contractId = contract ? contract.id : null;
-
-      // Filtrar pagamentos deste contrato/aluguel
-      const contractPayments = history.payments.filter((p) =>
-        contractId ? p.contractId === contractId : p.propertyId === rental.propertyId
+    for (const rental of rentals) {
+      const property = this.propertyRepository
+        ? await this.propertyRepository.findById(rental.propertyId)
+        : null;
+      const tenant = this.clientRepository
+        ? await this.clientRepository.findById(rental.tenantId)
+        : null;
+      const overduePayments = paymentItems.filter(
+        (payment) => payment.rentalId === rental.id && payment.status === "ATRASADO",
       );
 
-      const totalPaid = contractPayments.reduce((acc, p) => acc + p.amount, 0);
+      if (overduePayments.length === 0) continue;
+      overdueRentalIds.add(rental.id);
 
-      // Calcular todas as parcelas devidas até o momento atual
-      const expectedCharges = this.calculateExpectedCharges(
-        rental.startDate,
-        rental.dueDay,
-        rental.monthlyRent,
-        currentTimestamp
-      );
-
-      // Alocar pagamentos cronologicamente (FIFO)
-      const pendingCharges = this.calculatePendingDebts(expectedCharges, totalPaid);
-
-      // Apenas parcelas cujo vencimento já ocorreu em relação ao currentTimestamp
-      const overdueCharges = pendingCharges.filter((c) => c.dueDate < currentTimestamp);
-
-      if (overdueCharges.length > 0) {
-        overdueRentalIds.add(rental.id);
-
-        let tenantName: string | null = null;
-        let tenantEmail: string | null = null;
-        let tenantPhone: string | null = null;
-        if (this.clientRepository) {
-          const tenant = await this.clientRepository.findById(rental.tenantId);
-          if (tenant) {
-            tenantName = tenant.name;
-            tenantEmail = tenant.email ?? null;
-            tenantPhone = tenant.phone ?? null;
-          }
-        }
-
-        let propertyTitle: string | null = null;
-        if (this.propertyRepository) {
-          const property = await this.propertyRepository.findById(rental.propertyId);
-          if (property) {
-            propertyTitle = property.title;
-          }
-        }
-
-        for (const charge of overdueCharges) {
-          // RN06: cálculo de juros (1% ao mês pro rata die) e multa (2% por dia)
-          const charges = calculateOverdueCharges(
-            charge.amount,
-            charge.dueDate,
-            currentTimestamp
-          );
-
-          debts.push({
-            rentalId: rental.id,
-            contractId,
-            propertyId: rental.propertyId,
-            propertyTitle,
-            tenantId: rental.tenantId,
-            tenantName,
-            tenantEmail,
-            tenantPhone,
-            referenceMonth: charge.referenceMonth,
-            dueDate: charge.dueDate,
-            daysOverdue: charges.daysOverdue,
-            originalAmount: charge.amount,
-            interestAmount: charges.interestAmount,
-            fineAmount: charges.fineAmount,
-            totalAmount: charges.totalAmount,
-            isOverTwoMonths: charges.isOverTwoMonths,
-            autoSettlementBlocked: charges.isOverTwoMonths, // RN05
-          });
-        }
-      }
-    }
-
-    // Ordenar do atraso mais antigo ao mais recente
-    debts.sort((a, b) => b.daysOverdue - a.daysOverdue);
-
-    const summary: OverdueSummary = {
-      totalOverdueContracts: overdueRentalIds.size,
-      totalDebtsCount: debts.length,
-      totalOriginalAmount: Math.round(debts.reduce((acc, d) => acc + d.originalAmount, 0) * 100) / 100,
-      totalInterestAmount: Math.round(debts.reduce((acc, d) => acc + d.interestAmount, 0) * 100) / 100,
-      totalFineAmount: Math.round(debts.reduce((acc, d) => acc + d.fineAmount, 0) * 100) / 100,
-      totalDueAmount: Math.round(debts.reduce((acc, d) => acc + d.totalAmount, 0) * 100) / 100,
-      totalCriticalDebts: debts.filter((d) => d.isOverTwoMonths).length,
-    };
-
-    return {
-      summary,
-      debts,
-      checkedAt: currentTimestamp,
-    };
-  }
-
-  private calculateExpectedCharges(
-    startDateTimestamp: number,
-    dueDay: number,
-    monthlyRent: number,
-    currentTimestamp: number
-  ): Array<{ referenceMonth: string; dueDate: number; amount: number }> {
-    const charges: Array<{ referenceMonth: string; dueDate: number; amount: number }> = [];
-    const start = new Date(startDateTimestamp);
-
-    let currentYear = start.getUTCFullYear();
-    let currentMonth = start.getUTCMonth();
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const daysInMonth = new Date(Date.UTC(currentYear, currentMonth + 1, 0)).getUTCDate();
-      const actualDay = Math.min(dueDay, daysInMonth);
-      const dueDate = new Date(Date.UTC(currentYear, currentMonth, actualDay, 23, 59, 59, 999));
-      const dueTimestamp = dueDate.getTime();
-
-      if (dueTimestamp < startDateTimestamp) {
-        currentMonth++;
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
-        continue;
-      }
-
-      if (dueTimestamp > currentTimestamp) {
-        break;
-      }
-
-      const monthStr = String(currentMonth + 1).padStart(2, "0");
-      charges.push({
-        referenceMonth: `${monthStr}/${currentYear}`,
-        dueDate: dueTimestamp,
-        amount: monthlyRent,
-      });
-
-      currentMonth++;
-      if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-      }
-
-      if (charges.length > 600) break;
-    }
-
-    return charges;
-  }
-
-  private calculatePendingDebts(
-    expectedCharges: Array<{ referenceMonth: string; dueDate: number; amount: number }>,
-    totalPaid: number
-  ): Array<{ referenceMonth: string; dueDate: number; amount: number }> {
-    let remainingPaid = totalPaid;
-    const pending: Array<{ referenceMonth: string; dueDate: number; amount: number }> = [];
-
-    for (const charge of expectedCharges) {
-      if (remainingPaid >= charge.amount) {
-        remainingPaid -= charge.amount;
-      } else {
-        const unpaidForThisMonth = charge.amount - remainingPaid;
-        remainingPaid = 0;
-        pending.push({
-          referenceMonth: charge.referenceMonth,
-          dueDate: charge.dueDate,
-          amount: Math.round(unpaidForThisMonth * 100) / 100,
+      for (const payment of overduePayments) {
+        debts.push({
+          rentalId: rental.id,
+          contractId: payment.contractId,
+          propertyId: rental.propertyId,
+          propertyTitle: property?.title ?? null,
+          tenantId: rental.tenantId,
+          tenantName: tenant?.name ?? null,
+          tenantEmail: tenant?.email ?? null,
+          tenantPhone: tenant?.phone ?? null,
+          referenceMonth: payment.referenceMonth,
+          dueDate: payment.dueDate,
+          daysOverdue: payment.daysOverdue,
+          originalAmount: payment.amount,
+          interestAmount: payment.interestAmount,
+          fineAmount: payment.fineAmount,
+          totalAmount: payment.totalAmount,
+          isOverTwoMonths: payment.daysOverdue > 60,
+          autoSettlementBlocked: payment.daysOverdue > 60,
         });
       }
     }
 
-    return pending;
+    debts.sort((a, b) => b.daysOverdue - a.daysOverdue);
+    const summary: OverdueSummary = {
+      totalOverdueContracts: overdueRentalIds.size,
+      totalDebtsCount: debts.length,
+      totalOriginalAmount: Math.round(debts.reduce((sum, debt) => sum + debt.originalAmount, 0) * 100) / 100,
+      totalInterestAmount: Math.round(debts.reduce((sum, debt) => sum + debt.interestAmount, 0) * 100) / 100,
+      totalFineAmount: Math.round(debts.reduce((sum, debt) => sum + debt.fineAmount, 0) * 100) / 100,
+      totalDueAmount: Math.round(debts.reduce((sum, debt) => sum + debt.totalAmount, 0) * 100) / 100,
+      totalCriticalDebts: debts.filter((debt) => debt.isOverTwoMonths).length,
+    };
+
+    return { summary, debts, checkedAt: currentTimestamp };
   }
 }

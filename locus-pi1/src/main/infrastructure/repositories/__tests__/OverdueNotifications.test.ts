@@ -4,6 +4,8 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { initializeDatabase } from "../../database/initializeDatabase";
 import { OverdueNotification } from "../../../domain/entities/OverdueRent";
+import { NotificationService } from "../../../application/services/NotificationService";
+import { AppNotification } from "../../../domain/entities/AppNotification";
 
 const sqlite = createClient({ url: "file::memory:" });
 const dbModule = require.resolve("../../database/db");
@@ -22,6 +24,7 @@ before(async () => {
 
 beforeEach(async () => {
   await sqlite.executeMultiple(`
+    DELETE FROM app_notifications;
     DELETE FROM overdue_notifications;
     DELETE FROM rentals;
     DELETE FROM properties;
@@ -124,8 +127,14 @@ describe("HU-10: IPC Registration and Handlers", () => {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { registerOverdueIpc } = require("../../../ipc/overdue.ipc");
-      registerOverdueIpc();
+      const { registerOverdueIpc } = require("../../../ipc/finance/overdue.ipc");
+      const notificationService = {
+        publish: async () => ({
+          created: true,
+          notification: null as unknown as AppNotification,
+        }),
+      } as unknown as NotificationService;
+      registerOverdueIpc(notificationService);
 
       const expectedHandlers = [
         "overdue:check",

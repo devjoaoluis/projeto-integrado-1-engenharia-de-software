@@ -6,6 +6,7 @@ import { OwnerPayoutReport, OwnerPayoutItem } from "../../domain/entities/OwnerP
 
 export interface GetOwnerPayoutReportInput {
   ownerId: string;
+  propertyId?: string;
   referenceMonth?: string; // Formatos: "MM/YYYY", "M/YYYY", "YYYY-MM"
   month?: number;          // 1 a 12
   year?: number;           // Ex: 2026
@@ -47,7 +48,12 @@ export class GetOwnerPayoutReport {
 
     // Buscar todos os imóveis pertencentes ao proprietário
     const allProperties = await this.propertyRepository.findAll();
-    const ownerProperties = allProperties.filter((p) => p.ownerId === ownerId);
+    const ownerProperties = allProperties.filter(
+      (property) => property.ownerId === ownerId && (!input.propertyId || property.id === input.propertyId),
+    );
+    if (input.propertyId && ownerProperties.length === 0) {
+      throw new Error("O imóvel selecionado não pertence ao proprietário informado.");
+    }
 
     const items: OwnerPayoutItem[] = [];
 
@@ -73,6 +79,7 @@ export class GetOwnerPayoutReport {
           desc.includes(`${String(month).padStart(2, "0")}/${shortYear}`) ||
           this.matchesMonthNameInPortuguese(desc, month, year);
 
+        if (payment.referenceMonth) return payment.referenceMonth === normalizedReferenceMonth;
         return inTimestampRange || hasExplicitRef;
       });
 

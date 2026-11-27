@@ -23,6 +23,19 @@ export interface PropertyPayment {
   paidAt: number;
   description: string;
   createdAt: number;
+  referenceMonth?: string | null;
+  dueDate?: number | null;
+  receiptPath?: string | null;
+  amountCents?: number | null;
+  principalAmountCents?: number | null;
+  rentAmountCents?: number | null;
+  expensesAmountCents?: number | null;
+  fineAmountCents?: number | null;
+  interestAmountCents?: number | null;
+  createdBy?: string | null;
+  reversedAt?: number | null;
+  reversedBy?: string | null;
+  reversalReason?: string | null;
 }
 
 export interface PropertyInspection {

@@ -4,51 +4,29 @@ import { IVisitRepository } from "../../domain/repositories/IVisitRepository";
 import { IVisitReminderRepository } from "../../domain/repositories/IVisitReminderRepository";
 import { GetVisitAlerts, GetVisitAlertsOptions } from "../use-cases/GetVisitAlerts";
 import { DismissVisitReminder } from "../use-cases/DismissVisitReminder";
+import { NotificationService } from "./NotificationService";
 
 export interface IVisitNotifier {
   notify(alert: VisitAlert): Promise<void> | void;
 }
 
-export class ElectronVisitNotifier implements IVisitNotifier {
-  notify(alert: VisitAlert): void {
-    try {
-      // 1. Notificação visual nativa do SO
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const electron = require("electron");
-      if (
-        electron.Notification &&
-        typeof electron.Notification.isSupported === "function" &&
-        electron.Notification.isSupported()
-      ) {
-        const notification = new electron.Notification({
-          title: alert.title,
-          body: alert.message,
-          urgency: alert.urgency === "CRITICAL" ? "critical" : "normal",
-        });
-        notification.show();
-      }
-    } catch {
-      // Falha silenciosa em ambiente sem display / headless
-    }
+export class NotificationServiceVisitNotifier implements IVisitNotifier {
+  constructor(private readonly notificationService: NotificationService) {}
 
-    try {
-      // 2. Notificação visual in-app via IPC para as janelas abertas
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const electron = require("electron");
-      if (
-        electron.BrowserWindow &&
-        typeof electron.BrowserWindow.getAllWindows === "function"
-      ) {
-        const windows = electron.BrowserWindow.getAllWindows();
-        for (const win of windows) {
-          if (!win.isDestroyed()) {
-            win.webContents.send("visits:reminder-notification", alert);
-          }
-        }
-      }
-    } catch {
-      // Falha silenciosa se não houver janelas ou em testes
-    }
+  async notify(alert: VisitAlert): Promise<void> {
+    await this.notificationService.publish({
+      id: `visit:${alert.visitId}:${alert.stage}:${alert.scheduledAt}`,
+      category: "VISIT",
+      title: alert.title,
+      message: alert.message,
+      target: `/visitas?visitId=${encodeURIComponent(alert.visitId)}`,
+      entityId: alert.visitId,
+      data: {
+        visitId: alert.visitId,
+        stage: alert.stage,
+        scheduledAt: alert.scheduledAt,
+      },
+    });
   }
 }
 
@@ -60,7 +38,7 @@ export class VisitReminderService {
   constructor(
     private visitRepository: IVisitRepository,
     private reminderRepository: IVisitReminderRepository,
-    private notifier: IVisitNotifier = new ElectronVisitNotifier()
+    private notifier: IVisitNotifier
   ) {
     this.getAlertsUseCase = new GetVisitAlerts(this.visitRepository, this.reminderRepository);
     this.dismissUseCase = new DismissVisitReminder(this.reminderRepository);
@@ -86,23 +64,26 @@ export class VisitReminderService {
     const dispatched: VisitAlert[] = [];
 
     for (const alert of activeAlerts) {
-      const alreadyTriggered = await this.reminderRepository.isTriggered(
+      const claimed = await this.visitRepository.markNotificationSent(
         alert.visitId,
-        alert.stage
+        alert.scheduledAt,
+        alert.reminderLeadMinutes,
+        now
       );
-
-      if (!alreadyTriggered) {
-        await this.notifier.notify(alert);
-        await this.reminderRepository.recordTriggered({
-          id: crypto.randomUUID(),
-          visitId: alert.visitId,
-          stage: alert.stage,
-          triggeredAt: now,
-          dismissedAt: null,
-          createdAt: now,
-        });
-        dispatched.push(alert);
+      if (!claimed) {
+        continue;
       }
+
+      await this.notifier.notify(alert);
+      await this.reminderRepository.recordTriggered({
+        id: crypto.randomUUID(),
+        visitId: alert.visitId,
+        stage: alert.stage,
+        triggeredAt: now,
+        dismissedAt: null,
+        createdAt: now,
+      });
+      dispatched.push(alert);
     }
 
     return dispatched;
@@ -126,11 +107,11 @@ export class VisitReminderService {
     this.stop();
     // Executa uma checagem imediata ao iniciar
     this.checkAndDispatch().catch((err) => {
-      void err;
+      console.error("Erro ao verificar lembretes de visitas:", err);
     });
     this.timer = setInterval(() => {
       this.checkAndDispatch().catch((err) => {
-        void err;
+        console.error("Erro ao verificar lembretes de visitas:", err);
       });
     }, intervalMs);
   }

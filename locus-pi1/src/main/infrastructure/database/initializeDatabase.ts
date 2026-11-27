@@ -5,6 +5,8 @@ import { propertyHistoryTables } from "./propertyHistoryTables";
 import { tenantDocumentTables } from "./tenantDocumentTables";
 import { propertyVisitTables } from "./propertyVisitTables";
 import { overdueNotificationTables } from "./overdueNotificationTables";
+import { notificationTables } from "./notificationTables";
+import { financialTables } from "./financialTables";
 import { Client } from "@libsql/client";
 
 export async function initializeDatabase(client: Client): Promise<void> {
@@ -100,12 +102,128 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   if (!contractColumns.includes("notes")) {
     await client.execute("ALTER TABLE property_contracts ADD COLUMN notes TEXT");
   }
+  const paymentTableInfo = await client.execute("PRAGMA table_info(property_payments)");
+  const paymentColumns = new Set(paymentTableInfo.rows.map((row) => String(row.name)));
+  if (!paymentColumns.has("reference_month")) {
+    await client.execute("ALTER TABLE property_payments ADD COLUMN reference_month TEXT");
+  }
+  if (!paymentColumns.has("due_date")) {
+    await client.execute("ALTER TABLE property_payments ADD COLUMN due_date INTEGER");
+  }
+  if (!paymentColumns.has("receipt_path")) {
+    await client.execute("ALTER TABLE property_payments ADD COLUMN receipt_path TEXT");
+  }
+  const paymentFinanceColumns = [
+    ["amount_cents", "INTEGER"],
+    ["principal_amount_cents", "INTEGER"],
+    ["rent_amount_cents", "INTEGER"],
+    ["expenses_amount_cents", "INTEGER"],
+    ["fine_amount_cents", "INTEGER"],
+    ["interest_amount_cents", "INTEGER"],
+    ["created_by", "TEXT"],
+    ["reversed_at", "INTEGER"],
+    ["reversed_by", "TEXT"],
+    ["reversal_reason", "TEXT"],
+  ] as const;
+  for (const [columnName, columnType] of paymentFinanceColumns) {
+    if (!paymentColumns.has(columnName)) {
+      await client.execute(`ALTER TABLE property_payments ADD COLUMN ${columnName} ${columnType}`);
+    }
+  }
+  await client.execute(
+    "UPDATE property_payments SET amount_cents = CAST(ROUND(amount * 100) AS INTEGER) WHERE amount_cents IS NULL",
+  );
+  await client.execute("DROP INDEX IF EXISTS property_payments_contract_reference_unique");
+  await client.execute(`CREATE INDEX IF NOT EXISTS property_payments_contract_reference_idx
+    ON property_payments (contract_id, reference_month)`);
+  await client.executeMultiple(financialTables);
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO financial_settings
+      (id, grace_days, fine_rate_basis_points, monthly_interest_basis_points, admin_fee_basis_points, updated_at)
+      VALUES (1, 3, 1000, 100, 1000, ?)`,
+    args: [Date.now()],
+  });
   await initializeContacts(client);
   await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);
   await client.executeMultiple(tenantDocumentTables);
   await client.executeMultiple(propertyVisitTables);
+  const visitColumns = await client.execute("PRAGMA table_info(property_visits)");
+  const visitColumnNames = new Set(visitColumns.rows.map((column) => String(column.name)));
+  if (!visitColumnNames.has("reminder_lead_minutes")) {
+    await client.execute("ALTER TABLE property_visits ADD COLUMN reminder_lead_minutes INTEGER DEFAULT 30");
+  }
+  if (!visitColumnNames.has("notification_sent")) {
+    await client.execute("ALTER TABLE property_visits ADD COLUMN notification_sent INTEGER NOT NULL DEFAULT 0 CHECK (notification_sent IN (0, 1))");
+  }
+  await client.executeMultiple(`
+    CREATE TRIGGER IF NOT EXISTS property_visits_no_schedule_conflict_insert
+    BEFORE INSERT ON property_visits
+    WHEN NEW.status = 'AGENDADA' AND EXISTS (
+      SELECT 1 FROM property_visits
+      WHERE status = 'AGENDADA' AND scheduled_at = NEW.scheduled_at
+    )
+    BEGIN
+      SELECT RAISE(ABORT, 'VISIT_TIME_CONFLICT');
+    END;
+    CREATE TRIGGER IF NOT EXISTS property_visits_no_schedule_conflict_update
+    BEFORE UPDATE OF scheduled_at, status ON property_visits
+    WHEN NEW.status = 'AGENDADA' AND EXISTS (
+      SELECT 1 FROM property_visits
+      WHERE status = 'AGENDADA' AND scheduled_at = NEW.scheduled_at AND id <> NEW.id
+    )
+    BEGIN
+      SELECT RAISE(ABORT, 'VISIT_TIME_CONFLICT');
+    END;
+  `);
   await client.executeMultiple(overdueNotificationTables);
+  await client.executeMultiple(notificationTables);
+  const notificationColumns = await client.execute("PRAGMA table_info(app_notifications)");
+  if (!notificationColumns.rows.some((column) => String(column.name) === "deleted_at")) {
+    await client.execute("ALTER TABLE app_notifications ADD COLUMN deleted_at INTEGER");
+  }
+  const legacyNotifications = await client.execute("SELECT * FROM overdue_notifications");
+  for (const row of legacyNotifications.rows) {
+    const id = `legacy-overdue:${String(row.id)}`;
+    const payload = {
+      id: String(row.id),
+      rentalId: String(row.rental_id),
+      contractId: row.contract_id == null ? null : String(row.contract_id),
+      tenantId: String(row.tenant_id),
+      referenceMonth: String(row.reference_month),
+      dueDate: Number(row.due_date),
+      daysOverdue: Number(row.days_overdue),
+      originalAmount: Number(row.original_amount),
+      interestAmount: Number(row.interest_amount),
+      fineAmount: Number(row.fine_amount),
+      totalAmount: Number(row.total_amount),
+      message: String(row.message),
+      channel: String(row.channel),
+      createdAt: Number(row.created_at),
+    };
+    await client.execute({
+      sql: `INSERT OR IGNORE INTO app_notifications
+        (id, category, title, message, target, entity_id, data_json, created_at, read_at)
+        VALUES (?, 'OVERDUE', 'Locatário em atraso', ?, ?, ?, ?, ?, ?)`,
+      args: [
+        id,
+        payload.message,
+        `/pagamentos?tenantId=${encodeURIComponent(payload.tenantId)}`,
+        payload.rentalId,
+        JSON.stringify(payload),
+        payload.createdAt,
+        payload.createdAt,
+      ],
+    });
+  }
+  await client.execute(`
+    DELETE FROM app_notifications
+    WHERE id NOT IN (
+      SELECT id FROM app_notifications
+      ORDER BY created_at DESC
+      LIMIT 100
+    )
+  `);
 
 
   const tableInfo = await client.execute("PRAGMA table_info(properties)");

@@ -112,7 +112,10 @@ describe("HU05 property overview", () => {
     const other = await record.execute({ type: "CONTRACT", data: contractData("other") });
     assert.ok(other);
     await assert.rejects(record.execute({ type: "PAYMENT", data: { propertyId: "property", contractId: other.id, amount: 10, paidAt: now, description: "Pagamento" } }), /must belong/);
-    await assert.rejects(client.execute({ sql: "INSERT INTO property_payments VALUES (?, ?, ?, ?, ?, ?, ?)", args: ["bad", "property", other.id, 10, now, "Pagamento", now] }), /FOREIGN KEY/);
+    await assert.rejects(client.execute({
+      sql: "INSERT INTO property_payments (id, property_id, contract_id, amount, paid_at, description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      args: ["bad", "property", other.id, 10, now, "Pagamento", now],
+    }), /FOREIGN KEY/);
   });
   it("validates contract amounts, dates, tenant and linked rental", async () => {
     for (const monthlyRent of [0, -1, NaN, Infinity]) await assert.rejects(record.execute({ type: "CONTRACT", data: { ...contractData(), monthlyRent } }), /positive/);

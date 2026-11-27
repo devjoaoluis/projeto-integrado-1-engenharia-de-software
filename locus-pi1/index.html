@@ -1,9 +1,19 @@
 <!doctype html>
-<html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1558b5" />
+    <script>
+      try {
+        const savedTheme = window.localStorage.getItem("locus:theme");
+        document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
+      } catch (error) {
+        console.error("Não foi possível carregar a preferência de tema:", error);
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
+    <title>Locus — Gestão Imobiliária</title>
   </head>
   <body>
     <div id="root"></div>

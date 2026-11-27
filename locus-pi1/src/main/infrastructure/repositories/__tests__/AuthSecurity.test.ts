@@ -13,7 +13,7 @@ const handlers = new Map<string, Handler>();
 require.cache[databaseModule] = { exports: { db: drizzle(sqlite) } } as NodeModule;
 require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: Handler) => handlers.set(name, handler) } } } as NodeModule;
 // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron and SQLite before loading IPC
-const { registerAuthIpc } = require("../../../ipc/auth.ipc") as typeof import("../../../ipc/auth.ipc");
+const { registerAuthIpc } = require("../../../ipc/auth/auth.ipc") as typeof import("../../../ipc/auth/auth.ipc");
 type Response = { success?: boolean; error?: string; user?: Record<string, unknown> | null };
 async function invoke(channel: string, data?: unknown): Promise<Response> {
   const handler = handlers.get(channel);

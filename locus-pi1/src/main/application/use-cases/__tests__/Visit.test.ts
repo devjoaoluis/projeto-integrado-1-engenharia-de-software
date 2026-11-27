@@ -105,6 +105,23 @@ class MockVisitRepository implements IVisitRepository {
     });
   }
 
+  async markNotificationSent(
+    id: string,
+    _scheduledAt: number,
+    _reminderLeadMinutes: 30 | 1440 | 2880 | 10080,
+    now: number
+  ): Promise<boolean> {
+    const visit = this.visits.find((item) => item.id === id);
+    if (
+      !visit ||
+      visit.notificationSent ||
+      visit.status !== "AGENDADA" ||
+      visit.scheduledAt <= now
+    ) return false;
+    visit.notificationSent = true;
+    return true;
+  }
+
   async update(visit: Visit): Promise<Visit> {
     const index = this.visits.findIndex((v) => v.id === visit.id);
     if (index === -1) throw new Error("Visita não encontrada");
@@ -149,13 +166,17 @@ function makeFixture() {
 
   visitRepo.propertyMap.set(property.id, { title: property.title, address: property.address });
   visitRepo.clientMap.set(client.id, { name: client.name, phone: client.phone ?? null, email: client.email ?? null });
+  visitRepo.propertyMap.set("prop-2", { title: "Casa Jardins", address: "Rua das Flores, 20" });
+  visitRepo.clientMap.set("client-2", { name: "Rafael Souza", phone: null, email: null });
 
   const propertyRepo = {
-    findById: async (id: string) => (id === property.id ? property : null),
+    findById: async (id: string) =>
+      id === property.id ? property : id === "prop-2" ? { ...property, id, title: "Casa Jardins" } : null,
   } as unknown as IPropertyRepository;
 
   const clientRepo = {
-    findById: async (id: string) => (id === client.id ? client : null),
+    findById: async (id: string) =>
+      id === client.id ? client : id === "client-2" ? { ...client, id, name: "Rafael Souza" } : null,
   } as unknown as IClientRepository;
 
   return { visitRepo, propertyRepo, clientRepo, property, client };
@@ -291,6 +312,25 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
     assert.equal(updated.notes, "Visita concluída com sucesso. Cliente pediu minuta do contrato.");
   });
 
+  it("deve reabilitar a notificação ao mudar horário ou antecedência, mas não ao editar notas", async () => {
+    const { visitRepo, propertyRepo, clientRepo } = makeFixture();
+    const created = await new CreateVisit(visitRepo, propertyRepo, clientRepo).execute({
+      propertyId: "prop-1",
+      clientId: "client-1",
+      scheduledAt: Date.now() + 3 * 86400000,
+    });
+    const updateVisit = new UpdateVisit(visitRepo, propertyRepo, clientRepo);
+
+    const stored = visitRepo.visits[0];
+    stored.notificationSent = true;
+    const leadChanged = await updateVisit.execute({ id: created.id, reminderLeadMinutes: 1440 });
+    assert.equal(leadChanged.notificationSent, false);
+
+    visitRepo.visits[0].notificationSent = true;
+    const notesChanged = await updateVisit.execute({ id: created.id, notes: "Nota atualizada" });
+    assert.equal(notesChanged.notificationSent, true);
+  });
+
   it("RF06: deve listar lembretes de visitas futuras em ordem cronológica", async () => {
     const { visitRepo, propertyRepo, clientRepo } = makeFixture();
     const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
@@ -342,7 +382,7 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
     );
   });
 
-  it("deve rejeitar conflito de horário para o mesmo imóvel com visita agendada", async () => {
+  it("deve rejeitar conflito de horário entre imóveis e clientes diferentes", async () => {
     const { visitRepo, propertyRepo, clientRepo } = makeFixture();
     const createVisit = new CreateVisit(visitRepo, propertyRepo, clientRepo);
 
@@ -355,11 +395,11 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
 
     await assert.rejects(
       createVisit.execute({
-        propertyId: "prop-1",
-        clientId: "client-1",
+        propertyId: "prop-2",
+        clientId: "client-2",
         scheduledAt: scheduledTime,
       }),
-      /Já existe uma visita agendada para este imóvel no mesmo horário/
+      /Horário ocupado: Mariana Silva já tem uma visita para "Apartamento Centro"/
     );
   });
 
@@ -377,7 +417,7 @@ describe("HU-07: Agendamento de Visitas e Lembretes (RF04 / RF06)", () => {
     // Rejeita remarcar v2 para o mesmo horário exato de v1
     await assert.rejects(
       updateVisit.execute({ id: v2.id, scheduledAt: time1 }),
-      /Já existe uma visita agendada para este imóvel no mesmo horário/
+      /Horário ocupado/
     );
 
     // Rejeita remarcar v2 para o passado

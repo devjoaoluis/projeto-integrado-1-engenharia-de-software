@@ -51,7 +51,7 @@ describe("property search persistence and validation", () => {
     require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data: unknown) => Promise<unknown>) => handlers.set(name, handler) } } } as NodeModule;
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-      const { registerPropertiesIpc } = require("../../../ipc/properties.ipc") as typeof import("../../../ipc/properties.ipc");
+      const { registerPropertiesIpc } = require("../../../ipc/properties/properties.ipc") as typeof import("../../../ipc/properties/properties.ipc");
       registerPropertiesIpc();
       const handler = handlers.get("properties:search");
       assert.ok(handler);
@@ -102,14 +102,14 @@ describe("property search persistence and validation", () => {
   it("persists the neighborhood sent by the existing screen through IPC on create and edit", async () => {
     const electronModule = require.resolve("electron");
     const previousElectron = require.cache[electronModule];
-    const ipcModule = require.resolve("../../../ipc/properties.ipc");
+    const ipcModule = require.resolve("../../../ipc/properties/properties.ipc");
     const previousIpc = require.cache[ipcModule];
     delete require.cache[ipcModule];
     const handlers = new Map<string, (event: unknown, data: unknown) => Promise<unknown>>();
     require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data: unknown) => Promise<unknown>) => handlers.set(name, handler) } } } as NodeModule;
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-      const { registerPropertiesIpc } = require("../../../ipc/properties.ipc") as typeof import("../../../ipc/properties.ipc");
+      const { registerPropertiesIpc } = require("../../../ipc/properties/properties.ipc") as typeof import("../../../ipc/properties/properties.ipc");
       registerPropertiesIpc();
       const createHandler = handlers.get("properties:create");
       const updateHandler = handlers.get("properties:update");

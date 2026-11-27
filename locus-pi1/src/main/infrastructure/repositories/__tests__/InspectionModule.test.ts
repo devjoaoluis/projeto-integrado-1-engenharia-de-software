@@ -35,7 +35,7 @@ describe("HU08 inspection module", () => {
     require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data: unknown) => Promise<unknown>) => handlers.set(name, handler) } } } as NodeModule;
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-      require("../../../ipc/inspections.ipc").registerInspectionsIpc();
+      require("../../../ipc/inspections/inspections.ipc").registerInspectionsIpc();
       assert.deepEqual([...handlers.keys()], ["inspections:get", "inspections:list"]);
       assert.deepEqual(await handlers.get("inspections:list")({}, { propertyId: "property" }), []);
     } finally {

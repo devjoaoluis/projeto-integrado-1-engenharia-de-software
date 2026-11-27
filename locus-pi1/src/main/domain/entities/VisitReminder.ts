@@ -1,9 +1,12 @@
+import { VisitReminderLeadMinutes } from "./Visit";
+
 export type VisitReminderStage =
   | "UPCOMING_24H"  // Lembrete preventivo (24 horas antes)
   | "TODAY"         // Lembrete do dia da visita
   | "IMMINENT_1H"   // Lembrete de urgência (próximos 60 minutos)
   | "NOW"           // No momento da visita (horário exato)
-  | "OVERDUE";      // Visita agendada para hoje com horário expirado e ainda pendente
+  | "OVERDUE"       // Visita agendada para hoje com horário expirado e ainda pendente
+  | "SCHEDULED_REMINDER";
 
 export type VisitAlertUrgency = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -22,6 +25,7 @@ export interface VisitAlert {
   stage: VisitReminderStage;
   urgency: VisitAlertUrgency;
   scheduledAt: number;
+  reminderLeadMinutes: VisitReminderLeadMinutes;
   diffMinutes: number; // minutos até a visita (positivo = futuro, negativo = passado)
   title: string;
   message: string;

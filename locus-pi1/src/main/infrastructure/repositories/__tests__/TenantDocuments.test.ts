@@ -200,6 +200,14 @@ describe("HU-13 Tenant Documents Backend", () => {
     assert.ok(doc.caminhoArquivo.startsWith("tenant-1/"));
   });
 
+  it("rejects paths that escape the storage root or only share its prefix", () => {
+    assert.throws(() => storage.getAbsolutePath("../fora/segredo.pdf"), /não autorizado/);
+    assert.throws(
+      () => storage.getAbsolutePath(`${storageDir}-fora${path.sep}segredo.pdf`),
+      /não autorizado/
+    );
+  });
+
   it("rolls back stored file if database insertion fails", async () => {
     const failingRepo = new (class extends DrizzleTenantDocumentRepository {
       async create(): Promise<TenantDocument> {
@@ -380,7 +388,7 @@ it("registers all 5 IPC handlers for tenant documents (documentos:*)", async () 
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-    require("../../../ipc/tenant-documents.ipc").registerTenantDocumentsIpc(storageDir, async () => ({ canceled: true }));
+    require("../../../ipc/tenants/tenant-documents.ipc").registerTenantDocumentsIpc(storageDir, async () => ({ canceled: true }));
 
     const registeredKeys = [...handlers.keys()].sort();
     assert.deepEqual(registeredKeys, [

@@ -313,7 +313,7 @@ describe("HU11 Contracts IPC Registration and PDF Export", () => {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate IPC
-      const { registerContractsIpc } = require("../../../ipc/contracts.ipc");
+      const { registerContractsIpc } = require("../../../ipc/contracts/contracts.ipc");
       registerContractsIpc();
 
       const registeredKeys = [...handlers.keys()];

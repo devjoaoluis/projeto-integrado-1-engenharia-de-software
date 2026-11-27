@@ -4,9 +4,18 @@ import {
   calculateOverdueCharges,
   OverdueNotification,
 } from "../../../domain/entities/OverdueRent";
+import { AppNotification } from "../../../domain/entities/AppNotification";
+import { INotificationRepository } from "../../../domain/repositories/INotificationRepository";
+import { NotificationService } from "../../services/NotificationService";
+import {
+  IOverdueNotificationRepository,
+  OverdueNotificationFilter,
+} from "../../../domain/repositories/IOverdueNotificationRepository";
 import { CheckOverdueRents } from "../CheckOverdueRents";
 import { TriggerOverdueAlerts } from "../TriggerOverdueAlerts";
 import { SettleOverdueDebt } from "../SettleOverdueDebt";
+import { SettleRentalInstallment } from "../SettleRentalInstallment";
+import { ListPayments } from "../ListPayments";
 import { ListOverdueNotifications } from "../ListOverdueNotifications";
 import { Rental } from "../../../domain/entities/Rental";
 import {
@@ -18,12 +27,9 @@ import {
 } from "../../../domain/entities/PropertyHistory";
 import { IRentalRepository } from "../../../domain/repositories/IRentalRepository";
 import { IPropertyHistoryRepository } from "../../../domain/repositories/IPropertyHistoryRepository";
-import {
-  IOverdueNotificationRepository,
-  OverdueNotificationFilter,
-} from "../../../domain/repositories/IOverdueNotificationRepository";
 import { IClientRepository } from "../../../domain/repositories/IClientRepository";
 import { IPropertyRepository } from "../../../domain/repositories/IPropertyRepository";
+import { IFileStorage } from "../../../domain/repositories/IFileStorage";
 import { Client } from "../../../domain/entities/Client";
 import { Property, PropertyStatus } from "../../../domain/entities/Property";
 import { SearchPropertiesParams, SearchPropertiesResult } from "../../../../shared/types/properties";
@@ -68,6 +74,9 @@ class MockHistoryRepository implements IPropertyHistoryRepository {
       maintenances: [],
     };
   }
+  async findAllContracts(): Promise<PropertyContract[]> {
+    return this.contracts;
+  }
   async findContractById(id: string) {
     return this.contracts.find((c) => c.id === id) ?? null;
   }
@@ -87,39 +96,62 @@ class MockHistoryRepository implements IPropertyHistoryRepository {
   }
 }
 
-class MockNotificationRepository implements IOverdueNotificationRepository {
+class MockNotificationRepository implements INotificationRepository {
+  notifications: AppNotification[] = [];
+
+  async createIfAbsent(notification: AppNotification) {
+    const existing = this.notifications.find((item) => item.id === notification.id);
+    if (existing) return { created: false, notification: existing };
+    this.notifications.push(notification);
+    return { created: true, notification };
+  }
+  async findById(id: string) {
+    return this.notifications.find((item) => item.id === id) ?? null;
+  }
+  async list() {
+    return [...this.notifications].sort((a, b) => b.createdAt - a.createdAt).slice(0, 100);
+  }
+  async markRead(id: string, readAt: number) {
+    const notification = this.notifications.find((item) => item.id === id);
+    if (!notification) return false;
+    notification.readAt = readAt;
+    return true;
+  }
+  async markAllRead(readAt: number) {
+    this.notifications.forEach((item) => { item.readAt = readAt; });
+  }
+  async delete(id: string) {
+    const notification = this.notifications.find((item) => item.id === id);
+    if (notification) notification.deletedAt = Date.now();
+  }
+  async clear(deletedAt: number) {
+    this.notifications.forEach((item) => { item.deletedAt = deletedAt; });
+  }
+}
+
+class MockOverdueNotificationRepository implements IOverdueNotificationRepository {
   notifications: OverdueNotification[] = [];
 
-  async create(n: OverdueNotification) {
-    this.notifications.push(n);
-    return n;
+  async create(notification: OverdueNotification) {
+    this.notifications.push(notification);
+    return notification;
   }
   async findByRentalAndMonth(rentalId: string, referenceMonth: string) {
     return this.notifications.filter(
-      (n) => n.rentalId === rentalId && n.referenceMonth === referenceMonth
+      (notification) => notification.rentalId === rentalId
+        && notification.referenceMonth === referenceMonth
     );
   }
   async findLatestForRentalMonth(rentalId: string, referenceMonth: string) {
-    const matches = this.notifications.filter(
-      (n) => n.rentalId === rentalId && n.referenceMonth === referenceMonth
-    );
-    return matches.length > 0 ? matches[matches.length - 1] : null;
+    return (await this.findByRentalAndMonth(rentalId, referenceMonth))[0] ?? null;
   }
   async list(filter?: OverdueNotificationFilter) {
-    let result = [...this.notifications];
-    if (filter?.rentalId) {
-      result = result.filter((n) => n.rentalId === filter.rentalId);
-    }
-    if (filter?.tenantId) {
-      result = result.filter((n) => n.tenantId === filter.tenantId);
-    }
-    if (filter?.referenceMonth) {
-      result = result.filter((n) => n.referenceMonth === filter.referenceMonth);
-    }
-    if (filter?.since) {
-      result = result.filter((n) => n.createdAt >= filter.since!);
-    }
-    return result;
+    return this.notifications.filter((notification) =>
+      (!filter?.rentalId || notification.rentalId === filter.rentalId)
+      && (!filter?.tenantId || notification.tenantId === filter.tenantId)
+      && (!filter?.referenceMonth || notification.referenceMonth === filter.referenceMonth)
+      && (!filter?.since || notification.createdAt >= filter.since)
+    );
   }
 }
 
@@ -179,7 +211,7 @@ class MockPropertyRepository implements IPropertyRepository {
 describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", () => {
   const msInDay = 24 * 60 * 60 * 1000;
 
-  describe("Cálculo de Mora e Multa (RN06)", () => {
+  describe("Cálculo de mora pelas regras padrão", () => {
     it("retorna zero encargos quando o pagamento não está em atraso", () => {
       const dueDate = new Date("2026-10-10T23:59:59.999Z").getTime();
       const current = new Date("2026-10-10T12:00:00.000Z").getTime();
@@ -192,7 +224,7 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       assert.equal(result.isOverTwoMonths, false);
     });
 
-    it("aplica estritamente 1% ao mês pro rata die de juros e 2% de multa por dia de atraso (RN06)", () => {
+    it("aplica 10% de multa e juros proporcionais após os 3 dias de carência", () => {
       const dueDate = new Date("2026-10-01T23:59:59.999Z").getTime();
       // 10 dias depois
       const current = dueDate + 10 * msInDay;
@@ -200,12 +232,10 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       const result = calculateOverdueCharges(originalAmount, dueDate, current);
 
       assert.equal(result.daysOverdue, 10);
-      // Juros: (0.01 / 30) * 10 * 1000 = 3.33
-      assert.equal(result.interestAmount, 3.33);
-      // Multa: 0.02 * 10 * 1000 = 200.00
-      assert.equal(result.fineAmount, 200);
-      // Total: 1000 + 3.33 + 200 = 1203.33
-      assert.equal(result.totalAmount, 1203.33);
+      // Juros: (0.01 / 30) * 7 dias após a carência * 1000 = 2.33
+      assert.equal(result.interestAmount, 2.33);
+      assert.equal(result.fineAmount, 100);
+      assert.equal(result.totalAmount, 1102.33);
       assert.equal(result.isOverTwoMonths, false);
     });
 
@@ -309,18 +339,18 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       assert.equal(debt.daysOverdue, 15);
       assert.equal(debt.originalAmount, 1500);
 
-      // Juros: (0.01 / 30) * 15 * 1500 = 7.50
-      assert.equal(debt.interestAmount, 7.5);
-      // Multa: 0.02 * 15 * 1500 = 450.00
-      assert.equal(debt.fineAmount, 450);
-      assert.equal(debt.totalAmount, 1957.5);
+      // Juros: (0.01 / 30) * 12 dias após a carência * 1500 = 6.00
+      assert.equal(debt.interestAmount, 6);
+      // Multa única padrão: 10% de 1500 = 150.00
+      assert.equal(debt.fineAmount, 150);
+      assert.equal(debt.totalAmount, 1656);
       assert.equal(debt.isOverTwoMonths, false);
       assert.equal(debt.autoSettlementBlocked, false);
 
       assert.equal(result.summary.totalOverdueContracts, 1);
       assert.equal(result.summary.totalDebtsCount, 1);
       assert.equal(result.summary.totalOriginalAmount, 1500);
-      assert.equal(result.summary.totalDueAmount, 1957.5);
+      assert.equal(result.summary.totalDueAmount, 1656);
       assert.equal(result.summary.totalCriticalDebts, 0);
     });
 
@@ -384,6 +414,16 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       const rentalRepo = new MockRentalRepository();
       const historyRepo = new MockHistoryRepository();
       const notifRepo = new MockNotificationRepository();
+      const notificationService = new NotificationService(
+        notifRepo,
+        { show: () => true },
+        {
+          isAppFocused: () => true,
+          broadcastChanged: () => undefined,
+          broadcastNativeUnavailable: () => undefined,
+          navigateTo: () => undefined,
+        }
+      );
 
       const startDate = new Date(Date.UTC(2026, 7, 1)).getTime();
       await rentalRepo.create({
@@ -416,24 +456,60 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
         createdAt: startDate,
       });
 
+      await rentalRepo.create({
+        id: "rent-upcoming",
+        propertyId: "prop-upcoming",
+        tenantId: "tenant-upcoming",
+        monthlyRent: 800,
+        startDate,
+        dueDay: 16,
+        parentRentalId: null,
+        formalConsent: null,
+        contractSigned: true,
+        signaturesNotarized: true,
+        initialPaymentsPaid: true,
+        keysReleasedAt: startDate,
+        createdAt: startDate,
+        updatedAt: startDate,
+      });
+      await historyRepo.createContract({
+        id: "c-upcoming",
+        propertyId: "prop-upcoming",
+        tenantId: "tenant-upcoming",
+        rentalId: "rent-upcoming",
+        reference: "LOC-upcoming",
+        monthlyRent: 800,
+        startDate,
+        endDate: null,
+        status: "ACTIVE",
+        createdAt: startDate,
+      });
+
       const currentTimestamp = new Date(Date.UTC(2026, 7, 15)).getTime(); // 10 dias após vencimento
       const checkUseCase = new CheckOverdueRents(rentalRepo, historyRepo);
-      const triggerUseCase = new TriggerOverdueAlerts(checkUseCase, notifRepo);
+      const triggerUseCase = new TriggerOverdueAlerts(
+        checkUseCase,
+        notificationService,
+        new ListPayments(rentalRepo, historyRepo),
+      );
 
       const result = await triggerUseCase.execute({ currentTimestamp });
-      assert.equal(result.triggeredCount, 1);
+      assert.equal(result.triggeredCount, 2);
       assert.equal(result.notifications.length, 1);
-      assert.ok(result.notifications[0].message.includes("RN06"));
+      assert.equal(result.upcomingNotifications.length, 1);
+      assert.ok(result.notifications[0].message.includes("regras financeiras configuradas"));
       assert.ok(result.notifications[0].message.includes("08/2026"));
+      assert.ok(result.upcomingNotifications[0].message.includes("vence amanhã"));
 
       // Segunda chamada no mesmo dia deve pular para evitar spam
       const secondCall = await triggerUseCase.execute({ currentTimestamp: currentTimestamp + 3600000 });
       assert.equal(secondCall.triggeredCount, 0);
-      assert.equal(secondCall.skippedCount, 1);
+      assert.equal(secondCall.skippedCount, 2);
 
-      // Chamada forçada deve disparar
-      const forcedCall = await triggerUseCase.execute({ currentTimestamp: currentTimestamp + 3600000, force: true });
-      assert.equal(forcedCall.triggeredCount, 1);
+      // Nenhuma opção deve permitir duplicar o mesmo aviso do lançamento.
+      const repeatedCall = await triggerUseCase.execute({ currentTimestamp: currentTimestamp + 3600000 });
+      assert.equal(repeatedCall.triggeredCount, 0);
+      assert.equal(repeatedCall.skippedCount, 2);
     });
   });
 
@@ -478,7 +554,7 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       const checkUseCase = new CheckOverdueRents(rentalRepo, historyRepo);
       const settleUseCase = new SettleOverdueDebt(checkUseCase, historyRepo);
 
-      // Baixa automática deve ser expressamente bloqueada conforme RN05
+      // A baixa é sempre manual; débitos acima de 60 dias continuam disponíveis para baixa manual.
       await assert.rejects(
         settleUseCase.execute({
           rentalId: "rent-old",
@@ -488,9 +564,8 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
         }),
         (err: Error) => {
           assert.ok(
-            err.message.includes("RN05") &&
-            err.message.includes("Baixa automática bloqueada"),
-            `Esperado erro de RN05, obtido: ${err.message}`
+            err.message.includes("manualmente"),
+            `Esperado erro de baixa manual, obtido: ${err.message}`
           );
           return true;
         }
@@ -551,10 +626,10 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       assert.equal(res.success, true);
       const historyAfter = await historyRepo.findByPropertyId("prop-manual");
       assert.equal(historyAfter.payments.length, 1);
-      assert.ok(historyAfter.payments[0].description.includes("Baixa Manual"));
+      assert.ok(historyAfter.payments[0].description.includes("Baixa manual"));
     });
 
-    it("Permite baixa automática quando o atraso é menor ou igual a 60 dias", async () => {
+    it("também bloqueia baixa automática quando o atraso é menor ou igual a 60 dias", async () => {
       const rentalRepo = new MockRentalRepository();
       const historyRepo = new MockHistoryRepository();
 
@@ -594,23 +669,169 @@ describe("HU-10: Notificação de Atraso e Controle de Inadimplência (RF08)", (
       const checkUseCase = new CheckOverdueRents(rentalRepo, historyRepo);
       const settleUseCase = new SettleOverdueDebt(checkUseCase, historyRepo);
 
-      const res = await settleUseCase.execute({
-        rentalId: "rent-auto-ok",
-        referenceMonth: "08/2026",
-        automatic: true,
-        paidAt: currentTimestamp,
+      await assert.rejects(
+        settleUseCase.execute({
+          rentalId: "rent-auto-ok",
+          referenceMonth: "08/2026",
+          automatic: true,
+          paidAt: currentTimestamp,
+        }),
+        /manualmente/,
+      );
+      const historyAfter = await historyRepo.findByPropertyId("prop-auto-ok");
+      assert.equal(historyAfter.payments.length, 0);
+    });
+  });
+
+  describe("Caso de Uso: SettleRentalInstallment", () => {
+    it("aloca pagamentos parciais primeiro ao principal e mantém os encargos em aberto", async () => {
+      const rentalRepo = new MockRentalRepository();
+      const historyRepo = new MockHistoryRepository();
+      const paidAt = Date.now();
+      const currentDate = new Date(paidAt);
+      const dueDate = new Date(Date.UTC(
+        currentDate.getUTCFullYear(),
+        currentDate.getUTCMonth(),
+        currentDate.getUTCDate() - 10,
+      ));
+      const startDate = Date.UTC(dueDate.getUTCFullYear(), dueDate.getUTCMonth(), 1);
+      const referenceMonth = `${String(dueDate.getUTCMonth() + 1).padStart(2, "0")}/${dueDate.getUTCFullYear()}`;
+      await rentalRepo.create({
+        id: "rent-partial",
+        propertyId: "prop-partial",
+        tenantId: "tenant-partial",
+        monthlyRent: 1000,
+        startDate,
+        dueDay: dueDate.getUTCDate(),
+        parentRentalId: null,
+        formalConsent: null,
+        contractSigned: true,
+        signaturesNotarized: true,
+        initialPaymentsPaid: true,
+        keysReleasedAt: startDate,
+        createdAt: startDate,
+        updatedAt: startDate,
+      });
+      await historyRepo.createContract({
+        id: "contract-partial",
+        propertyId: "prop-partial",
+        tenantId: "tenant-partial",
+        rentalId: "rent-partial",
+        reference: "LOC-partial",
+        monthlyRent: 1000,
+        startDate,
+        endDate: null,
+        status: "ACTIVE",
+        createdAt: startDate,
+      });
+      const storage: IFileStorage = {
+        save: async () => "receipt.pdf",
+        delete: async () => undefined,
+        exists: async () => true,
+        getPath: () => "receipt.pdf",
+      };
+      const listPayments = new ListPayments(rentalRepo, historyRepo);
+      const settle = new SettleRentalInstallment(rentalRepo, historyRepo, listPayments, storage);
+      const partial = await settle.execute({
+        rentalId: "rent-partial",
+        referenceMonth,
+        paidAt,
+        amountCents: 50_000,
+      });
+      assert.equal(partial.payment.principalAmountCents, 50_000);
+      assert.equal(partial.payment.fineAmountCents, 0);
+
+      const outstanding = (await listPayments.execute("tenant-partial", paidAt)).find(
+        (item) => item.referenceMonth === referenceMonth,
+      );
+      assert.ok(outstanding);
+      assert.equal(outstanding?.principalOutstandingCents, 50_000);
+      assert.ok((outstanding?.fineOutstandingCents ?? 0) > 0);
+      assert.ok((outstanding?.interestOutstandingCents ?? 0) > 0);
+
+      const completed = await settle.execute({
+        rentalId: "rent-partial",
+        referenceMonth,
+        paidAt,
+        amountCents: Math.round((outstanding?.totalAmount ?? 0) * 100),
+      });
+      assert.equal(completed.payment.principalAmountCents, 50_000);
+      assert.ok((completed.payment.fineAmountCents ?? 0) > 0);
+      assert.equal(
+        (await listPayments.execute("tenant-partial", paidAt)).find(
+          (item) => item.referenceMonth === referenceMonth,
+        )?.status,
+        "PAGO",
+      );
+    });
+
+    it("registra a baixa manual, competência, vencimento e comprovante", async () => {
+      const rentalRepo = new MockRentalRepository();
+      const historyRepo = new MockHistoryRepository();
+      const currentDate = new Date();
+      const previousMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth() - 1, 1));
+      const startDate = Date.UTC(previousMonth.getUTCFullYear(), previousMonth.getUTCMonth(), 1);
+      const paidAt = Date.now();
+      const referenceMonth = `${String(previousMonth.getUTCMonth() + 1).padStart(2, "0")}/${previousMonth.getUTCFullYear()}`;
+      await rentalRepo.create({
+        id: "rent-payment",
+        propertyId: "prop-payment",
+        tenantId: "tenant-payment",
+        monthlyRent: 1000,
+        startDate,
+        dueDay: 10,
+        parentRentalId: null,
+        formalConsent: null,
+        contractSigned: true,
+        signaturesNotarized: true,
+        initialPaymentsPaid: true,
+        keysReleasedAt: startDate,
+        createdAt: startDate,
+        updatedAt: startDate,
+      });
+      await historyRepo.createContract({
+        id: "contract-payment",
+        propertyId: "prop-payment",
+        tenantId: "tenant-payment",
+        rentalId: "rent-payment",
+        reference: "LOC-payment",
+        monthlyRent: 1000,
+        startDate,
+        endDate: null,
+        status: "ACTIVE",
+        createdAt: startDate,
+      });
+      const storage: IFileStorage = {
+        save: async (_source, _destination, fileName) => `C:\\receipts\\${fileName}`,
+        delete: async (filePath) => { assert.ok(filePath); },
+        exists: async () => true,
+        getPath: (_destination, fileName) => `C:\\receipts\\${fileName}`,
+      };
+      const listPayments = new ListPayments(rentalRepo, historyRepo);
+      const settle = new SettleRentalInstallment(rentalRepo, historyRepo, listPayments, storage);
+      const result = await settle.execute({
+        rentalId: "rent-payment",
+        referenceMonth,
+        paidAt,
+        receiptSourcePath: "C:\\temp\\receipt.pdf",
+        receiptName: "receipt.pdf",
       });
 
-      assert.equal(res.success, true);
-      const historyAfter = await historyRepo.findByPropertyId("prop-auto-ok");
-      assert.equal(historyAfter.payments.length, 1);
-      assert.ok(historyAfter.payments[0].description.includes("Baixa Automática"));
+      assert.equal(result.payment.referenceMonth, referenceMonth);
+      assert.ok(result.payment.amount > 1000);
+      assert.ok(result.payment.dueDate);
+      assert.ok(result.payment.receiptPath?.endsWith(".pdf"));
+      assert.equal((await historyRepo.findByPropertyId("prop-payment")).payments.length, 1);
+      await assert.rejects(
+        settle.execute({ rentalId: "rent-payment", referenceMonth, paidAt }),
+        /Não há parcela pendente/,
+      );
     });
   });
 
   describe("Caso de Uso: ListOverdueNotifications", () => {
     it("filtra notificações por locação e mês de referência", async () => {
-      const repo = new MockNotificationRepository();
+      const repo = new MockOverdueNotificationRepository();
       await repo.create({
         id: "n-1",
         rentalId: "r-1",
