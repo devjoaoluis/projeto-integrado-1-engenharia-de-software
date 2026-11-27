@@ -133,7 +133,7 @@ it("registers only the entry recording IPC handler", async () => {
   require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data: unknown) => Promise<unknown>) => handlers.set(name, handler) }, app: { getPath: () => storageDir } } } as NodeModule;
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-    require("../../../ipc/inspection-entry.ipc").registerInspectionEntryIpc();
+    require("../../../ipc/inspections/inspection-entry.ipc").registerInspectionEntryIpc();
     assert.deepEqual([...handlers.keys()], ["inspections:record-entry"]);
     const entry = await handlers.get("inspections:record-entry")({}, input()) as { id: string };
     assert.equal((await get.execute(entry.id)).contractId, "contract");

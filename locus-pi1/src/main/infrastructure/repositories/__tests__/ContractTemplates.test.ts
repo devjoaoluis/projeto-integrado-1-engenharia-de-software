@@ -50,7 +50,7 @@ it("registers template create/get/list IPC without filling or PDF handlers", asy
   require.cache[electronModule] = { exports: { ipcMain: { handle: (name: string, handler: (event: unknown, data?: unknown) => Promise<unknown>) => handlers.set(name, handler) } } } as NodeModule;
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate Electron IPC
-    require("../../../ipc/contract-templates.ipc").registerContractTemplatesIpc();
+    require("../../../ipc/contracts/contract-templates.ipc").registerContractTemplatesIpc();
     assert.deepEqual([...handlers.keys()], ["contract-templates:create", "contract-templates:get", "contract-templates:list"]);
     const entry = await handlers.get("contract-templates:create")({}, { name: "Modelo IPC", content: "Texto" }) as { id: string };
     assert.equal((await handlers.get("contract-templates:get")({}, entry.id) as { content: string }).content, "Texto");

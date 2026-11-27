@@ -26,7 +26,7 @@ describe("HU08 and HU11 integration", () => {
       [7, "0007_inspection_module"], [8, "0008_contract_templates"],
     ]);
     assert.deepEqual(entries.slice(-2).map(entry => [entry.idx, entry.tag]), [
-      [15, "0015_payment_installments_and_receipts"], [16, "0016_unified_notifications"],
+      [16, "0016_unified_notifications"], [17, "0017_finance_installments_and_rules"],
     ]);
     const previous = JSON.parse(await fs.readFile(path.join(migrations, "meta/0007_snapshot.json"), "utf8"));
     const latest = JSON.parse(await fs.readFile(path.join(migrations, "meta/0008_snapshot.json"), "utf8"));

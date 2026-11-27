@@ -2,8 +2,10 @@ import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
-import { calculateOverdueCharges } from "../../domain/entities/OverdueRent";
+import { IFinancialRepository } from "../../domain/repositories/IFinancialRepository";
+import { calcularEncargos, DEFAULT_FINANCIAL_LATE_RULES } from "../../domain/entities/FinancialCharges";
 import { PropertyPayment } from "../../domain/entities/PropertyHistory";
+import { InstallmentItem } from "../../domain/entities/FinancialSettings";
 
 export interface PaymentItem {
   id: string;
@@ -11,10 +13,20 @@ export interface PaymentItem {
   contractId: string | null;
   propertyId: string;
   propertyTitle: string;
+  ownerId: string | null;
   tenantId: string;
   tenantName: string;
   clientId: string;
   amount: number;
+  amountCents: number;
+  rentAmountCents: number;
+  expensesAmountCents: number;
+  receivedAmountCents: number;
+  principalOutstandingCents: number;
+  rentOutstandingCents: number;
+  expensesOutstandingCents: number;
+  fineOutstandingCents: number;
+  interestOutstandingCents: number;
   totalAmount: number;
   fineAmount: number;
   interestAmount: number;
@@ -23,6 +35,8 @@ export interface PaymentItem {
   dueDate: number;
   referenceMonth: string;
   receiptPath?: string | null;
+  receipts: PropertyPayment[];
+  installmentItems: InstallmentItem[];
   description: string;
   status: "PAGO" | "PENDENTE" | "ATRASADO";
 }
@@ -30,24 +44,48 @@ export interface PaymentItem {
 interface ExpectedCharge {
   referenceMonth: string;
   dueDate: number;
-  amount: number;
+  rentAmountCents: number;
+  expensesAmountCents: number;
+  installmentItems: InstallmentItem[];
 }
 
-const roundCurrency = (value: number): number => Math.round(value * 100) / 100;
+interface ReceiptTotals {
+  principalCents: number;
+  rentCents: number;
+  expensesCents: number;
+  fineCents: number;
+  interestCents: number;
+  receivedCents: number;
+}
 
-/**
- * Lists manually recorded rent payments and the monthly installments due under each rental.
- */
+const centsFromAmount = (value: number): number => {
+  if (!Number.isFinite(value) || value < 0) throw new Error("Foi encontrado um valor de pagamento inválido.");
+  const cents = Math.round(value * 100);
+  if (!Number.isSafeInteger(cents)) throw new Error("Valor de pagamento fora do limite permitido.");
+  return cents;
+};
+
+const amountFromCents = (value: number): number => value / 100;
+const dayNumber = (timestamp: number): number => {
+  const date = new Date(timestamp);
+  return Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86_400_000);
+};
+
 export class ListPayments {
   constructor(
     private rentalRepository: IRentalRepository,
     private historyRepository: IPropertyHistoryRepository,
     private clientRepository?: IClientRepository,
     private propertyRepository?: IPropertyRepository,
+    private financialRepository?: IFinancialRepository,
   ) {}
 
   async execute(tenantIdFilter?: string, currentTimestamp = Date.now()): Promise<PaymentItem[]> {
+    if (!Number.isFinite(currentTimestamp)) throw new Error("A data de referência financeira é inválida.");
     const rentals = await this.rentalRepository.findAll();
+    const globalSettings = this.financialRepository
+      ? await this.financialRepository.getGlobalSettings()
+      : { ...DEFAULT_FINANCIAL_LATE_RULES };
     const results: PaymentItem[] = [];
 
     for (const rental of rentals.filter((item) => !tenantIdFilter || item.tenantId === tenantIdFilter)) {
@@ -60,12 +98,24 @@ export class ListPayments {
           && item.status === "ACTIVE")
         ?? null;
       if (!contract) continue;
-      const contractId = contract.id;
-      const contractPayments = history.payments
-        .filter((payment) => payment.contractId === contractId)
-        .sort((a, b) => a.paidAt - b.paidAt);
-      const tenant = this.clientRepository ? await this.clientRepository.findById(contract.tenantId) : null;
-      const property = this.propertyRepository ? await this.propertyRepository.findById(rental.propertyId) : null;
+
+      const contractSettings = this.financialRepository
+        ? await this.financialRepository.getContractSettings(contract.id)
+        : null;
+      const rules = contractSettings?.useOwnRules ? contractSettings : globalSettings;
+      const items = this.financialRepository
+        ? await this.financialRepository.listInstallmentItems(contract.id)
+        : [];
+      const itemsByReference = new Map<string, InstallmentItem[]>();
+      for (const installmentItem of items) {
+        const group = itemsByReference.get(installmentItem.referenceMonth) ?? [];
+        group.push(installmentItem);
+        itemsByReference.set(installmentItem.referenceMonth, group);
+      }
+
+      const activePayments = history.payments
+        .filter((payment) => payment.contractId === contract.id && payment.reversedAt == null)
+        .sort((a, b) => a.paidAt - b.paidAt || a.createdAt - b.createdAt);
       const expectedCharges = contract.status === "CANCELLED"
         ? []
         : this.calculateExpectedCharges(
@@ -74,67 +124,156 @@ export class ListPayments {
           rental.dueDay,
           contract.monthlyRent,
           currentTimestamp,
+          itemsByReference,
         );
       const chargesByReference = new Map(
         expectedCharges.map((charge) => [charge.referenceMonth, charge] as const),
       );
-      const allocatedPayments = this.allocatePayments(expectedCharges, contractPayments);
-
-      for (const payment of contractPayments) {
+      const receiptsByReference = new Map<string, PropertyPayment[]>();
+      let legacyReceiptsCents = 0;
+      for (const payment of activePayments) {
         const referenceMonth = this.resolveReferenceMonth(payment, chargesByReference);
-        const charge = referenceMonth ? chargesByReference.get(referenceMonth) : undefined;
-        results.push({
-          id: payment.id,
-          rentalId: rental.id,
-          contractId,
-          propertyId: rental.propertyId,
-          propertyTitle: property?.title ?? "Imóvel",
-          tenantId: contract.tenantId,
-          tenantName: tenant?.name ?? "Locatário",
-          clientId: contract.tenantId,
-          amount: payment.amount,
-          totalAmount: payment.amount,
-          fineAmount: 0,
-          interestAmount: 0,
-          daysOverdue: 0,
-          paidAt: payment.paidAt,
-          dueDate: payment.dueDate ?? charge?.dueDate ?? payment.paidAt,
-          referenceMonth: referenceMonth ?? this.formatReferenceMonth(payment.paidAt),
-          receiptPath: payment.receiptPath,
-          description: payment.description,
-          status: "PAGO",
-        });
+        if (!referenceMonth) {
+          if (!payment.referenceMonth && payment.dueDate == null) {
+            legacyReceiptsCents += payment.amountCents ?? centsFromAmount(payment.amount);
+          }
+          continue;
+        }
+        const group = receiptsByReference.get(referenceMonth) ?? [];
+        group.push(payment);
+        receiptsByReference.set(referenceMonth, group);
       }
 
-      for (const charge of expectedCharges) {
-        const unpaidAmount = allocatedPayments.get(charge.referenceMonth) ?? 0;
-        if (unpaidAmount <= 0) continue;
+      const tenant = this.clientRepository ? await this.clientRepository.findById(contract.tenantId) : null;
+      const property = this.propertyRepository ? await this.propertyRepository.findById(rental.propertyId) : null;
 
-        const lateCharges = calculateOverdueCharges(charge.amount, charge.dueDate, currentTimestamp);
-        const isOverdue = charge.dueDate < currentTimestamp;
+      for (const charge of expectedCharges) {
+        const receipts = receiptsByReference.get(charge.referenceMonth) ?? [];
+        const principalCents = charge.rentAmountCents + charge.expensesAmountCents;
+        const receiptTotals = this.calculateReceiptTotals(receipts, principalCents, charge.rentAmountCents);
+        const legacyRentAllocation = Math.min(
+          legacyReceiptsCents,
+          charge.rentAmountCents - receiptTotals.rentCents,
+        );
+        const legacyExpensesAllocation = Math.min(
+          legacyReceiptsCents - legacyRentAllocation,
+          charge.expensesAmountCents - receiptTotals.expensesCents,
+        );
+        const legacyAllocation = legacyRentAllocation + legacyExpensesAllocation;
+        legacyReceiptsCents -= legacyAllocation;
+        receiptTotals.rentCents += legacyRentAllocation;
+        receiptTotals.expensesCents += legacyExpensesAllocation;
+        receiptTotals.principalCents += legacyAllocation;
+        receiptTotals.receivedCents += legacyAllocation;
+
+        const principalOutstandingCents = Math.max(0, principalCents - receiptTotals.principalCents);
+        const rentOutstandingCents = Math.max(0, charge.rentAmountCents - receiptTotals.rentCents);
+        const expensesOutstandingCents = Math.max(0, charge.expensesAmountCents - receiptTotals.expensesCents);
+        const chargesDue = calcularEncargos(
+          { amountCents: principalOutstandingCents, dueDate: charge.dueDate },
+          rules,
+          currentTimestamp,
+        );
+        const fineOutstandingCents = Math.max(0, chargesDue.multa - receiptTotals.fineCents);
+        const interestOutstandingCents = Math.max(0, chargesDue.juros - receiptTotals.interestCents);
+        const totalOutstandingCents =
+          principalOutstandingCents + fineOutstandingCents + interestOutstandingCents;
+        const daysOverdue = Math.max(0, dayNumber(currentTimestamp) - dayNumber(charge.dueDate));
+        const status = totalOutstandingCents === 0
+          ? "PAGO"
+          : daysOverdue > 0
+            ? "ATRASADO"
+            : "PENDENTE";
+        const lastReceipt = receipts[receipts.length - 1];
+
         results.push({
-          id: `debt-${rental.id}-${charge.referenceMonth.replace("/", "-")}`,
+          id: `installment-${rental.id}-${charge.referenceMonth.replace("/", "-")}`,
           rentalId: rental.id,
-          contractId,
+          contractId: contract.id,
           propertyId: rental.propertyId,
           propertyTitle: property?.title ?? "Imóvel",
+          ownerId: property?.ownerId ?? null,
           tenantId: contract.tenantId,
           tenantName: tenant?.name ?? "Locatário",
           clientId: contract.tenantId,
-          amount: unpaidAmount,
-          totalAmount: roundCurrency(unpaidAmount + lateCharges.interestAmount + lateCharges.fineAmount),
-          fineAmount: lateCharges.fineAmount,
-          interestAmount: lateCharges.interestAmount,
-          daysOverdue: lateCharges.daysOverdue,
+          amount: amountFromCents(principalCents),
+          amountCents: principalCents,
+          rentAmountCents: charge.rentAmountCents,
+          expensesAmountCents: charge.expensesAmountCents,
+          receivedAmountCents: receiptTotals.receivedCents,
+          principalOutstandingCents,
+          rentOutstandingCents,
+          expensesOutstandingCents,
+          fineOutstandingCents,
+          interestOutstandingCents,
+          totalAmount: amountFromCents(totalOutstandingCents),
+          fineAmount: amountFromCents(fineOutstandingCents),
+          interestAmount: amountFromCents(interestOutstandingCents),
+          daysOverdue,
+          paidAt: lastReceipt?.paidAt ?? null,
           dueDate: charge.dueDate,
           referenceMonth: charge.referenceMonth,
+          receiptPath: lastReceipt?.receiptPath ?? null,
+          receipts,
+          installmentItems: charge.installmentItems,
           description: `Aluguel Ref. ${charge.referenceMonth}`,
-          status: isOverdue ? "ATRASADO" : "PENDENTE",
+          status,
         });
       }
     }
 
-    return results.sort((a, b) => b.dueDate - a.dueDate);
+    return results.sort((a, b) => b.dueDate - a.dueDate || a.tenantName.localeCompare(b.tenantName, "pt-BR"));
+  }
+
+  private calculateReceiptTotals(
+    receipts: PropertyPayment[],
+    principalDueCents: number,
+    rentDueCents: number,
+  ): ReceiptTotals {
+    const totals: ReceiptTotals = {
+      principalCents: 0,
+      rentCents: 0,
+      expensesCents: 0,
+      fineCents: 0,
+      interestCents: 0,
+      receivedCents: 0,
+    };
+    for (const payment of receipts) {
+      const amountCents = payment.amountCents ?? centsFromAmount(payment.amount);
+      if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
+        throw new Error(`O recebimento ${payment.id} possui um valor inválido.`);
+      }
+      const hasAllocation = payment.principalAmountCents != null
+        || payment.fineAmountCents != null
+        || payment.interestAmountCents != null
+        || payment.rentAmountCents != null
+        || payment.expensesAmountCents != null;
+      const principal = hasAllocation
+        ? payment.principalAmountCents ?? 0
+        : Math.min(amountCents, Math.max(0, principalDueCents - totals.principalCents));
+      const rent = payment.rentAmountCents
+        ?? (hasAllocation
+          ? principal
+          : Math.min(principal, Math.max(0, rentDueCents - totals.rentCents)));
+      const expenses = payment.expensesAmountCents
+        ?? (hasAllocation ? Math.max(0, principal - rent) : Math.max(0, principal - rent));
+      const fine = hasAllocation ? payment.fineAmountCents ?? 0 : 0;
+      const interest = hasAllocation ? payment.interestAmountCents ?? 0 : 0;
+      if (
+        ![principal, rent, expenses, fine, interest].every((value) => Number.isSafeInteger(value) && value >= 0)
+        || rent + expenses !== principal
+        || principal + fine + interest > amountCents
+      ) {
+        throw new Error(`O recebimento ${payment.id} possui uma alocação financeira inválida.`);
+      }
+      totals.principalCents += principal;
+      totals.rentCents += rent;
+      totals.expensesCents += expenses;
+      totals.fineCents += fine;
+      totals.interestCents += interest;
+      totals.receivedCents += amountCents;
+    }
+    return totals;
   }
 
   private calculateExpectedCharges(
@@ -143,6 +282,7 @@ export class ListPayments {
     dueDay: number,
     monthlyRent: number,
     currentTimestamp: number,
+    itemsByReference: Map<string, InstallmentItem[]>,
   ): ExpectedCharge[] {
     const charges: ExpectedCharge[] = [];
     const start = new Date(startDateTimestamp);
@@ -155,58 +295,29 @@ export class ListPayments {
       const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
       const actualDay = Math.min(dueDay, daysInMonth);
       const dueDate = Date.UTC(year, month, actualDay, 23, 59, 59, 999);
-      if (dueDate < startDateTimestamp) {
+      if (dueDate < Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate())) {
         month++;
         if (month > 11) { month = 0; year++; }
         continue;
       }
       if (dueDate > throughCurrentMonth || (endDateTimestamp != null && dueDate > endDateTimestamp)) break;
 
+      const referenceMonth = `${String(month + 1).padStart(2, "0")}/${year}`;
       charges.push({
-        referenceMonth: `${String(month + 1).padStart(2, "0")}/${year}`,
+        referenceMonth,
         dueDate,
-        amount: monthlyRent,
+        rentAmountCents: centsFromAmount(monthlyRent),
+        expensesAmountCents: (itemsByReference.get(referenceMonth) ?? []).reduce(
+          (sum, item) => sum + item.amountCents,
+          0,
+        ),
+        installmentItems: itemsByReference.get(referenceMonth) ?? [],
       });
       month++;
       if (month > 11) { month = 0; year++; }
     }
 
     return charges;
-  }
-
-  private allocatePayments(
-    charges: ExpectedCharge[],
-    payments: PropertyPayment[],
-  ): Map<string, number> {
-    const unpaidByReference = new Map(
-      charges.map((charge) => [charge.referenceMonth, charge.amount] as const),
-    );
-    let legacyPaid = 0;
-
-    for (const payment of payments) {
-      const referenceMonth = this.resolveReferenceMonth(
-        payment,
-        new Map(charges.map((charge) => [charge.referenceMonth, charge] as const)),
-      );
-      if (!referenceMonth) {
-        if (payment.referenceMonth || payment.dueDate != null) continue;
-        legacyPaid += payment.amount;
-        continue;
-      }
-      const outstanding = unpaidByReference.get(referenceMonth);
-      if (outstanding !== undefined) {
-        unpaidByReference.set(referenceMonth, Math.max(0, roundCurrency(outstanding - payment.amount)));
-      }
-    }
-
-    for (const charge of charges) {
-      const outstanding = unpaidByReference.get(charge.referenceMonth) ?? 0;
-      const allocated = Math.min(outstanding, legacyPaid);
-      unpaidByReference.set(charge.referenceMonth, roundCurrency(outstanding - allocated));
-      legacyPaid = roundCurrency(legacyPaid - allocated);
-    }
-
-    return unpaidByReference;
   }
 
   private resolveReferenceMonth(

@@ -120,6 +120,13 @@
       "when": 1792603480272,
       "tag": "0016_unified_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792603480273,
+      "tag": "0017_finance_installments_and_rules",
+      "breakpoints": true
     }
   ]
 }

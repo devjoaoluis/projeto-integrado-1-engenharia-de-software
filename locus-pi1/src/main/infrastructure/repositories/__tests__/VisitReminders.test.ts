@@ -242,7 +242,7 @@ describe("HU-09: IPC Registration and Handlers", () => {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { registerVisitsIpc } = require("../../../ipc/visits.ipc");
+      const { registerVisitsIpc } = require("../../../ipc/visits/visits.ipc");
       const notificationService = {
         publish: async () => ({
           created: true,

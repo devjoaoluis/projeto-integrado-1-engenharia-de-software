@@ -660,9 +660,9 @@ describe("HU-17: Expansão de Modelos de Contrato (Comercial, Residencial, etc.)
       try {
         await initializeDatabase(sqlite);
         // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate IPC and DB
-        const { registerContractsIpc } = require("../../../ipc/contracts.ipc");
+        const { registerContractsIpc } = require("../../../ipc/contracts/contracts.ipc");
         // eslint-disable-next-line @typescript-eslint/no-var-requires -- isolate IPC and DB
-        const { registerContractTemplatesIpc } = require("../../../ipc/contract-templates.ipc");
+        const { registerContractTemplatesIpc } = require("../../../ipc/contracts/contract-templates.ipc");
         registerContractsIpc();
         registerContractTemplatesIpc();
 

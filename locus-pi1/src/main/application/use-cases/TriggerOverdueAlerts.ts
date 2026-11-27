@@ -1,9 +1,10 @@
 import { CheckOverdueRents, CheckOverdueRentsOptions } from "./CheckOverdueRents";
 import { OverdueNotification, OverdueDebtItem } from "../../domain/entities/OverdueRent";
+import { AppNotification } from "../../domain/entities/AppNotification";
 import { NotificationService } from "../services/NotificationService";
+import { ListPayments } from "./ListPayments";
 
 export interface TriggerOverdueAlertsInput extends CheckOverdueRentsOptions {
-  force?: boolean; // Se true, dispara mesmo se já houver notificação enviada hoje
   channel?: "SYSTEM" | "EMAIL" | "WHATSAPP";
 }
 
@@ -11,6 +12,7 @@ export interface TriggerOverdueAlertsResult {
   triggeredCount: number;
   skippedCount: number;
   notifications: OverdueNotification[];
+  upcomingNotifications: AppNotification[];
   debts: OverdueDebtItem[];
   checkedAt: number;
 }
@@ -18,13 +20,13 @@ export interface TriggerOverdueAlertsResult {
 export class TriggerOverdueAlerts {
   constructor(
     private checkOverdueRents: CheckOverdueRents,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private listPayments?: ListPayments,
   ) {}
 
   async execute(input?: TriggerOverdueAlertsInput): Promise<TriggerOverdueAlertsResult> {
     const currentTimestamp = input?.currentTimestamp ?? Date.now();
     const channel = input?.channel ?? "SYSTEM";
-    const force = input?.force ?? false;
 
     // 1. Executa a rotina de verificação de atrasos
     const checkResult = await this.checkOverdueRents.execute({
@@ -34,13 +36,58 @@ export class TriggerOverdueAlerts {
     });
 
     const notifications: OverdueNotification[] = [];
+    const upcomingNotifications: AppNotification[] = [];
     let triggeredCount = 0;
     let skippedCount = 0;
+
+    if (this.listPayments) {
+      const currentDay = Math.floor(Date.UTC(
+        new Date(currentTimestamp).getUTCFullYear(),
+        new Date(currentTimestamp).getUTCMonth(),
+        new Date(currentTimestamp).getUTCDate(),
+      ) / 86_400_000);
+      const payments = await this.listPayments.execute(input?.tenantId, currentTimestamp);
+      for (const payment of payments) {
+        const dueDate = new Date(payment.dueDate);
+        const dueDay = Math.floor(Date.UTC(
+          dueDate.getUTCFullYear(),
+          dueDate.getUTCMonth(),
+          dueDate.getUTCDate(),
+        ) / 86_400_000);
+        if (payment.status !== "PENDENTE" || dueDay !== currentDay + 1) continue;
+
+        const dueDateText = dueDate.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+        const amountText = payment.totalAmount.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
+        const message = `Aluguel de ${payment.tenantName} vence amanhã (${dueDateText}). Valor: ${amountText}.`;
+        const result = await this.notificationService.publish({
+          id: `rent-due-tomorrow:${payment.rentalId}:${payment.referenceMonth}`,
+          category: "SYSTEM",
+          title: `Aluguel vence amanhã: ${payment.tenantName}`,
+          message,
+          target: `/pagamentos?tenantId=${encodeURIComponent(payment.tenantId)}`,
+          entityId: payment.rentalId,
+          data: {
+            rentalId: payment.rentalId,
+            contractId: payment.contractId,
+            tenantId: payment.tenantId,
+            referenceMonth: payment.referenceMonth,
+            dueDate: payment.dueDate,
+          },
+          createdAt: currentTimestamp,
+        });
+        upcomingNotifications.push(result.notification);
+        if (result.created) triggeredCount++;
+        else skippedCount++;
+      }
+    }
 
     for (const debt of checkResult.debts) {
       const message = this.buildAlertMessage(debt);
       const notification: OverdueNotification = {
-        id: `overdue:${debt.rentalId}:${debt.referenceMonth}${force ? `:manual:${currentTimestamp}` : ""}`,
+        id: `overdue:${debt.rentalId}:${debt.referenceMonth}`,
         rentalId: debt.rentalId,
         contractId: debt.contractId,
         tenantId: debt.tenantId,
@@ -75,6 +122,7 @@ export class TriggerOverdueAlerts {
       triggeredCount,
       skippedCount,
       notifications,
+      upcomingNotifications,
       debts: checkResult.debts,
       checkedAt: currentTimestamp,
     };
@@ -88,7 +136,7 @@ export class TriggerOverdueAlerts {
     const chargesStr = (debt.interestAmount + debt.fineAmount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     const totalStr = debt.totalAmount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-    let msg = `${tenantGreeting}, identificamos que a parcela de aluguel referente ao mês ${debt.referenceMonth} ${propertyInfo}, com vencimento em ${dueDateStr}, encontra-se em atraso há ${debt.daysOverdue} dia(s). Valor original: ${originalStr}, Encargos moratórios (Juros de 1% ao mês + multa única de 2% - RN06): ${chargesStr}. Total atualizado para quitação: ${totalStr}.`;
+    let msg = `${tenantGreeting}, identificamos que a parcela de aluguel referente ao mês ${debt.referenceMonth} ${propertyInfo}, com vencimento em ${dueDateStr}, encontra-se em atraso há ${debt.daysOverdue} dia(s). Valor original: ${originalStr}, encargos conforme as regras financeiras configuradas: ${chargesStr}. Total atualizado para quitação: ${totalStr}.`;
 
     if (debt.isOverTwoMonths) {
       msg += " [AVISO IMPORTANTE - RN05]: O débito possui mais de 2 meses de atraso (>60 dias). A baixa automática do débito está bloqueada pelo sistema e permanecerá pendente até regularização ou baixa manual com o corretor.";

@@ -6,6 +6,7 @@ import { tenantDocumentTables } from "./tenantDocumentTables";
 import { propertyVisitTables } from "./propertyVisitTables";
 import { overdueNotificationTables } from "./overdueNotificationTables";
 import { notificationTables } from "./notificationTables";
+import { financialTables } from "./financialTables";
 import { Client } from "@libsql/client";
 
 export async function initializeDatabase(client: Client): Promise<void> {
@@ -112,8 +113,36 @@ CREATE UNIQUE INDEX IF NOT EXISTS rentals_property_tenant_unique ON rentals(prop
   if (!paymentColumns.has("receipt_path")) {
     await client.execute("ALTER TABLE property_payments ADD COLUMN receipt_path TEXT");
   }
-  await client.execute(`CREATE UNIQUE INDEX IF NOT EXISTS "property_payments_contract_reference_unique"
-    ON "property_payments" ("contract_id", "reference_month")`);
+  const paymentFinanceColumns = [
+    ["amount_cents", "INTEGER"],
+    ["principal_amount_cents", "INTEGER"],
+    ["rent_amount_cents", "INTEGER"],
+    ["expenses_amount_cents", "INTEGER"],
+    ["fine_amount_cents", "INTEGER"],
+    ["interest_amount_cents", "INTEGER"],
+    ["created_by", "TEXT"],
+    ["reversed_at", "INTEGER"],
+    ["reversed_by", "TEXT"],
+    ["reversal_reason", "TEXT"],
+  ] as const;
+  for (const [columnName, columnType] of paymentFinanceColumns) {
+    if (!paymentColumns.has(columnName)) {
+      await client.execute(`ALTER TABLE property_payments ADD COLUMN ${columnName} ${columnType}`);
+    }
+  }
+  await client.execute(
+    "UPDATE property_payments SET amount_cents = CAST(ROUND(amount * 100) AS INTEGER) WHERE amount_cents IS NULL",
+  );
+  await client.execute("DROP INDEX IF EXISTS property_payments_contract_reference_unique");
+  await client.execute(`CREATE INDEX IF NOT EXISTS property_payments_contract_reference_idx
+    ON property_payments (contract_id, reference_month)`);
+  await client.executeMultiple(financialTables);
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO financial_settings
+      (id, grace_days, fine_rate_basis_points, monthly_interest_basis_points, admin_fee_basis_points, updated_at)
+      VALUES (1, 3, 1000, 100, 1000, ?)`,
+    args: [Date.now()],
+  });
   await initializeContacts(client);
   await client.executeMultiple(contractTemplateTables);
   await initializeInspectionModule(client);

@@ -1,6 +1,7 @@
 import { app } from "electron";
 import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
+import fs from "fs";
 import path from "path";
 import { initializeDatabase } from "./initializeDatabase";
 
@@ -17,4 +18,22 @@ export const client = createClient({
 });
 
 export const db = drizzle(client);
-export const databaseReady = initializeDatabase(client);
+
+async function initializeWithFinanceBackup(): Promise<void> {
+  if (fs.existsSync(databasePath)) {
+    const existingPaymentsTable = await client.execute(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'property_payments'",
+    );
+    const existingFinanceSettings = await client.execute(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'financial_settings'",
+    );
+    if (existingPaymentsTable.rows.length > 0 && existingFinanceSettings.rows.length === 0) {
+      const backupPath = `${databasePath}.before-finance-${Date.now()}.bak`;
+      const escapedBackupPath = backupPath.replace(/'/g, "''");
+      await client.execute(`VACUUM INTO '${escapedBackupPath}'`);
+    }
+  }
+  await initializeDatabase(client);
+}
+
+export const databaseReady = initializeWithFinanceBackup();

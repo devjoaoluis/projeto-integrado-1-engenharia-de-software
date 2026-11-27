@@ -13,8 +13,18 @@ export class LocalFileStorage implements IFileStorage {
     return path.join(process.cwd(), "test-userdata");
   }
 
+  private resolveSafe(...segments: string[]): string {
+    const root = path.resolve(this.baseDir);
+    const target = path.resolve(root, ...segments);
+    const relative = path.relative(root, target);
+    if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      throw new Error("Acesso a caminho de arquivo não autorizado.");
+    }
+    return target;
+  }
+
   public getPath(destinationDir: string, fileName: string): string {
-    return path.join(this.baseDir, destinationDir, fileName);
+    return this.resolveSafe(destinationDir, fileName);
   }
 
   public async save(sourcePath: string, destinationDir: string, fileName: string): Promise<string> {
@@ -29,7 +39,7 @@ export class LocalFileStorage implements IFileStorage {
 
   public async delete(filePath: string): Promise<void> {
     try {
-      await fs.unlink(filePath);
+      await fs.unlink(this.resolveSafe(filePath));
     } catch (error: any) {
       if (error.code !== "ENOENT") {
         throw error;
@@ -39,7 +49,7 @@ export class LocalFileStorage implements IFileStorage {
 
   public async exists(filePath: string): Promise<boolean> {
     try {
-      await fs.access(filePath);
+      await fs.access(this.resolveSafe(filePath));
       return true;
     } catch {
       return false;

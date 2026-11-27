@@ -55,7 +55,10 @@ describe("Rental SQLite persistence", () => {
       await initializeDatabase(bootstrap);
       assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
       assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
-      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 19);
+      const tables = await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'");
+      assert.equal(tables.rows.length, 22);
+      assert.ok(tables.rows.some((row) => row.name === "financial_settings"));
+      assert.ok(tables.rows.some((row) => row.name === "rental_installment_items"));
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {

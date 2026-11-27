@@ -2,6 +2,7 @@ import { IRentalRepository } from "../../domain/repositories/IRentalRepository";
 import { IPropertyHistoryRepository } from "../../domain/repositories/IPropertyHistoryRepository";
 import { IClientRepository } from "../../domain/repositories/IClientRepository";
 import { IPropertyRepository } from "../../domain/repositories/IPropertyRepository";
+import { IFinancialRepository } from "../../domain/repositories/IFinancialRepository";
 import {
   OverdueCheckResult,
   OverdueDebtItem,
@@ -22,13 +23,15 @@ export class CheckOverdueRents {
     private rentalRepository: IRentalRepository,
     private historyRepository: IPropertyHistoryRepository,
     private clientRepository?: IClientRepository,
-    private propertyRepository?: IPropertyRepository
+    private propertyRepository?: IPropertyRepository,
+    financialRepository?: IFinancialRepository,
   ) {
     this.listPayments = new ListPayments(
       rentalRepository,
       historyRepository,
       clientRepository,
       propertyRepository,
+      financialRepository,
     );
   }
 

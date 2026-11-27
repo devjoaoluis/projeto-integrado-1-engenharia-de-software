@@ -9,9 +9,11 @@ import { ListPayments } from "./ListPayments";
 export interface SettleRentalInstallmentInput {
   rentalId: string;
   referenceMonth: string;
+  amountCents?: number;
   paidAt?: number;
   receiptSourcePath?: string;
   receiptName?: string;
+  createdBy?: string | null;
 }
 
 export interface SettleRentalInstallmentResult {
@@ -52,10 +54,6 @@ export class SettleRentalInstallment {
         && item.tenantId === rental.tenantId
         && item.status === "ACTIVE");
     if (!contract) throw new Error("Não existe contrato vinculado à locação selecionada.");
-    if (history.payments.some((payment) => payment.contractId === contract.id && payment.referenceMonth === referenceMonth)) {
-      throw new Error(`A parcela de ${referenceMonth} já possui uma baixa registrada.`);
-    }
-
     const installment = (await this.listPayments.execute(rental.tenantId, paidAt)).find(
       (payment) => payment.rentalId === rental.id
         && payment.referenceMonth === referenceMonth
@@ -63,6 +61,25 @@ export class SettleRentalInstallment {
     );
     if (!installment) {
       throw new Error(`Não há parcela pendente para a competência ${referenceMonth} nesta locação.`);
+    }
+    const amountCents = input.amountCents ?? Math.round(installment.totalAmount * 100);
+    if (!Number.isSafeInteger(amountCents) || amountCents <= 0) {
+      throw new Error("O valor recebido deve ser um inteiro positivo em centavos.");
+    }
+    if (amountCents > Math.round(installment.totalAmount * 100)) {
+      throw new Error("O valor recebido não pode ser maior que o saldo atualizado da parcela.");
+    }
+    const principalAmountCents = Math.min(amountCents, installment.principalOutstandingCents);
+    const rentAmountCents = Math.min(principalAmountCents, installment.rentOutstandingCents);
+    const expensesAmountCents = principalAmountCents - rentAmountCents;
+    if (expensesAmountCents > installment.expensesOutstandingCents) {
+      throw new Error("O valor recebido não pode ser maior que o saldo atualizado da parcela.");
+    }
+    const remainingAfterPrincipal = amountCents - principalAmountCents;
+    const fineAmountCents = Math.min(remainingAfterPrincipal, installment.fineOutstandingCents);
+    const interestAmountCents = remainingAfterPrincipal - fineAmountCents;
+    if (interestAmountCents > installment.interestOutstandingCents) {
+      throw new Error("O valor recebido não pode ser maior que o saldo atualizado da parcela.");
     }
 
     const id = crypto.randomUUID();
@@ -89,9 +106,16 @@ export class SettleRentalInstallment {
       id,
       propertyId: rental.propertyId,
       contractId: contract.id,
-      amount: installment.totalAmount,
+      amount: amountCents / 100,
+      amountCents,
+      principalAmountCents,
+      rentAmountCents,
+      expensesAmountCents,
+      fineAmountCents,
+      interestAmountCents,
+      createdBy: input.createdBy ?? null,
       paidAt,
-      description: `Baixa manual de aluguel - ${referenceMonth}`,
+      description: `Recebimento de aluguel - ${referenceMonth}`,
       createdAt: Date.now(),
       referenceMonth,
       dueDate: installment.dueDate,
@@ -107,7 +131,9 @@ export class SettleRentalInstallment {
 
     return {
       payment,
-      message: `Parcela de ${referenceMonth} registrada como paga.`,
+      message: amountCents < Math.round(installment.totalAmount * 100)
+        ? `Pagamento parcial de ${referenceMonth} registrado.`
+        : `Parcela de ${referenceMonth} registrada como recebida.`,
     };
   }
 }

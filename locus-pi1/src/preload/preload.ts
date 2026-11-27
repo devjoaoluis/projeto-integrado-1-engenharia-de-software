@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("contracts:fill-template", data),
     generatePdf: (params: import("../main/application/use-cases/GenerateContractPdf").GenerateContractPdfInput) =>
       ipcRenderer.invoke("contracts:generate-pdf", params),
-    exportPdf: (params: import("../main/ipc/contracts.ipc").ExportContractPdfParams) =>
+    exportPdf: (params: import("../main/ipc/contracts/contracts.ipc").ExportContractPdfParams) =>
       ipcRenderer.invoke("contracts:export-pdf", params),
     updateDates: (params: import("../main/application/use-cases/UpdateContractDates").UpdateContractDatesInput) =>
       ipcRenderer.invoke("contracts:update-dates", params),
@@ -190,7 +190,7 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("owners:generate-payout-pdf", params),
 
     exportPayoutPdf: (
-      params: import("../main/ipc/contacts.ipc").ExportOwnerPayoutPdfParams
+      params: import("../main/ipc/contacts/contacts.ipc").ExportOwnerPayoutPdfParams
     ) =>
       ipcRenderer.invoke("owners:export-payout-pdf", params),
   },
@@ -257,6 +257,24 @@ contextBridge.exposeInMainWorld("api", {
     settleInstallment: (
       input: import("../main/application/use-cases/SettleRentalInstallment").SettleRentalInstallmentInput
     ) => ipcRenderer.invoke("payments:settle-installment", input),
+    undo: (paymentId: string) => ipcRenderer.invoke("payments:undo", paymentId),
+    getSettings: () => ipcRenderer.invoke("payments:get-settings"),
+    updateSettings: (
+      settings: import("../main/domain/repositories/IFinancialRepository").GlobalFinancialSettingsUpdate
+    ) => ipcRenderer.invoke("payments:update-settings", settings),
+    updateContractSettings: (
+      contractId: string,
+      settings: import("../main/domain/repositories/IFinancialRepository").ContractFinancialSettingsUpdate
+    ) => ipcRenderer.invoke("payments:update-contract-settings", contractId, settings),
+    getContractSettings: (contractId: string) =>
+      ipcRenderer.invoke("payments:get-contract-settings", contractId),
+    listInstallmentItems: (contractId: string, referenceMonth?: string) =>
+      ipcRenderer.invoke("payments:list-installment-items", contractId, referenceMonth),
+    createInstallmentItem: (
+      input: import("../main/application/use-cases/CreateInstallmentItem").CreateInstallmentItemInput
+    ) => ipcRenderer.invoke("payments:create-installment-item", input),
+    voidInstallmentItem: (id: string, voidedBy?: string) =>
+      ipcRenderer.invoke("payments:void-installment-item", id, voidedBy),
     openReceipt: (paymentId: string) => ipcRenderer.invoke("payments:open-receipt", paymentId),
   },
 
@@ -346,9 +364,18 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("owners:generate-payout-pdf", params),
 
     exportPdf: (
-      params: import("../main/ipc/contacts.ipc").ExportOwnerPayoutPdfParams
+      params: import("../main/ipc/contacts/contacts.ipc").ExportOwnerPayoutPdfParams
     ) =>
       ipcRenderer.invoke("owners:export-payout-pdf", params),
+  },
+
+  financialReports: {
+    preview: (
+      params: import("../main/application/use-cases/GetFinancialReport").GetFinancialReportInput
+    ) => ipcRenderer.invoke("finance:report-preview", params),
+    exportPdf: (
+      params: import("../main/ipc/contacts/contacts.ipc").ExportFinancialReportParams
+    ) => ipcRenderer.invoke("finance:report-export", params),
   },
 
   lateFee: {

@@ -127,7 +127,7 @@ describe("HU-10: IPC Registration and Handlers", () => {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { registerOverdueIpc } = require("../../../ipc/overdue.ipc");
+      const { registerOverdueIpc } = require("../../../ipc/finance/overdue.ipc");
       const notificationService = {
         publish: async () => ({
           created: true,
