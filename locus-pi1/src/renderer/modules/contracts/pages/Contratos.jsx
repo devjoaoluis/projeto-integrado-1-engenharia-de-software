@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
@@ -365,7 +364,12 @@ export default function Contratos() {
           Contratos de Locação
         </h1>
 
-        <p style={{ color: "var(--color-on-surface)", fontSize: "var(--font-body-md)" }}>
+        <p
+          style={{
+            color: "var(--color-on-surface)",
+            fontSize: "var(--font-body-md)",
+          }}
+        >
           Gere documentos em PDF automaticamente preenchidos com os dados
           disponíveis do imóvel, proprietário e locatário.
         </p>
@@ -520,8 +524,7 @@ export default function Contratos() {
                   </div>
 
                   <div>
-                    <strong>Endereço:</strong>{" "}
-                    {dadosMontados.property.address}
+                    <strong>Endereço:</strong> {dadosMontados.property.address}
                   </div>
 
                   <div>
@@ -548,9 +551,8 @@ export default function Contratos() {
                         paddingTop: "var(--space-1)",
                       }}
                     >
-                      <strong>Proprietário:</strong>{" "}
-                      {dadosMontados.owner.name} (
-                      {dadosMontados.owner.cpfCnpj || "Sem CPF"})
+                      <strong>Proprietário:</strong> {dadosMontados.owner.name}{" "}
+                      ({dadosMontados.owner.cpfCnpj || "Sem CPF"})
                     </div>
                   )}
                 </div>
@@ -594,9 +596,7 @@ export default function Contratos() {
                 </div>
               ) : null}
 
-              <label className="ui-label ui-label-required">
-                Locatário:
-              </label>
+              <label className="ui-label ui-label-required">Locatário:</label>
 
               <select
                 className="ui-control"
@@ -824,9 +824,7 @@ export default function Contratos() {
                 </option>
 
                 {modelos
-                  .filter((modelo) =>
-                    modelo.id?.startsWith("builtin-")
-                  )
+                  .filter((modelo) => modelo.id?.startsWith("builtin-"))
                   .map((modelo) => (
                     <option key={modelo.id} value={modelo.id}>
                       {modelo.name}
@@ -842,8 +840,8 @@ export default function Contratos() {
                   marginBottom: 0,
                 }}
               >
-                O documento selecionado será preenchido automaticamente com
-                os dados disponíveis no sistema.
+                O documento selecionado será preenchido automaticamente com os
+                dados disponíveis no sistema.
               </p>
 
               {imovelSelecionadoId && (
@@ -942,88 +940,93 @@ export default function Contratos() {
               flexDirection: "column",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "var(--space-4)",
-              }}
-            >
-              <div>
-                <h2
-                  style={{
-                    fontSize: "var(--font-title-lg)",
-                    fontWeight: "bold",
-                    color: "var(--color-on-surface)",
-                  }}
-                >
-                  Pré-visualização do Documento Preenchido
-                </h2>
-
-                <span
-                  style={{
-                    fontSize: "var(--font-body-md)",
-                    color: "var(--color-on-surface)",
-                  }}
-                >
-                  {carregandoDados
-                    ? "Atualizando campos..."
-                    : "Dados substituídos automaticamente. Você pode editar o texto antes de exportar."}
-                </span>
-              </div>
-
-              <button
-                className="ui-action ui-action--primary ui-action--large"
-                type="button"
-                onClick={exportarPdf}
-                disabled={
-                  exportandoPdf ||
-                  !conteudoContrato.trim() ||
-                  datasInvalidas
-                }
+            <div style={{ marginBottom: "var(--space-4)" }}>
+              <h2
+                style={{
+                  fontSize: "var(--font-title-lg)",
+                  fontWeight: "bold",
+                  color: "var(--color-on-surface)",
+                  marginBottom: "var(--space-1)",
+                }}
               >
-                <FileDown size={20} />
+                Pré-visualização do Documento Preenchido
+              </h2>
 
-                {exportandoPdf
-                  ? "Gerando PDF..."
-                  : "Exportar em PDF para Assinatura"}
-              </button>
+              <span
+                style={{
+                  fontSize: "var(--font-body-md)",
+                  color: "var(--color-on-surface)",
+                }}
+              >
+                Dados substituídos automaticamente. Você pode editar o texto antes
+                de exportar.
+              </span>
             </div>
 
-            {/* Pré-visualização do documento */}
-            <div
-              style={{
-                flex: 1,
-                border: "1px solid var(--color-outline-variant)",
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: "var(--color-surface)",
-                padding: "var(--space-4)",
-                boxShadow: "var(--elevation-1)",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
+            {carregandoDados ? (
+              <div
+                style={{
+                  padding: "var(--space-5)",
+                  textAlign: "center",
+                  color: "var(--color-on-surface)",
+                  fontSize: "var(--font-body-md)",
+                }}
+              >
+                Carregando e preenchendo os dados do documento...
+              </div>
+            ) : (
               <textarea
+                aria-label="Conteúdo do contrato"
                 value={conteudoContrato}
                 onChange={(e) => setConteudoContrato(e.target.value)}
-                placeholder="Selecione um imóvel e locatário para visualizar o documento preenchido automaticamente..."
+                rows={26}
                 style={{
                   width: "100%",
-                  minHeight: "550px",
                   padding: "var(--space-4)",
                   borderRadius: "var(--radius-sm)",
                   border: "1px solid var(--color-outline-variant)",
-                  backgroundColor: "var(--color-surface)",
                   fontSize: "var(--font-body-md)",
-                  lineHeight: "1.6",
+                  lineHeight: 1.6,
+                  fontFamily: "inherit",
                   color: "var(--color-on-surface)",
-                  fontFamily: "var(--font-family-base)",
+                  backgroundColor: "var(--color-surface)",
                   resize: "vertical",
-                  boxShadow: "var(--elevation-1)",
                   boxSizing: "border-box",
                 }}
               />
+            )}
+
+            {/* Rodapé com o botão de exportar no final da página */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: "var(--space-4)",
+                paddingTop: "var(--space-4)",
+                borderTop: "1px solid var(--color-outline-variant)",
+              }}
+            >
+              <button
+                type="button"
+                className="ui-action ui-action--primary"
+                onClick={exportarPdf}
+                disabled={
+                  exportandoPdf ||
+                  carregandoDados ||
+                  !conteudoContrato.trim() ||
+                  datasInvalidas
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                }}
+              >
+                <FileDown size={18} />
+                {exportandoPdf
+                  ? "Exportando PDF..."
+                  : "Exportar em PDF para Assinatura"}
+              </button>
             </div>
           </div>
         </div>
