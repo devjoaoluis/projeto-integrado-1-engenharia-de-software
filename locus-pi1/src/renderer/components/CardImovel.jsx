@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
 import Badge from "./Badge";
 
 function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar, onExcluir }) {
@@ -52,6 +53,19 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         background-color: var(--color-surface-variant);
                     }
 
+                    .card-imovel-foto-placeholder {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: var(--space-2);
+                        color: var(--color-outline);
+                    }
+
+                    .card-imovel-foto-placeholder span {
+                        font-size: var(--font-body-sm);
+                    }
+
                     .card-imovel-corpo {
                         padding: var(--space-4);
                         display: flex;
@@ -86,51 +100,12 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         padding-top: 16px;
                     }
 
-                    .card-btn-editar, .card-btn-excluir, .card-btn-vistorias {
+                    .card-imovel-acoes .ui-action {
                         flex: 1;
-                        padding: var(--space-2);
-                        border: none;
-                        border-radius: var(--radius-xs);
-                        cursor: pointer;
-                        font-weight: 500;
-                        transition: background-color 0.2s;
-                        font-size: var(--font-body-md);
-                        text-decoration: none;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-
-                    .card-btn-vistorias {
-                        background-color: var(--color-success-container);
-                        color: var(--color-success);
-                    }
-
-                    .card-btn-vistorias:hover {
-                        background-color: var(--color-success-container);
-                    }
-
-                    .card-btn-editar {
-                        background-color: var(--color-surface-variant);
-                        color: var(--color-on-surface);
-                    }
-
-                    .card-btn-editar:hover {
-                        background-color: var(--color-surface-variant);
-                    }
-
-                    .card-btn-excluir {
-                        background-color: var(--color-error-container);
-                        color: var(--color-error);
-                    }
-
-                    .card-btn-excluir:hover {
-                        background-color: var(--color-error-container);
+                        min-width: 0;
                     }
 
                     .card-btn-excluir:disabled {
-                        background-color: var(--color-surface-variant);
-                        color: var(--color-on-surface-variant);
                         cursor: not-allowed;
                     }
                 `}
@@ -145,7 +120,10 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         onError={() => setErroImagem(true)}
                     />
                 ) : (
-                    <div className="card-imovel-foto" />
+                    <div className="card-imovel-foto card-imovel-foto-placeholder" role="img" aria-label="Sem foto">
+                        <Home size={40} strokeWidth={1.5} aria-hidden="true" />
+                        <span>Sem foto</span>
+                    </div>
                 )}
 
                 <div className="card-imovel-corpo">
@@ -164,7 +142,7 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
 
                     <div className="card-imovel-acoes">
                         <button 
-                            className="card-btn-editar"
+                            className="card-btn-editar ui-action ui-action--primary"
                             onClick={() => onEditar && onEditar(id)}
                             title="Editar imóvel"
                         >
@@ -172,13 +150,13 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         </button>
                         <Link 
                             to={`/vistorias?imovelId=${encodeURIComponent(id)}`}
-                            className="card-btn-vistorias"
+                            className="card-btn-vistorias ui-action ui-action--neutral"
                             title="Ver ou registrar vistorias deste imóvel"
                         >
                             Vistorias
                         </Link>
                         <button 
-                            className="card-btn-excluir"
+                            className="card-btn-excluir ui-action ui-action--destructive"
                             onClick={() => onExcluir && onExcluir(id)}
                             disabled={alugado}
                             title="Excluir imóvel"

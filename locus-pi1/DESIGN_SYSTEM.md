@@ -6,6 +6,8 @@ The renderer uses a small Material-inspired system built on CSS custom propertie
 
 - **Color roles:** use `--color-primary`, `--color-surface`, `--color-on-surface`, `--color-outline`, and the `success`, `warning`, `error`, and `info` roles. Container colors should be paired with their matching `--color-on-*-container` text role.
 - **Text hierarchy:** use `--color-on-surface` for headings, body copy, input values, and table content; use `--color-on-surface-variant` for labels, secondary copy, and placeholders. Reserve primary blue for primary actions, focus indicators, explicit links, highlighted icons, and active navigation.
+- **Destructive actions:** use `--color-danger-action` and `--color-on-danger-action` for filled destructive buttons, with `--color-danger-action-hover` for hover states in both themes.
+- **Action buttons:** use `.ui-action` with `.ui-action--primary`, `.ui-action--destructive`, `.ui-action--positive`, or `.ui-action--neutral`. Add `.ui-action--large` for primary form and page actions; compact variants are suited to table rows.
 - **Typography:** use the `--font-*` scale from display through label. Reading copy uses `--font-body-lg` (16px); functional text must not be smaller than `--font-body-sm` (12px).
 - **Spacing and shape:** use `--space-1` through `--space-12`, `--radius-xs` through `--radius-full`, and `--elevation-1` through `--elevation-5`.
 - **Motion and layout:** use `--motion-*`, `--ease-*`, and the documented `--breakpoint-*` values.

@@ -189,7 +189,7 @@ export default function Pagamentos() {
           <h2 className="payments-title">Controle financeiro</h2>
           <p className="payments-subtitle">Parcelas de locação, baixas manuais e relatórios internos.</p>
         </div>
-        <button onClick={imprimirInadimplencia} className="payments-button payments-button--outlined no-print">
+        <button onClick={imprimirInadimplencia} className="payments-button payments-button--outlined ui-action ui-action--neutral ui-action--large no-print">
           <Printer size={16} /> Imprimir inadimplência
         </button>
       </header>
@@ -209,7 +209,7 @@ export default function Pagamentos() {
           <div className="payments-report-panel payments-report-panel--error">
             <h4 className="payments-report-title"><AlertTriangle size={17} /> Relatório de inadimplência</h4>
             <p className="payments-report-description">A tabela abaixo pode ser filtrada por atraso e impressa. Casos acima de 90 dias ficam destacados.</p>
-            <button onClick={() => { setStatusFiltro("ATRASADO"); setMesFiltro(""); }} className="payments-button payments-button--error">
+            <button onClick={() => { setStatusFiltro("ATRASADO"); setMesFiltro(""); }} className="payments-button payments-button--outlined ui-action ui-action--neutral ui-action--large">
               Exibir débitos em atraso
             </button>
           </div>
@@ -227,8 +227,8 @@ export default function Pagamentos() {
               <input type="month" value={mesRepasse} onChange={(event) => { setMesRepasse(event.target.value); setRelatorioRepasse(null); }} className="payments-input" aria-label="Mês de repasse" />
             </div>
             <div className="payments-report-actions">
-              <button onClick={gerarRelatorioRepasse} className="payments-button payments-button--filled">Pré-visualizar</button>
-              {relatorioRepasse && <button onClick={exportarRelatorioRepasse} className="payments-button payments-button--outlined">Exportar PDF</button>}
+              <button onClick={gerarRelatorioRepasse} className="payments-button payments-button--filled ui-action ui-action--primary ui-action--large">Pré-visualizar</button>
+              {relatorioRepasse && <button onClick={exportarRelatorioRepasse} className="payments-button payments-button--outlined ui-action ui-action--neutral ui-action--large">Exportar PDF</button>}
             </div>
             {relatorioRepasse && <div className="payments-report-preview">
               <div className="payments-report-preview-title">{relatorioRepasse.owner.name} · {relatorioRepasse.referenceMonth}</div>
@@ -255,7 +255,7 @@ export default function Pagamentos() {
             <option value="ATRASADO">Atrasado</option>
           </select>
           <input type="month" value={mesFiltro} onChange={(event) => setMesFiltro(event.target.value)} className="payments-input payments-filter-month" aria-label="Filtrar por competência" />
-          {(tenantFiltro || propertyFiltro) && <button onClick={() => { setTenantFiltro(""); setPropertyFiltro(""); }} className="payments-text-button">Limpar vínculo</button>}
+          {(tenantFiltro || propertyFiltro) && <button onClick={() => { setTenantFiltro(""); setPropertyFiltro(""); }} className="ui-action ui-action--neutral">Limpar vínculo</button>}
         </div>
 
         {loading ? <div className="payments-loading" role="status" aria-live="polite" aria-label="Carregando pagamentos">
@@ -277,8 +277,8 @@ export default function Pagamentos() {
                     <td><Link className="payments-link" to={`/locatarios/${item.tenantId}`}>{item.tenantName}</Link><div><Link className="payments-cell-link" to={`/imoveis/${item.propertyId}`}>{item.propertyTitle}</Link></div></td>
                     <td><div className="payments-cell-primary">{moeda(item.status === "PAGO" ? item.amount : item.totalAmount)}</div>{item.status !== "PAGO" && (item.fineAmount > 0 || item.interestAmount > 0) && <div className="payments-cell-secondary">Multa {moeda(item.fineAmount)} · Juros {moeda(item.interestAmount)}</div>}</td>
                     <td><span className={`payments-status payments-status--${item.status === "PAGO" ? "paid" : item.status === "ATRASADO" ? "overdue" : "pending"}`}>{item.status === "PAGO" ? "Pago" : item.status === "ATRASADO" ? `Atrasado · ${item.daysOverdue}d` : "Pendente"}</span></td>
-                    <td>{item.paidAt ? <div>{formatarData(item.paidAt)}</div> : <span className="payments-cell-secondary">—</span>}{item.receiptPath && <button onClick={() => abrirComprovante(item.id)} className="payments-receipt-button"><Receipt size={16} aria-hidden="true" /> Comprovante</button>}</td>
-                    <td className="no-print">{item.status !== "PAGO" && <button onClick={() => { setParcelaSelecionada(item); setDataPagamento(agoraParaInput()); setComprovante(null); }} className="payments-button payments-button--success">Registrar baixa</button>}</td>
+                    <td>{item.paidAt ? <div>{formatarData(item.paidAt)}</div> : <span className="payments-cell-secondary">—</span>}{item.receiptPath && <button onClick={() => abrirComprovante(item.id)} className="payments-receipt-button ui-action ui-action--neutral"><Receipt size={16} aria-hidden="true" /> Comprovante</button>}</td>
+                    <td className="no-print">{item.status !== "PAGO" && <button onClick={() => { setParcelaSelecionada(item); setDataPagamento(agoraParaInput()); setComprovante(null); }} className="payments-button payments-button--success ui-action ui-action--positive">Registrar baixa</button>}</td>
                   </tr>
                 ))}
               </tbody>
@@ -294,8 +294,8 @@ export default function Pagamentos() {
           <label className="payments-form-label">Data do pagamento<input type="datetime-local" value={dataPagamento} onChange={(event) => setDataPagamento(event.target.value)} required className="payments-input" /></label>
           <label className="payments-form-label">Comprovante (opcional)<input type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" onChange={(event) => setComprovante(event.target.files?.[0] || null)} className="payments-file-input" /><span className="payments-cell-secondary">PDF, PNG ou JPG.</span></label>
           <div className="payments-modal-actions">
-            <button type="button" onClick={() => setParcelaSelecionada(null)} className="payments-button payments-button--outlined">Cancelar</button>
-            <button disabled={salvando} type="submit" className="payments-button payments-button--success">{salvando ? "Salvando…" : "Confirmar baixa"}</button>
+            <button type="button" onClick={() => setParcelaSelecionada(null)} className="payments-button payments-button--outlined ui-action ui-action--neutral ui-action--large">Cancelar</button>
+            <button disabled={salvando} type="submit" className="payments-button payments-button--success ui-action ui-action--positive ui-action--large">{salvando ? "Salvando…" : "Confirmar baixa"}</button>
           </div>
         </form>
       </div>}

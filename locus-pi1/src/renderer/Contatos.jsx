@@ -107,10 +107,7 @@ function Contatos() {
         .contatos-filtro label { display: flex; flex-direction: column; gap: var(--space-1); color: var(--color-on-surface-variant); font-size: var(--font-body-sm); font-weight: 600; }
         .contatos-filtro input { width: 100%; box-sizing: border-box; min-height: 38px; padding: 0 var(--space-2); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-xs); }
         .contatos-acoes { display: flex; gap: var(--space-2); }
-        .contatos-acoes button, .contato-acao { min-height: 38px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-xs); cursor: pointer; background: var(--color-primary); color: var(--color-on-primary); font-weight: 600; }
-        .contatos-acoes .cancelar, .contato-acao.excluir { background: var(--color-background); color: var(--color-on-surface); }
-        .contato-acao.excluir { color: var(--color-error); }
-        .contato-acao.repasse { background: var(--color-success); color: var(--color-on-primary); }
+        .contato-acao { white-space: nowrap; flex-shrink: 0; }
         .contatos-tabela { width: 100%; border-collapse: collapse; }
         .contatos-tabela th, .contatos-tabela td { padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--color-outline-variant); text-align: left; }
         .contatos-tabela th { color: var(--color-on-surface); font-size: var(--font-body-md); }
@@ -144,8 +141,8 @@ function Contatos() {
             <label className="ui-label ui-label-optional">Telefone<input className="ui-control" name="phone" value={formulario.phone} onChange={mudar} /></label>
             <label className="ui-label ui-label-optional">E-mail<input className="ui-control" name="email" type="email" value={formulario.email} onChange={mudar} /></label>
             <div className="contatos-acoes">
-              <button type="submit">{editando ? "Salvar" : "Cadastrar"}</button>
-              {editando && <button className="cancelar" type="button" onClick={cancelarEdicao}>Cancelar</button>}
+              <button className="ui-action ui-action--primary ui-action--large" type="submit">{editando ? "Salvar" : "Cadastrar"}</button>
+              {editando && <button className="ui-action ui-action--neutral ui-action--large" type="button" onClick={cancelarEdicao}>Cancelar</button>}
             </div>
           </form>
           {erro && <div className="contatos-erro" role="alert"><strong>Não foi possível concluir a operação</strong><br />{erro}</div>}
@@ -172,12 +169,12 @@ function Contatos() {
                     <td>{contato.name}</td><td>{contato.cpfCnpj}</td><td>{contato.phone}</td><td>{contato.email || "—"}</td>
                     <td className="contato-acoes">
                       {aba === "owners" && (
-                        <button type="button" className="contato-acao repasse" onClick={() => setProprietarioParaRepasse(contato)}>
+                        <button type="button" className="contato-acao ui-action ui-action--positive" onClick={() => setProprietarioParaRepasse(contato)}>
                           Gerar Repasse
                         </button>
                       )}
-                      <button className="contato-acao" onClick={() => editar(contato)}>Editar</button>
-                      <button className="contato-acao excluir" disabled={removendo} onClick={() => excluir(contato.id)}>Excluir</button>
+                      <button className="contato-acao ui-action ui-action--primary" onClick={() => editar(contato)}>Editar</button>
+                      <button className="contato-acao ui-action ui-action--destructive" disabled={removendo} onClick={() => excluir(contato.id)}>Excluir</button>
                     </td>
                   </tr>
                 ))}
@@ -192,8 +189,8 @@ function Contatos() {
             <h2>Excluir cadastro?</h2>
             <p>Deseja excluir <strong>{contatoParaExcluir.name}</strong>? Essa ação não poderá ser desfeita.</p>
             <div className="confirmacao-exclusao-acoes">
-              <button type="button" onClick={() => setContatoParaExcluir(null)}>Cancelar</button>
-              <button type="button" className="confirmacao-excluir" onClick={excluirConfirmado}>Excluir</button>
+              <button className="ui-action ui-action--neutral" type="button" onClick={() => setContatoParaExcluir(null)}>Cancelar</button>
+              <button className="ui-action ui-action--destructive" type="button" onClick={excluirConfirmado}>Excluir</button>
             </div>
           </div>
         </div>
@@ -381,10 +378,10 @@ function ModalRepasse({ proprietario, onClose }) {
         </div>
 
         <div style={{ padding: "var(--space-3) var(--space-4)", background: "var(--color-primary-container)", borderTop: "1px solid var(--color-outline-variant)", display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
-          <button type="button" onClick={onClose} style={{ padding: "var(--space-2) var(--space-4)", background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 600, cursor: "pointer", fontSize: "var(--font-body-md)" }}>
+          <button className="ui-action ui-action--neutral ui-action--large" type="button" onClick={onClose}>
             Fechar
           </button>
-          <button type="button" onClick={exportarPdf} disabled={exportando} style={{ padding: "var(--space-2) var(--space-4)", background: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 600, cursor: exportando ? "not-allowed" : "pointer", fontSize: "var(--font-body-md)" }}>
+          <button className="ui-action ui-action--primary ui-action--large" type="button" onClick={exportarPdf} disabled={exportando}>
             {exportando ? "Gerando PDF..." : "Exportar Relatório PDF"}
           </button>
         </div>

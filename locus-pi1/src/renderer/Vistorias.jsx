@@ -498,7 +498,10 @@ export default function Vistorias() {
                 </option>
                 {contratos.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.codigo || c.reference || `CTR-${c.id.substring(0, 6)}`} | Locatário: {c.locatario} ({c.status})
+                    {c.locatario}
+                    {contratos.filter((contrato) => contrato.tenantId === c.tenantId).length > 1 && c.inicio
+                      ? ` (Início: ${c.inicio})`
+                      : ""}
                   </option>
                 ))}
               </select>
@@ -521,19 +524,10 @@ export default function Vistorias() {
                     <strong>Atenção:</strong> Este imóvel não possui locação/contrato ativo registrado. O dossiê de documentos armazena os arquivos pessoais do locatário, mas para habilitar a vistoria é necessário formalizar a locação associando o locatário ao imóvel.
                   </span>
                   <button
+                    className="ui-action ui-action--primary"
                     type="button"
                     onClick={() => navigate(`/imoveis/${imovelId}`)}
-                    style={{
-                      alignSelf: "flex-start",
-                      background: "var(--color-warning)",
-                      color: "var(--color-on-warning)",
-                      border: "none",
-                      borderRadius: "var(--radius-xs)",
-                      padding: "var(--space-1) var(--space-3)",
-                      fontSize: "var(--font-body-sm)",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                    }}
+                    style={{ alignSelf: "flex-start" }}
                   >
                     Ir para Visão Geral do Imóvel para Associar Locatário &rarr;
                   </button>
@@ -718,8 +712,8 @@ export default function Vistorias() {
                           position: "absolute",
                           top: "4px",
                           right: "4px",
-                          backgroundColor: "var(--color-error)",
-                          color: "var(--color-on-error)",
+                          backgroundColor: "var(--color-danger-action)",
+                          color: "var(--color-on-danger-action)",
                           border: "none",
                           borderRadius: "var(--radius-full)",
                           width: "22px",
@@ -779,22 +773,9 @@ export default function Vistorias() {
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)" }}>
             <button
+              className="ui-action ui-action--primary ui-action--large"
               type="submit"
               disabled={salvando}
-              style={{
-                backgroundColor: tipoVistoria === "EXIT" ? "var(--color-warning)" : "var(--color-success)",
-                color: tipoVistoria === "EXIT" ? "var(--color-on-warning)" : "var(--color-on-success)",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                padding: "var(--space-3) var(--space-5)",
-                fontSize: "var(--font-body-md)",
-                fontWeight: "bold",
-                cursor: salvando ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "var(--space-2)",
-                opacity: salvando ? 0.7 : 1,
-              }}
             >
               <ClipboardCheck size={20} />
               {salvando
@@ -865,19 +846,11 @@ export default function Vistorias() {
                 Nenhuma vistoria registrada para este imóvel.
               </p>
               <button
+                className="ui-action ui-action--primary"
                 type="button"
                 onClick={() => {
                   setImovelId(filtroImovelId);
                   setAbaAtiva("registrar");
-                }}
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-on-primary)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "var(--space-2) var(--space-4)",
-                  fontWeight: "600",
-                  cursor: "pointer",
                 }}
               >
                 Registrar Primeira Vistoria
@@ -925,21 +898,9 @@ export default function Vistorias() {
                         </td>
                         <td style={{ padding: "var(--space-3)", textAlign: "center" }}>
                           <button
+                            className="ui-action ui-action--neutral"
                             type="button"
                             onClick={() => abrirDetalhesVistoria(v.id)}
-                            style={{
-                              backgroundColor: "var(--color-primary-container)",
-                              color: "var(--color-on-surface)",
-                              border: "1px solid var(--color-outline-variant)",
-                              borderRadius: "var(--radius-xs)",
-                              padding: "var(--space-1) var(--space-3)",
-                              fontSize: "var(--font-body-md)",
-                              fontWeight: "600",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "var(--space-1)",
-                            }}
                           >
                             <Eye size={14} />
                             Ver Mídias e Detalhes
@@ -1007,14 +968,9 @@ export default function Vistorias() {
                 </h3>
               </div>
               <button
+                className="ui-action ui-action--neutral"
                 type="button"
                 onClick={() => setVistoriaDetalhe(null)}
-                style={{
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--color-on-surface)",
-                }}
               >
                 <X size={24} />
               </button>
@@ -1121,17 +1077,9 @@ export default function Vistorias() {
 
             <div style={{ marginTop: "var(--space-5)", display: "flex", justifyContent: "flex-end" }}>
               <button
+                className="ui-action ui-action--neutral"
                 type="button"
                 onClick={() => setVistoriaDetalhe(null)}
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                  color: "var(--color-on-primary)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "var(--space-2) var(--space-4)",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
               >
                 Fechar
               </button>

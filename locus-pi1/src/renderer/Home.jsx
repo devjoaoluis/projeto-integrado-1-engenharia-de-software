@@ -45,6 +45,18 @@ function formatDate(value) {
     : new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(timestamp);
 }
 
+function formatContractStatus(status) {
+  const labels = {
+    ACTIVE: "ativo",
+    ENDED: "encerrado",
+    CANCELLED: "cancelado",
+    CANCELED: "cancelado",
+    PENDING: "pendente",
+    SCHEDULED: "agendado",
+  };
+  return `Contrato ${labels[String(status || "").toUpperCase()] || "registrado"}`;
+}
+
 function isOverdue(payment, now = Date.now()) {
   const status = String(payment.status || "").toUpperCase();
   if (["ATRASADO", "OVERDUE"].includes(status)) return true;
@@ -83,8 +95,6 @@ function Home() {
     payments: { ...initialResource },
     visits: { ...initialResource },
   });
-  const [analyticsOpen, setAnalyticsOpen] = useState(false);
-
   const loadResource = useCallback(async (key) => {
     setResources((current) => ({
       ...current,
@@ -184,13 +194,21 @@ function Home() {
       date: getTimestamp(property.createdAt),
       target: property.id ? `/imoveis/${property.id}` : "/imoveis",
     }));
-    const contracts = contractData.map((contract) => ({
-      id: `contract:${contract.id}`,
-      title: contract.reference || `Contrato · ${contract.tenantName || "Locatário"}`,
-      detail: `Contrato ${String(contract.status || "").toLowerCase() || "registrado"}`,
-      date: getTimestamp(contract.createdAt),
-      target: contract.propertyId ? `/imoveis/${contract.propertyId}` : "/contratos",
-    }));
+    const contracts = contractData.map((contract) => {
+      const property = propertyData.find((item) => item.id === contract.propertyId);
+      const propertyName = property?.title || property?.address;
+      const tenantName = contract.tenantName || contract.tenant?.name;
+
+      return {
+        id: `contract:${contract.id}`,
+        title: tenantName && propertyName
+          ? `${tenantName} — ${propertyName}`
+          : tenantName || propertyName || "Contrato cadastrado",
+        detail: formatContractStatus(contract.status),
+        date: getTimestamp(contract.createdAt),
+        target: contract.propertyId ? `/imoveis/${contract.propertyId}` : "/contratos",
+      };
+    });
     return [...properties, ...contracts]
       .filter((item) => item.date != null)
       .sort((a, b) => b.date - a.date)
@@ -280,8 +298,8 @@ function Home() {
         .home-erro-secao p { margin: 0; }
         .home-erro-secao button { min-height: 44px; display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-error); border-radius: var(--radius-sm); color: var(--color-error); background: var(--color-surface); cursor: pointer; }
         .home-analytics { margin-top: 22px; border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); background: var(--color-surface-variant); }
-        .home-analytics summary { min-height: 52px; display: flex; align-items: center; padding: 0 var(--space-4); color: var(--color-on-surface); font-size: var(--font-body-md); font-weight: 700; cursor: pointer; }
-        .home-analytics-body { padding: 0 var(--space-3) var(--space-3); }
+        .home-analytics h3 { margin: 0; padding: var(--space-4) var(--space-4) 0; color: var(--color-on-surface); font-size: var(--font-body-lg); }
+        .home-analytics-body { padding: var(--space-3); }
         @media (max-width: 620px) {
           .home-welcome { align-items: flex-start; flex-direction: column; }
           .home-list-item { align-items: flex-start; }
@@ -322,6 +340,27 @@ function Home() {
             </Link>
           );
         })}
+      </section>
+
+      <section className="home-analytics" aria-labelledby="home-analytics-title">
+        <h3 id="home-analytics-title">Análises da carteira · gráficos existentes</h3>
+        <div className="home-analytics-body">
+          {resources.properties.status === "error" || resources.contracts.status === "error" ? (
+            <SectionError
+              message="Não foi possível carregar os dados das análises."
+              onRetry={() => {
+                void loadResource("properties");
+                void loadResource("contracts");
+              }}
+            />
+          ) : resources.properties.status === "loading" || resources.contracts.status === "loading" ? (
+            <Skeleton rows={4} />
+          ) : (
+            <Suspense fallback={<Skeleton rows={4} />}>
+              <HomeCharts properties={propertyData} contracts={contractData} />
+            </Suspense>
+          )}
+        </div>
       </section>
 
       <section className="home-section" aria-labelledby="home-quick-title">
@@ -422,31 +461,6 @@ function Home() {
         </div>
       </section>
 
-      <details
-        className="home-analytics"
-        onToggle={(event) => setAnalyticsOpen(event.currentTarget.open)}
-      >
-        <summary>Análises da carteira · gráficos existentes</summary>
-        {analyticsOpen && (
-          <div className="home-analytics-body">
-            {resources.properties.status === "error" || resources.contracts.status === "error" ? (
-              <SectionError
-                message="Não foi possível carregar os dados das análises."
-                onRetry={() => {
-                  void loadResource("properties");
-                  void loadResource("contracts");
-                }}
-              />
-            ) : resources.properties.status === "loading" || resources.contracts.status === "loading" ? (
-              <Skeleton rows={4} />
-            ) : (
-              <Suspense fallback={<Skeleton rows={4} />}>
-                <HomeCharts properties={propertyData} contracts={contractData} />
-              </Suspense>
-            )}
-          </div>
-        )}
-      </details>
     </div>
   );
 }

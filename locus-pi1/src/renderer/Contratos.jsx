@@ -887,24 +887,14 @@ export default function Contratos() {
                       </p>
 
                       <button
+                        className="ui-action ui-action--positive"
                         type="button"
                         onClick={() =>
                           navigate(
                             `/vistorias?imovelId=${imovelSelecionadoId}&tipo=ENTRY`
                           )
                         }
-                        style={{
-                          marginTop: "var(--space-1)",
-                          backgroundColor: "var(--color-success)",
-                          color: "var(--color-on-success)",
-                          border: "none",
-                          borderRadius: "var(--radius-sm)",
-                          padding: "var(--space-1) var(--space-3)",
-                          fontWeight: "bold",
-                          fontSize: "var(--font-body-sm)",
-                          cursor: "pointer",
-                          textAlign: "center",
-                        }}
+                        style={{ marginTop: "var(--space-1)" }}
                       >
                         Ir para Vistoria de Entrada &rarr;
                       </button>
@@ -924,22 +914,12 @@ export default function Contratos() {
                       </p>
 
                       <button
+                        className="ui-action ui-action--primary"
                         type="button"
                         onClick={() =>
                           navigate(`/imoveis/${imovelSelecionadoId}`)
                         }
-                        style={{
-                          marginTop: "var(--space-1)",
-                          backgroundColor: "var(--color-primary)",
-                          color: "var(--color-on-primary)",
-                          border: "none",
-                          borderRadius: "var(--radius-sm)",
-                          padding: "var(--space-1) var(--space-3)",
-                          fontWeight: "bold",
-                          fontSize: "var(--font-body-sm)",
-                          cursor: "pointer",
-                          textAlign: "center",
-                        }}
+                        style={{ marginTop: "var(--space-1)" }}
                       >
                         Ir para Imóvel e Associar Locatário &rarr;
                       </button>
@@ -994,6 +974,7 @@ export default function Contratos() {
               </div>
 
               <button
+                className="ui-action ui-action--primary ui-action--large"
                 type="button"
                 onClick={exportarPdf}
                 disabled={
@@ -1001,30 +982,6 @@ export default function Contratos() {
                   !conteudoContrato.trim() ||
                   datasInvalidas
                 }
-                style={{
-                  padding: "var(--space-3) var(--space-5)",
-                  backgroundColor:
-                    exportandoPdf || datasInvalidas
-                      ? "var(--color-primary-container)"
-                      : "var(--color-primary)",
-                  color:
-                    exportandoPdf || datasInvalidas
-                      ? "var(--color-on-primary-container)"
-                      : "var(--color-on-primary)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  cursor:
-                    exportandoPdf || datasInvalidas
-                      ? "not-allowed"
-                      : "pointer",
-                  fontWeight: "bold",
-                  fontSize: "var(--font-body-md)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "var(--space-2)",
-                  boxShadow: "var(--elevation-3)",
-                  transition: "background 0.2s",
-                }}
               >
                 <FileDown size={20} />
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, CheckCircle, BellRing, X } from "lucide-react";
+import { AlertTriangle, CheckCircle, X } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
 
 const POR_PAGINA = 5;
@@ -57,32 +57,6 @@ function locacaoEstaEmAtraso(aluguel, agora = new Date()) {
   return false;
 }
 
-function Avatar({ nome }) {
-  const iniciais = nome
-    ? nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
-    : "L";
-
-  return (
-    <div
-      style={{
-        width: "36px",
-        height: "36px",
-        borderRadius: "var(--radius-full)",
-        backgroundColor: "var(--color-primary-container)",
-        color: "var(--color-on-surface)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        fontSize: "var(--font-body-md)",
-        flexShrink: 0
-      }}
-    >
-      {iniciais}
-    </div>
-  );
-}
-
 function Pilula({ status }) {
   const isEmDia = status === "Em dia";
   const isAtrasado = status === "Atrasado";
@@ -113,9 +87,9 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
       <button
+        className="ui-action ui-action--neutral"
         onClick={() => onMudar(Math.max(1, paginaAtual - 1))}
         disabled={paginaAtual === 1}
-        style={{ padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)", cursor: paginaAtual === 1 ? "not-allowed" : "pointer" }}
       >
         Anterior
       </button>
@@ -123,9 +97,9 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
         Página <strong>{paginaAtual}</strong> de {totalPaginas}
       </span>
       <button
+        className="ui-action ui-action--neutral"
         onClick={() => onMudar(Math.min(totalPaginas, paginaAtual + 1))}
         disabled={paginaAtual === totalPaginas}
-        style={{ padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)", cursor: paginaAtual === totalPaginas ? "not-allowed" : "pointer" }}
       >
         Seguinte
       </button>
@@ -292,18 +266,14 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
               <button
+                className="ui-action ui-action--neutral"
                 onClick={onClose}
-                style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)", fontWeight: "600", cursor: "pointer", fontSize: "var(--font-body-md)" }}
               >
                 Cancelar
               </button>
               <button
+                className="ui-action ui-action--destructive"
                 onClick={handleConfirmarRescisao}
-                style={{
-                  background: temDebitos ? "var(--color-warning)" : "var(--color-error)",
-                  color: "var(--color-on-surface-variant)", border: "none", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)",
-                  fontWeight: "600", cursor: "pointer", fontSize: "var(--font-body-md)"
-                }}
               >
                 {temDebitos ? "Prosseguir com Débitos e Rescindir" : "Confirmar Rescisão"}
               </button>
@@ -326,8 +296,6 @@ export default function Locatarios() {
   const [form, setForm] = useState(formVazio);
   const [editando, setEditando] = useState(null);
   const [locatarioParaRescindir, setLocatarioParaRescindir] = useState(null);
-  const [alertaDisparo, setAlertaDisparo] = useState({ type: "", message: "" });
-  const [disparandoAlerta, setDisparandoAlerta] = useState(false);
 
   const carregarDados = async () => {
     try {
@@ -418,30 +386,6 @@ export default function Locatarios() {
   useEffect(() => {
     carregarDados();
   }, []);
-
-  const inadimplentes = locatarios.filter((l) => l.status === "Atrasado");
-
-  async function dispararAlertaInadimplentes() {
-    if (inadimplentes.length === 0 || disparandoAlerta) return;
-    setDisparandoAlerta(true);
-    setAlertaDisparo({ type: "", message: "" });
-
-    try {
-      const resultado = await window.api.overdue.triggerAlerts({ force: true });
-      setAlertaDisparo({
-        type: "success",
-        message: `${resultado.triggeredCount} novo(s) alerta(s) registrado(s) no sino. As notificações nativas são exibidas quando o app não está em foco.`,
-      });
-    } catch (error) {
-      console.error("Não foi possível disparar os alertas de inadimplência:", error);
-      setAlertaDisparo({
-        type: "error",
-        message: "Não foi possível enviar os alertas. Tente novamente.",
-      });
-    } finally {
-      setDisparandoAlerta(false);
-    }
-  }
 
   const filtrados = locatarios.filter((l) => {
     const nome = l.nome || "";
@@ -566,55 +510,17 @@ export default function Locatarios() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-5)" }}>
         <h1 style={{ fontSize: "var(--font-headline-md)", fontWeight: "bold", color: "var(--color-on-surface)" }}>Locatários</h1>
         <button
-          className={mostrarForm ? "botao-voltar-padrao" : "ui-button"}
+          className={mostrarForm
+            ? "ui-action ui-action--neutral ui-action--large"
+            : "ui-action ui-action--primary ui-action--large"}
           onClick={() => {
             if (mostrarForm) cancelarEdicao();
             else setMostrarForm(true);
           }}
-          style={{ width: mostrarForm ? "auto" : "200px" }}
         >
           {mostrarForm ? "← Voltar" : "Novo locatário"}
         </button>
       </div>
-
-      {inadimplentes.length > 0 && (
-        <div style={{ marginBottom: "var(--space-4)" }}>
-          <button
-            type="button"
-            onClick={dispararAlertaInadimplentes}
-            disabled={disparandoAlerta}
-            style={{
-              minHeight: "44px",
-              padding: "var(--space-2) var(--space-3)",
-              border: "1px solid var(--color-error)",
-              borderRadius: "var(--radius-sm)",
-              background: "var(--color-surface)",
-              color: "var(--color-error)",
-              fontWeight: 600,
-              cursor: disparandoAlerta ? "wait" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "var(--space-2)",
-              opacity: disparandoAlerta ? 0.7 : 1,
-            }}
-          >
-            <BellRing size={16} aria-hidden="true" />
-            {disparandoAlerta ? "Enviando alertas..." : `Notificar ${inadimplentes.length} inadimplente(s)`}
-          </button>
-          {alertaDisparo.message && (
-            <p
-              role={alertaDisparo.type === "error" ? "alert" : "status"}
-              style={{
-                margin: "var(--space-2) 0 0",
-                color: alertaDisparo.type === "error" ? "var(--color-error)" : "var(--color-success)",
-                fontSize: "var(--font-body-md)",
-              }}
-            >
-              {alertaDisparo.message}
-            </p>
-          )}
-        </div>
-      )}
 
       {mostrarForm && (
         <form onSubmit={salvar} style={{ background: "var(--color-primary-container)", padding: "var(--space-4)", borderRadius: "var(--radius-sm)", marginBottom: "var(--space-5)", border: "1px solid var(--color-outline-variant)" }}>
@@ -679,7 +585,7 @@ export default function Locatarios() {
               </select>
             </div>
           </div>
-          <button className="ui-button" type="submit">
+          <button className="ui-action ui-action--primary ui-action--large" type="submit">
             {editando ? "Salvar" : "Cadastrar"}
           </button>
         </form>
@@ -703,8 +609,8 @@ export default function Locatarios() {
           <option value="Pendente">Pendente</option>
           <option value="Atrasado">Atrasado</option>
         </select>
-        <button onClick={buscar} style={{ padding: "var(--space-2) var(--space-4)", backgroundColor: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer" }}>Buscar</button>
-        <button onClick={limpar} style={{ padding: "var(--space-2) var(--space-4)", backgroundColor: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer" }}>Limpar</button>
+        <button className="ui-action ui-action--primary" onClick={buscar}>Buscar</button>
+        <button className="ui-action ui-action--neutral" onClick={limpar}>Limpar</button>
       </div>
 
       <div style={{ overflowX: "auto", background: "var(--color-surface)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-4)" }}>
@@ -756,8 +662,7 @@ export default function Locatarios() {
                   onMouseEnter={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error)" : "var(--color-primary-container)"}
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error-container)" : "transparent"}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontWeight: "500", color: "var(--color-on-surface)" }}>
-                    <Avatar nome={l.nome} />
+                  <span style={{ fontWeight: "500", color: "var(--color-on-surface)" }}>
                     {l.nome}
                   </span>
                   <span style={{ color: "var(--color-on-surface)" }}>{l.imovel || "—"}</span>
@@ -767,20 +672,11 @@ export default function Locatarios() {
                   </span>
                   <span>
                     <button
+                      className="ui-action ui-action--neutral"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/locatarios/${l.id}`);
-                      }}
-                      style={{
-                        backgroundColor: "var(--color-primary-container)",
-                        color: "var(--color-on-surface)",
-                        border: "1px solid var(--color-outline-variant)",
-                        borderRadius: "var(--radius-sm)",
-                        padding: "var(--space-1) var(--space-2)",
-                        fontSize: "var(--font-body-sm)",
-                        fontWeight: "600",
-                        cursor: "pointer",
                       }}
                     >
                       Dossiê
@@ -788,22 +684,22 @@ export default function Locatarios() {
                   </span>
                   <span style={{ display: "flex", gap: "var(--space-1)", alignItems: "center" }}>
                     <button
+                      className="ui-action ui-action--primary"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         editar(l);
                       }}
-                      style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", padding: "var(--space-1) var(--space-2)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                     >
                       Editar
                     </button>
                     <button
+                      className="ui-action ui-action--destructive"
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setLocatarioParaRescindir(l);
                       }}
-                      style={{ background: "var(--color-error-container)", color: "var(--color-error)", border: "none", borderRadius: "var(--radius-sm)", padding: "var(--space-1) var(--space-2)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                       title="Encerrar Contrato / Quebra de Contrato"
                     >
                       Rescindir

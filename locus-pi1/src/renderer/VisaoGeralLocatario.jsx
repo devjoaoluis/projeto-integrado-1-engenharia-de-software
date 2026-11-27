@@ -113,6 +113,13 @@ export default function VisaoGeralLocatario() {
   }, [toast]);
 
   useEffect(() => {
+    const previewUrl = previewDoc?.previewUrl;
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewDoc?.previewUrl]);
+
+  useEffect(() => {
     carregarDadosCompletos();
   }, [id]);
 
@@ -230,6 +237,7 @@ export default function VisaoGeralLocatario() {
     const ext = "." + file.name.split(".").pop().toLowerCase();
 
     if (!extensoesValidas.includes(ext)) {
+      setArquivoSelecionado(null);
       setErro("Formato não suportado. Apenas ficheiros PDF, JPG, JPEG e PNG são permitidos.");
       return;
     }
@@ -250,16 +258,19 @@ export default function VisaoGeralLocatario() {
     setEnviando(true);
     setErro("");
     try {
-      const filePath = window.api.getPathForFile
-        ? window.api.getPathForFile(arquivoSelecionado)
-        : arquivoSelecionado.path;
+      if (!id || !arquivoSelecionado.name) {
+        setErro("Não foi possível identificar o locatário ou o nome do arquivo.");
+        return;
+      }
+
+      const conteudo = new Uint8Array(await arquivoSelecionado.arrayBuffer());
 
       await window.api.documentos.upload({
         locatarioId: id,
         categoria: categoriaUpload,
-        nomeOriginal: arquivoSelecionado.name,
-        caminhoOrigem: filePath,
-        tamanhoBytes: arquivoSelecionado.size,
+        nomeArquivo: arquivoSelecionado.name,
+        conteudo,
+        mimeType: arquivoSelecionado.type || undefined,
       });
 
       setArquivoSelecionado(null);
@@ -279,7 +290,46 @@ export default function VisaoGeralLocatario() {
     setCarregandoPreview(true);
     try {
       const detalhado = await window.api.documentos.obter({ id: doc.id });
-      setPreviewDoc(detalhado || doc);
+      const extensao = (detalhado.nomeOriginal || doc.nomeOriginal || doc.name || "")
+        .split(".")
+        .pop()
+        .toLowerCase();
+      const mimeTypeInformado = (detalhado.mimeType || "").toLowerCase().split(";")[0].trim();
+      const mimeTypePorExtensao = {
+        pdf: "application/pdf",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+      }[extensao];
+      const mimeType =
+        mimeTypeInformado === "image/jpg"
+          ? "image/jpeg"
+          : ["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(
+              mimeTypeInformado
+            )
+            ? mimeTypeInformado
+            : mimeTypePorExtensao;
+      const tipoPreview =
+        mimeType === "application/pdf"
+          ? "pdf"
+          : ["image/jpeg", "image/png", "image/webp"].includes(mimeType)
+            ? "image"
+            : null;
+      const conteudo =
+        detalhado.conteudo instanceof Uint8Array
+          ? detalhado.conteudo
+          : new Uint8Array(detalhado.conteudo);
+      const previewUrl = tipoPreview
+        ? URL.createObjectURL(new Blob([conteudo], { type: mimeType }))
+        : null;
+
+      setPreviewDoc({
+        ...doc,
+        ...detalhado,
+        tipoPreview,
+        previewUrl,
+      });
     } catch (err) {
       console.error("Erro ao abrir pré-visualização:", err);
       setErro("Não foi possível pré-visualizar o documento.");
@@ -911,32 +961,65 @@ export default function VisaoGeralLocatario() {
               <strong style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)" }}>
                 {previewDoc.nomeOriginal || previewDoc.name || "Pré-visualização"}
               </strong>
-              <button
-                type="button"
-                onClick={() => setPreviewDoc(null)}
-                style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-on-surface)" }}
-              >
-                <X size={20} />
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+                <button
+                  type="button"
+                  className="ui-action ui-action--neutral"
+                  onClick={() => handleBaixarDocumento(previewDoc)}
+                  aria-label="Baixar arquivo"
+                >
+                  <Download size={15} aria-hidden="true" />
+                  Baixar arquivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  aria-label="Fechar pré-visualização"
+                  style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-on-surface)" }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
-            <div style={{ padding: "var(--space-4)", overflow: "auto", flex: 1, textAlign: "center" }}>
-              {previewDoc.dataUrl ? (
-                previewDoc.dataUrl.startsWith("data:image/") ? (
-                  <img
-                    src={previewDoc.dataUrl}
-                    alt={previewDoc.nomeOriginal || "Documento"}
-                    style={{ maxWidth: "100%", maxHeight: "65vh", borderRadius: "var(--radius-sm)" }}
-                  />
-                ) : (
-                  <iframe
-                    src={previewDoc.dataUrl}
-                    title="Pré-visualização PDF"
-                    style={{ width: "100%", height: "65vh", border: "none" }}
-                  />
-                )
+            <div
+              style={{
+                padding: "var(--space-4)",
+                overflow: "auto",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+              }}
+            >
+              {previewDoc.tipoPreview === "image" ? (
+                <img
+                  src={previewDoc.previewUrl}
+                  alt={previewDoc.nomeOriginal || "Documento"}
+                  onError={() =>
+                    setPreviewDoc((current) =>
+                      current
+                        ? { ...current, tipoPreview: null, previewUrl: null }
+                        : current
+                    )
+                  }
+                  style={{
+                    display: "block",
+                    maxWidth: "100%",
+                    maxHeight: "75vh",
+                    objectFit: "contain",
+                    borderRadius: "var(--radius-sm)",
+                  }}
+                />
+              ) : previewDoc.tipoPreview === "pdf" ? (
+                <iframe
+                  src={previewDoc.previewUrl}
+                  title="Pré-visualização PDF"
+                  style={{ width: "100%", height: "75vh", border: "none" }}
+                />
               ) : (
                 <p style={{ color: "var(--color-on-surface)" }}>
-                  Pré-visualização direta indisponível. Clique em "Baixar" para abrir o ficheiro.
+                  Não há pré-visualização disponível para este formato. Baixe o arquivo para abri-lo.
                 </p>
               )}
             </div>

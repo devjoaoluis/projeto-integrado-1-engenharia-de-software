@@ -247,12 +247,12 @@ function Imoveis() {
                     }
 
                     .filtro-buscar {
-                        background: var(--color-primary);
-                        color: var(--color-on-primary);
+                        background: var(--color-primary-action);
+                        color: var(--color-on-primary-action);
                     }
 
                     .filtro-buscar:hover {
-                        background: var(--color-primary);
+                        background: var(--color-primary-action-hover);
                     }
 
                     .filtro-limpar {
@@ -326,10 +326,7 @@ function Imoveis() {
                         cursor: pointer;
                     }
 
-                    .confirmacao-excluir {
-                        color: var(--color-on-primary);
-                        background: var(--color-error);
-                    }
+                    .confirmacao-excluir { color: var(--color-on-danger-action); background: var(--color-danger-action); }
                 `}
             </style>
 
@@ -340,6 +337,7 @@ function Imoveis() {
                 </div>
                 <div className="imoveis-acao">
                     <Button
+                        className="ui-action ui-action--primary ui-action--large"
                         texto="+ Cadastrar imóvel"
                         type="button"
                         onClick={() => navigate("/imoveis/cadastrar", { state: null })}
@@ -434,8 +432,8 @@ function Imoveis() {
                     </select>
                 </div>
 
-                <button className="filtro-botao filtro-buscar" type="submit">Buscar</button>
-                <button className="filtro-botao filtro-limpar" type="button" onClick={limparFiltros}>Limpar</button>
+                <button className="filtro-botao filtro-buscar ui-action ui-action--primary" type="submit">Buscar</button>
+                <button className="filtro-botao filtro-limpar ui-action ui-action--neutral" type="button" onClick={limparFiltros}>Limpar</button>
             </form>
 
             {erro && (
@@ -454,9 +452,9 @@ function Imoveis() {
                     <p style={{ fontSize: "var(--font-body-lg)", fontWeight: "600", color: "var(--color-on-surface)", margin: 0 }}>Nenhum imóvel encontrado</p>
                     <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", margin: "var(--space-1) 0 var(--space-4) 0" }}>Tente ajustar os filtros de busca ou cadastre um novo imóvel.</p>
                     <button
+                        className="ui-action ui-action--neutral"
                         type="button"
                         onClick={limparFiltros}
-                        style={{ background: "var(--color-surface-variant)", color: "var(--color-on-surface)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", padding: "var(--space-2) var(--space-4)", fontSize: "var(--font-body-md)", fontWeight: "600", cursor: "pointer" }}
                     >
                         Limpar filtros
                     </button>
@@ -490,8 +488,8 @@ function Imoveis() {
                         <h2 id="titulo-confirmacao-exclusao">Excluir imóvel?</h2>
                         <p>Tem certeza que deseja excluir “{imovelParaExcluir.title}”? Esta ação não pode ser desfeita.</p>
                         <div className="confirmacao-exclusao-acoes">
-                            <button type="button" onClick={() => setImovelParaExcluir(null)}>Cancelar</button>
-                            <button type="button" className="confirmacao-excluir" onClick={excluirConfirmado}>Excluir</button>
+                            <button className="ui-action ui-action--neutral" type="button" onClick={() => setImovelParaExcluir(null)}>Cancelar</button>
+                            <button type="button" className="confirmacao-excluir ui-action ui-action--destructive" onClick={excluirConfirmado}>Excluir</button>
                         </div>
                     </div>
                 </div>

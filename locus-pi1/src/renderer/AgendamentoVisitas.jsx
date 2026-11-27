@@ -254,10 +254,11 @@ export const AgendamentoVisitas = () => {
       {/* Top Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-4)", flexWrap: "wrap", gap: "var(--space-4)" }}>
         <div>
-          <button 
+          <button
+            className="ui-action ui-action--neutral"
             type="button"
             onClick={() => navigate("/imoveis")} 
-            style={{ background: "none", border: "none", color: "var(--color-on-surface)", cursor: "pointer", fontSize: "var(--font-body-md)", fontWeight: "500", display: "flex", alignItems: "center", gap: "var(--space-1)", padding: 0, marginBottom: "var(--space-2)" }}
+            style={{ marginBottom: "var(--space-2)" }}
           >
             &larr; Voltar para Imóveis
           </button>
@@ -270,21 +271,8 @@ export const AgendamentoVisitas = () => {
         </div>
 
         <button
+          className="ui-action ui-action--primary ui-action--large"
           onClick={() => handleAbrirNovoAgendamento()}
-          style={{
-            background: "var(--color-primary)",
-            color: "var(--color-on-primary)",
-            border: "none",
-            borderRadius: "var(--radius-sm)",
-            padding: "var(--space-2) var(--space-4)",
-            fontSize: "var(--font-body-md)",
-            fontWeight: "600",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "var(--space-2)",
-            boxShadow: "var(--elevation-1)"
-          }}
         >
           <Plus size={18} />
           Registrar Novo Agendamento
@@ -327,20 +315,20 @@ export const AgendamentoVisitas = () => {
             </h2>
             <div style={{ display: "flex", gap: "var(--space-2)" }}>
               <button
+                className="ui-action ui-action--neutral"
                 onClick={() => mudarMes(-1)}
-                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 &larr; Mês Anterior
               </button>
               <button
+                className="ui-action ui-action--neutral"
                 onClick={() => setCurrentDate(new Date())}
-                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 Hoje
               </button>
               <button
+                className="ui-action ui-action--neutral"
                 onClick={() => mudarMes(1)}
-                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 Próximo Mês &rarr;
               </button>
@@ -512,14 +500,14 @@ export const AgendamentoVisitas = () => {
                       <td style={{ padding: "var(--space-3)", color: "var(--color-on-surface)" }}>{v.notes || "-"}</td>
                       <td style={{ padding: "var(--space-3)", display: "flex", gap: "var(--space-2)" }}>
                         <button
+                          className="ui-action ui-action--primary"
                           onClick={() => handleEditarVisita(v)}
-                          style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                         >
                           Editar
                         </button>
                         <button
+                          className="ui-action ui-action--destructive"
                           onClick={() => handleDeletarVisita(v.id)}
-                          style={{ background: "var(--color-error-container)", color: "var(--color-error)", border: "none", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                         >
                           Excluir
                         </button>
@@ -748,15 +736,15 @@ export const AgendamentoVisitas = () => {
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)" }}>
                 <button
+                  className="ui-action ui-action--neutral ui-action--large"
                   type="button"
                   onClick={handleFecharModal}
-                  style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)", fontWeight: "600", fontSize: "var(--font-body-md)", cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
                 <button
+                  className="ui-action ui-action--primary ui-action--large"
                   type="submit"
-                  style={{ background: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", padding: "var(--space-2) var(--space-5)", borderRadius: "var(--radius-sm)", fontWeight: "600", fontSize: "var(--font-body-md)", cursor: "pointer" }}
                 >
                   {editingId ? "Salvar Alterações" : "Salvar Agendamento"}
                 </button>
