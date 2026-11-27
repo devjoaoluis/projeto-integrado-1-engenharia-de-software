@@ -338,28 +338,28 @@ export default function Vistorias() {
   }
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", paddingBottom: "40px" }}>
+    <div style={{ maxWidth: "1200px", margin: "0 auto", paddingBottom: "var(--space-6)" }}>
       <BotaoVoltar
         destino={imovelIdParam ? `/imoveis/${imovelIdParam}` : "/imoveis"}
         texto={imovelIdParam ? "Voltar para Detalhes do Imóvel" : "Voltar para Imóveis"}
       />
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px", borderBottom: "1px solid #e5e7eb" }}>
+      <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)", borderBottom: "1px solid var(--color-outline-variant)" }}>
         <button
           type="button"
           onClick={() => setAbaAtiva("registrar")}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "12px 20px",
-            fontSize: "15px",
+            gap: "var(--space-2)",
+            padding: "var(--space-3) var(--space-4)",
+            fontSize: "var(--font-body-md)",
             fontWeight: "600",
             backgroundColor: "transparent",
             border: "none",
-            borderBottom: abaAtiva === "registrar" ? "3px solid #1877f2" : "3px solid transparent",
-            color: abaAtiva === "registrar" ? "#1877f2" : "#64748b",
+            borderBottom: abaAtiva === "registrar" ? "3px solid var(--color-primary)" : "3px solid transparent",
+            color: abaAtiva === "registrar" ? "var(--color-primary)" : "var(--color-primary)",
             cursor: "pointer",
           }}
         >
@@ -372,14 +372,14 @@ export default function Vistorias() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "12px 20px",
-            fontSize: "15px",
+            gap: "var(--space-2)",
+            padding: "var(--space-3) var(--space-4)",
+            fontSize: "var(--font-body-md)",
             fontWeight: "600",
             backgroundColor: "transparent",
             border: "none",
-            borderBottom: abaAtiva === "consultar" ? "3px solid #1877f2" : "3px solid transparent",
-            color: abaAtiva === "consultar" ? "#1877f2" : "#64748b",
+            borderBottom: abaAtiva === "consultar" ? "3px solid var(--color-primary)" : "3px solid transparent",
+            color: abaAtiva === "consultar" ? "var(--color-primary)" : "var(--color-primary)",
             cursor: "pointer",
           }}
         >
@@ -392,18 +392,18 @@ export default function Vistorias() {
       {mensagemSucesso && (
         <div
           style={{
-            backgroundColor: "#ecfdf5",
-            border: "1px solid #a7f3d0",
-            color: "#065f46",
-            padding: "12px 16px",
-            borderRadius: "6px",
-            marginBottom: "16px",
+            backgroundColor: "var(--color-success-container)",
+            border: "1px solid var(--color-success)",
+            color: "var(--color-success)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "var(--space-2)",
           }}
         >
-          <CheckCircle2 size={20} color="#059669" />
+          <CheckCircle2 size={20} color="var(--color-success)" />
           <span>{mensagemSucesso}</span>
         </div>
       )}
@@ -411,18 +411,18 @@ export default function Vistorias() {
       {mensagemErro && (
         <div
           style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fecaca",
-            color: "#991b1b",
-            padding: "12px 16px",
-            borderRadius: "6px",
-            marginBottom: "16px",
+            backgroundColor: "var(--color-error-container)",
+            border: "1px solid var(--color-error)",
+            color: "var(--color-error)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
+            gap: "var(--space-2)",
           }}
         >
-          <AlertCircle size={20} color="#dc2626" />
+          <AlertCircle size={20} color="var(--color-error)" />
           <span>{mensagemErro}</span>
         </div>
       )}
@@ -432,21 +432,21 @@ export default function Vistorias() {
         <form
           onSubmit={handleSubmit}
           style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            padding: "24px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-outline-variant)",
+            borderRadius: "var(--radius-sm)",
+            padding: "var(--space-5)",
+            boxShadow: "var(--elevation-1)",
           }}
         >
-          <h3 style={{ fontSize: "18px", fontWeight: "bold", color: "#1e293b", marginTop: 0, marginBottom: "16px" }}>
+          <h3 style={{ fontSize: "var(--font-title-lg)", fontWeight: "bold", color: "var(--color-on-surface)", marginTop: 0, marginBottom: "var(--space-4)" }}>
             Dados da Vistoria
           </h3>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
             {/* Imovel */}
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Imóvel *
               </label>
               <select
@@ -455,10 +455,10 @@ export default function Vistorias() {
                 required
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 <option value="">Selecione um imóvel...</option>
@@ -472,7 +472,7 @@ export default function Vistorias() {
 
             {/* Contrato */}
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Contrato Associado *
               </label>
               <select
@@ -482,11 +482,11 @@ export default function Vistorias() {
                 disabled={!imovelId || contratos.length === 0}
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  backgroundColor: !imovelId || contratos.length === 0 ? "#f8fafc" : "#ffffff",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
+                  backgroundColor: !imovelId || contratos.length === 0 ? "var(--color-surface-variant)" : "var(--color-surface)",
                 }}
               >
                 <option value="">
@@ -505,16 +505,16 @@ export default function Vistorias() {
               {imovelId && contratos.length === 0 && (
                 <div
                   style={{
-                    marginTop: "8px",
-                    padding: "10px 12px",
-                    backgroundColor: "#fffbeb",
-                    border: "1px solid #fde68a",
-                    borderRadius: "6px",
-                    fontSize: "12px",
-                    color: "#92400e",
+                    marginTop: "var(--space-2)",
+                    padding: "var(--space-2) var(--space-3)",
+                    backgroundColor: "var(--color-warning-container)",
+                    border: "1px solid var(--color-warning)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "var(--font-body-sm)",
+                    color: "var(--color-warning)",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "6px",
+                    gap: "var(--space-1)",
                   }}
                 >
                   <span>
@@ -525,12 +525,12 @@ export default function Vistorias() {
                     onClick={() => navigate(`/imoveis/${imovelId}`)}
                     style={{
                       alignSelf: "flex-start",
-                      background: "#d97706",
-                      color: "#ffffff",
+                      background: "var(--color-warning)",
+                      color: "var(--color-on-warning)",
                       border: "none",
-                      borderRadius: "4px",
-                      padding: "5px 12px",
-                      fontSize: "12px",
+                      borderRadius: "var(--radius-xs)",
+                      padding: "var(--space-1) var(--space-3)",
+                      fontSize: "var(--font-body-sm)",
                       fontWeight: "600",
                       cursor: "pointer",
                     }}
@@ -542,25 +542,25 @@ export default function Vistorias() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
             {/* Tipo de Vistoria */}
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Tipo de Vistoria *
               </label>
-              <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ display: "flex", gap: "var(--space-2)" }}>
                 <button
                   type="button"
                   onClick={() => setTipoVistoria("ENTRY")}
                   style={{
                     flex: 1,
-                    padding: "10px",
-                    borderRadius: "6px",
-                    border: tipoVistoria === "ENTRY" ? "2px solid #16a34a" : "1px solid #cbd5e1",
-                    backgroundColor: tipoVistoria === "ENTRY" ? "#f0fdf4" : "#ffffff",
-                    color: tipoVistoria === "ENTRY" ? "#166534" : "#475569",
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius-sm)",
+                    border: tipoVistoria === "ENTRY" ? "2px solid var(--color-success)" : "1px solid var(--color-outline-variant)",
+                    backgroundColor: tipoVistoria === "ENTRY" ? "var(--color-success-container)" : "var(--color-surface-variant)",
+                    color: tipoVistoria === "ENTRY" ? "var(--color-success)" : "var(--color-on-surface)",
                     fontWeight: "600",
-                    fontSize: "14px",
+                    fontSize: "var(--font-body-md)",
                     cursor: "pointer",
                   }}
                 >
@@ -571,13 +571,13 @@ export default function Vistorias() {
                   onClick={() => setTipoVistoria("EXIT")}
                   style={{
                     flex: 1,
-                    padding: "10px",
-                    borderRadius: "6px",
-                    border: tipoVistoria === "EXIT" ? "2px solid #ea580c" : "1px solid #cbd5e1",
-                    backgroundColor: tipoVistoria === "EXIT" ? "#fff7ed" : "#ffffff",
-                    color: tipoVistoria === "EXIT" ? "#9a3412" : "#475569",
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius-sm)",
+                    border: tipoVistoria === "EXIT" ? "2px solid var(--color-warning)" : "1px solid var(--color-outline-variant)",
+                    backgroundColor: tipoVistoria === "EXIT" ? "var(--color-warning-container)" : "var(--color-surface-variant)",
+                    color: tipoVistoria === "EXIT" ? "var(--color-warning)" : "var(--color-on-surface)",
                     fontWeight: "600",
-                    fontSize: "14px",
+                    fontSize: "var(--font-body-md)",
                     cursor: "pointer",
                   }}
                 >
@@ -588,7 +588,7 @@ export default function Vistorias() {
 
             {/* Data da Vistoria */}
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Data da Realização *
               </label>
               <input
@@ -599,17 +599,17 @@ export default function Vistorias() {
                 required
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
                 }}
               />
             </div>
 
             {/* Referência do Laudo */}
             <div>
-              <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Referência / Laudo Técnico (Opcional)
               </label>
               <input
@@ -619,18 +619,18 @@ export default function Vistorias() {
                 onChange={(e) => setReportReference(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
                 }}
               />
             </div>
           </div>
 
           {/* Descrição */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+          <div style={{ marginBottom: "var(--space-4)" }}>
+            <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
               Descrição e Constatações do Imóvel *
             </label>
             <textarea
@@ -641,40 +641,40 @@ export default function Vistorias() {
               required
               style={{
                 width: "100%",
-                padding: "10px 12px",
-                borderRadius: "6px",
-                border: "1px solid #cbd5e1",
-                fontSize: "14px",
-                fontFamily: "inherit",
+                padding: "var(--space-2) var(--space-3)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-outline-variant)",
+                fontSize: "var(--font-body-md)",
+                fontFamily: "var(--font-family-base)",
               }}
             />
           </div>
 
           {/* Upload de Fotos e Vídeos */}
-          <div style={{ marginBottom: "24px" }}>
-            <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+          <div style={{ marginBottom: "var(--space-5)" }}>
+            <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
               Anexo de Evidências: Fotos e Vídeos
             </label>
-            <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 10px" }}>
+            <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", margin: "0 0 var(--space-2)" }}>
               Formatos aceitos: JPG, JPEG, PNG, WEBP (fotos) e MP4, MKV, WEBM (vídeos). As mídias originais são preservadas e copiadas com segurança.
             </p>
 
             <div
               style={{
-                border: "2px dashed #cbd5e1",
-                borderRadius: "8px",
-                padding: "24px",
+                border: "2px dashed var(--color-outline-variant)",
+                borderRadius: "var(--radius-sm)",
+                padding: "var(--space-5)",
                 textAlign: "center",
-                backgroundColor: "#f8fafc",
+                backgroundColor: "var(--color-primary-container)",
                 cursor: "pointer",
               }}
               onClick={() => document.getElementById("file-input-vistoria").click()}
             >
-              <UploadCloud size={36} color="#1877f2" style={{ margin: "0 auto 8px" }} />
-              <p style={{ fontSize: "14px", fontWeight: "600", color: "#1e293b", margin: "0 0 4px" }}>
+              <UploadCloud size={36} color="var(--color-primary)" style={{ margin: "0 auto var(--space-2)" }} />
+              <p style={{ fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface)", margin: "0 0 var(--space-1)" }}>
                 Clique para selecionar fotos e vídeos do computador
               </p>
-              <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+              <p style={{ fontSize: "var(--font-body-sm)", color: "var(--color-on-surface)", margin: 0 }}>
                 Você pode selecionar múltiplos arquivos simultaneamente
               </p>
               <input
@@ -689,23 +689,23 @@ export default function Vistorias() {
 
             {/* Lista de Arquivos Selecionados */}
             {arquivosSelecionados.length > 0 && (
-              <div style={{ marginTop: "16px" }}>
-                <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#334155", marginBottom: "8px" }}>
+              <div style={{ marginTop: "var(--space-4)" }}>
+                <h4 style={{ fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface)", marginBottom: "var(--space-2)" }}>
                   Mídias a serem enviadas ({arquivosSelecionados.length}):
                 </h4>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "var(--space-3)" }}>
                   {arquivosSelecionados.map((item, idx) => (
                     <div
                       key={idx}
                       style={{
                         position: "relative",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "6px",
-                        padding: "8px",
-                        backgroundColor: "#ffffff",
+                        border: "1px solid var(--color-outline-variant)",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "var(--space-2)",
+                        backgroundColor: "var(--color-surface)",
                         display: "flex",
                         flexDirection: "column",
-                        gap: "6px",
+                        gap: "var(--space-1)",
                       }}
                     >
                       <button
@@ -718,10 +718,10 @@ export default function Vistorias() {
                           position: "absolute",
                           top: "4px",
                           right: "4px",
-                          backgroundColor: "rgba(220, 38, 38, 0.9)",
-                          color: "#ffffff",
+                          backgroundColor: "var(--color-error)",
+                          color: "var(--color-on-error)",
                           border: "none",
-                          borderRadius: "50%",
+                          borderRadius: "var(--radius-full)",
                           width: "22px",
                           height: "22px",
                           display: "flex",
@@ -743,7 +743,7 @@ export default function Vistorias() {
                             width: "100%",
                             height: "110px",
                             objectFit: "cover",
-                            borderRadius: "4px",
+                            borderRadius: "var(--radius-xs)",
                           }}
                         />
                       ) : (
@@ -751,25 +751,25 @@ export default function Vistorias() {
                           style={{
                             width: "100%",
                             height: "110px",
-                            backgroundColor: "#0f172a",
-                            color: "#ffffff",
-                            borderRadius: "4px",
+                            backgroundColor: "var(--color-primary)",
+                            color: "var(--color-on-primary)",
+                            borderRadius: "var(--radius-xs)",
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
                             justifyContent: "center",
-                            gap: "6px",
+                            gap: "var(--space-1)",
                           }}
                         >
-                          <Video size={30} color="#38bdf8" />
-                          <span style={{ fontSize: "11px", fontWeight: "600" }}>VÍDEO</span>
+                          <Video size={30} color="var(--color-info)" />
+                          <span style={{ fontSize: "var(--font-body-sm)", fontWeight: "600" }}>VÍDEO</span>
                         </div>
                       )}
 
-                      <div style={{ fontSize: "12px", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontSize: "var(--font-body-sm)", color: "var(--color-on-surface)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.name}
                       </div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>{item.size}</div>
+                      <div style={{ fontSize: "var(--font-body-sm)", color: "var(--color-on-surface)" }}>{item.size}</div>
                     </div>
                   ))}
                 </div>
@@ -777,22 +777,22 @@ export default function Vistorias() {
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)" }}>
             <button
               type="submit"
               disabled={salvando}
               style={{
-                backgroundColor: tipoVistoria === "EXIT" ? "#ea580c" : "#16a34a",
-                color: "#ffffff",
+                backgroundColor: tipoVistoria === "EXIT" ? "var(--color-warning)" : "var(--color-success)",
+                color: tipoVistoria === "EXIT" ? "var(--color-on-warning)" : "var(--color-on-success)",
                 border: "none",
-                borderRadius: "6px",
-                padding: "12px 24px",
-                fontSize: "15px",
+                borderRadius: "var(--radius-sm)",
+                padding: "var(--space-3) var(--space-5)",
+                fontSize: "var(--font-body-md)",
                 fontWeight: "bold",
                 cursor: salvando ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "var(--space-2)",
                 opacity: salvando ? 0.7 : 1,
               }}
             >
@@ -811,20 +811,20 @@ export default function Vistorias() {
       {abaAtiva === "consultar" && (
         <div
           style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "8px",
-            padding: "24px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-outline-variant)",
+            borderRadius: "var(--radius-sm)",
+            padding: "var(--space-5)",
+            boxShadow: "var(--elevation-1)",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
+            <h3 style={{ fontSize: "var(--font-title-lg)", fontWeight: "bold", color: "var(--color-on-surface)", margin: 0 }}>
               Consultar Vistorias Registradas
             </h3>
 
             <div style={{ width: "350px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "4px" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Filtrar por Imóvel:
               </label>
               <select
@@ -832,10 +832,10 @@ export default function Vistorias() {
                 onChange={(e) => setFiltroImovelId(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 <option value="">Selecione um imóvel para listar...</option>
@@ -849,19 +849,19 @@ export default function Vistorias() {
           </div>
 
           {!filtroImovelId ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-              <Building2 size={40} color="#94a3b8" style={{ margin: "0 auto 12px" }} />
-              <p style={{ fontSize: "15px", margin: 0 }}>
+            <div style={{ padding: "var(--space-6)", textAlign: "center", color: "var(--color-on-surface)" }}>
+              <Building2 size={40} color="var(--color-primary)" style={{ margin: "0 auto var(--space-3)" }} />
+              <p style={{ fontSize: "var(--font-body-md)", margin: 0 }}>
                 Selecione um imóvel acima para carregar as vistorias de entrada e saída registradas.
               </p>
             </div>
           ) : carregandoLista ? (
-            <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>
+            <p style={{ textAlign: "center", color: "var(--color-on-surface)", padding: "var(--space-4)" }}>
               Carregando vistorias...
             </p>
           ) : listaVistorias.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>
-              <p style={{ fontSize: "15px", margin: "0 0 10px" }}>
+            <div style={{ padding: "var(--space-6)", textAlign: "center", color: "var(--color-on-surface)" }}>
+              <p style={{ fontSize: "var(--font-body-md)", margin: "0 0 var(--space-2)" }}>
                 Nenhuma vistoria registrada para este imóvel.
               </p>
               <button
@@ -871,11 +871,11 @@ export default function Vistorias() {
                   setAbaAtiva("registrar");
                 }}
                 style={{
-                  backgroundColor: "#1877f2",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-on-primary)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "600",
                   cursor: "pointer",
                 }}
@@ -885,14 +885,14 @@ export default function Vistorias() {
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--font-body-md)" }}>
                 <thead>
-                  <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                    <th style={{ padding: "12px" }}>Tipo</th>
-                    <th style={{ padding: "12px" }}>Data</th>
-                    <th style={{ padding: "12px" }}>Laudo / Ref</th>
-                    <th style={{ padding: "12px" }}>Descrição</th>
-                    <th style={{ padding: "12px", textAlign: "center" }}>Ações</th>
+                  <tr style={{ backgroundColor: "var(--color-primary-container)", borderBottom: "2px solid var(--color-outline-variant)" }}>
+                    <th style={{ padding: "var(--space-3)" }}>Tipo</th>
+                    <th style={{ padding: "var(--space-3)" }}>Data</th>
+                    <th style={{ padding: "var(--space-3)" }}>Laudo / Ref</th>
+                    <th style={{ padding: "var(--space-3)" }}>Descrição</th>
+                    <th style={{ padding: "var(--space-3)", textAlign: "center" }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -900,45 +900,45 @@ export default function Vistorias() {
                     const isExit = v.type === "EXIT";
                     const dataFormatada = new Date(v.inspectedAt).toLocaleDateString("pt-BR");
                     return (
-                      <tr key={v.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "12px" }}>
+                      <tr key={v.id} style={{ borderBottom: "1px solid var(--color-outline-variant)" }}>
+                        <td style={{ padding: "var(--space-3)" }}>
                           <span
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "4px",
-                              padding: "4px 8px",
-                              borderRadius: "12px",
-                              fontSize: "12px",
+                              gap: "var(--space-1)",
+                              padding: "var(--space-1) var(--space-2)",
+                              borderRadius: "var(--radius-md)",
+                              fontSize: "var(--font-body-sm)",
                               fontWeight: "bold",
-                              backgroundColor: isExit ? "#ffedd5" : "#dcfce7",
-                              color: isExit ? "#c2410c" : "#15803d",
+                              backgroundColor: isExit ? "var(--color-warning-container)" : "var(--color-success-container)",
+                              color: isExit ? "var(--color-primary)" : "var(--color-success)",
                             }}
                           >
                             {isExit ? "SAÍDA (EXIT)" : "ENTRADA (ENTRY)"}
                           </span>
                         </td>
-                        <td style={{ padding: "12px" }}>{dataFormatada}</td>
-                        <td style={{ padding: "12px" }}>{v.reportReference || "—"}</td>
-                        <td style={{ padding: "12px", maxWidth: "350px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "var(--space-3)" }}>{dataFormatada}</td>
+                        <td style={{ padding: "var(--space-3)" }}>{v.reportReference || "—"}</td>
+                        <td style={{ padding: "var(--space-3)", maxWidth: "350px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {v.description}
                         </td>
-                        <td style={{ padding: "12px", textAlign: "center" }}>
+                        <td style={{ padding: "var(--space-3)", textAlign: "center" }}>
                           <button
                             type="button"
                             onClick={() => abrirDetalhesVistoria(v.id)}
                             style={{
-                              backgroundColor: "#f1f5f9",
-                              color: "#1e293b",
-                              border: "1px solid #cbd5e1",
-                              borderRadius: "4px",
-                              padding: "6px 12px",
-                              fontSize: "13px",
+                              backgroundColor: "var(--color-primary-container)",
+                              color: "var(--color-on-surface)",
+                              border: "1px solid var(--color-outline-variant)",
+                              borderRadius: "var(--radius-xs)",
+                              padding: "var(--space-1) var(--space-3)",
+                              fontSize: "var(--font-body-md)",
                               fontWeight: "600",
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
-                              gap: "6px",
+                              gap: "var(--space-1)",
                             }}
                           >
                             <Eye size={14} />
@@ -966,43 +966,43 @@ export default function Vistorias() {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)",
+            backgroundColor: "var(--color-scrim)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 100,
-            padding: "20px",
+            padding: "var(--space-4)",
           }}
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "10px",
+              backgroundColor: "var(--color-surface)",
+              borderRadius: "var(--radius-md)",
               width: "100%",
               maxWidth: "750px",
               maxHeight: "90vh",
               overflowY: "auto",
-              padding: "24px",
+              padding: "var(--space-5)",
               position: "relative",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-4)" }}>
               <div>
                 <span
                   style={{
                     display: "inline-block",
-                    padding: "4px 8px",
-                    borderRadius: "12px",
-                    fontSize: "12px",
+                    padding: "var(--space-1) var(--space-2)",
+                    borderRadius: "var(--radius-md)",
+                    fontSize: "var(--font-body-sm)",
                     fontWeight: "bold",
-                    marginBottom: "6px",
-                    backgroundColor: vistoriaDetalhe.type === "EXIT" ? "#ffedd5" : "#dcfce7",
-                    color: vistoriaDetalhe.type === "EXIT" ? "#c2410c" : "#15803d",
+                    marginBottom: "var(--space-1)",
+                    backgroundColor: vistoriaDetalhe.type === "EXIT" ? "var(--color-warning-container)" : "var(--color-success-container)",
+                    color: vistoriaDetalhe.type === "EXIT" ? "var(--color-primary)" : "var(--color-success)",
                   }}
                 >
                   {vistoriaDetalhe.type === "EXIT" ? "Vistoria de Saída" : "Vistoria de Entrada"}
                 </span>
-                <h3 style={{ fontSize: "20px", fontWeight: "bold", margin: 0, color: "#1e293b" }}>
+                <h3 style={{ fontSize: "var(--font-title-lg)", fontWeight: "bold", margin: 0, color: "var(--color-on-surface)" }}>
                   Detalhes da Vistoria
                 </h3>
               </div>
@@ -1013,14 +1013,14 @@ export default function Vistorias() {
                   backgroundColor: "transparent",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "var(--color-on-surface)",
                 }}
               >
                 <X size={24} />
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px", fontSize: "14px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", marginBottom: "var(--space-4)", fontSize: "var(--font-body-md)" }}>
               <div>
                 <strong>Data de Realização:</strong>{" "}
                 {new Date(vistoriaDetalhe.inspectedAt).toLocaleDateString("pt-BR")}
@@ -1031,28 +1031,28 @@ export default function Vistorias() {
               </div>
               <div style={{ gridColumn: "span 2" }}>
                 <strong>Descrição:</strong>
-                <p style={{ marginTop: "4px", backgroundColor: "#f8fafc", padding: "10px", borderRadius: "6px", border: "1px solid #e2e8f0" }}>
+                <p style={{ marginTop: "var(--space-1)", backgroundColor: "var(--color-primary-container)", padding: "var(--space-2)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)" }}>
                   {vistoriaDetalhe.description}
                 </p>
               </div>
             </div>
 
-            <h4 style={{ fontSize: "16px", fontWeight: "bold", color: "#1e293b", marginBottom: "12px" }}>
+            <h4 style={{ fontSize: "var(--font-body-lg)", fontWeight: "bold", color: "var(--color-on-surface)", marginBottom: "var(--space-3)" }}>
               Mídias Anexadas ({vistoriaDetalhe.media?.length || 0})
             </h4>
 
             {(!vistoriaDetalhe.media || vistoriaDetalhe.media.length === 0) ? (
-              <p style={{ color: "#64748b", fontSize: "14px" }}>Nenhuma foto ou vídeo anexado a esta vistoria.</p>
+              <p style={{ color: "var(--color-on-surface)", fontSize: "var(--font-body-md)" }}>Nenhuma foto ou vídeo anexado a esta vistoria.</p>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "var(--space-3)" }}>
                 {vistoriaDetalhe.media.map((m) => (
                   <div
                     key={m.id}
                     style={{
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "6px",
+                      border: "1px solid var(--color-outline-variant)",
+                      borderRadius: "var(--radius-sm)",
                       overflow: "hidden",
-                      backgroundColor: "#f8fafc",
+                      backgroundColor: "var(--color-primary-container)",
                     }}
                   >
                     {m.type === "IMAGE" ? (
@@ -1069,7 +1069,7 @@ export default function Vistorias() {
                             fb.style.padding = "20px";
                             fb.style.fontSize = "12px";
                             fb.style.textAlign = "center";
-                            fb.style.color = "#64748b";
+                            fb.style.color = "var(--color-primary)";
                             fb.textContent = `Foto gravada no sistema: ${m.fileName}`;
                             e.target.parentElement.appendChild(fb);
                           }
@@ -1079,8 +1079,8 @@ export default function Vistorias() {
                       <div
                         style={{
                           height: "140px",
-                          backgroundColor: "#0f172a",
-                          color: "#ffffff",
+                          backgroundColor: "var(--color-primary)",
+                          color: "var(--color-on-primary)",
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
@@ -1095,20 +1095,20 @@ export default function Vistorias() {
                         />
                       </div>
                     )}
-                    <div style={{ padding: "8px 10px", fontSize: "12px", color: "#475569" }}>
+                    <div style={{ padding: "var(--space-2) var(--space-2)", fontSize: "var(--font-body-sm)", color: "var(--color-on-surface)" }}>
                       <div
                         style={{ fontWeight: "600", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}
                         title={m.fileName}
                       >
                         {m.fileName}
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "var(--space-1)" }}>
                         <span>{(m.size / (1024 * 1024)).toFixed(2)} MB</span>
                         <a
                           href={mediaFileUrl(m.filePath)}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ color: "#1877f2", textDecoration: "none", fontWeight: "600", fontSize: "11px" }}
+                          style={{ color: "var(--color-primary)", textDecoration: "none", fontWeight: "600", fontSize: "var(--font-body-sm)" }}
                         >
                           Visualizar
                         </a>
@@ -1119,16 +1119,16 @@ export default function Vistorias() {
               </div>
             )}
 
-            <div style={{ marginTop: "24px", display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ marginTop: "var(--space-5)", display: "flex", justifyContent: "flex-end" }}>
               <button
                 type="button"
                 onClick={() => setVistoriaDetalhe(null)}
                 style={{
-                  backgroundColor: "#1877f2",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-on-primary)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 20px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "bold",
                   cursor: "pointer",
                 }}

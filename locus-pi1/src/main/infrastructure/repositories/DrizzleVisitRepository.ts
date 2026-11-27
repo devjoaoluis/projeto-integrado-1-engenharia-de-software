@@ -1,23 +1,43 @@
-import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../database/db";
 import { propertyVisits } from "../database/schema/property-visits";
 import { properties } from "../database/schema/properties";
 import { clients } from "../database/schema/clients";
-import { Visit, VisitWithDetails } from "../../domain/entities/Visit";
+import { Visit, VisitReminderLeadMinutes, VisitWithDetails } from "../../domain/entities/Visit";
 import { IVisitRepository, VisitFilter } from "../../domain/repositories/IVisitRepository";
+
+function isScheduleConflict(error: unknown): boolean {
+  let current = error;
+  while (current instanceof Error) {
+    if (current.message.includes("VISIT_TIME_CONFLICT")) {
+      return true;
+    }
+    current = current.cause;
+  }
+  return false;
+}
 
 export class DrizzleVisitRepository implements IVisitRepository {
   async create(visit: Visit): Promise<Visit> {
-    await db.insert(propertyVisits).values({
-      id: visit.id,
-      propertyId: visit.propertyId,
-      clientId: visit.clientId,
-      scheduledAt: visit.scheduledAt,
-      status: visit.status,
-      notes: visit.notes,
-      createdAt: visit.createdAt,
-      updatedAt: visit.updatedAt,
-    });
+    try {
+      await db.insert(propertyVisits).values({
+        id: visit.id,
+        propertyId: visit.propertyId,
+        clientId: visit.clientId,
+        scheduledAt: visit.scheduledAt,
+        reminderLeadMinutes: visit.reminderLeadMinutes,
+        notificationSent: visit.notificationSent,
+        status: visit.status,
+        notes: visit.notes,
+        createdAt: visit.createdAt,
+        updatedAt: visit.updatedAt,
+      });
+    } catch (error) {
+      if (isScheduleConflict(error)) {
+        throw new Error("Horário já ocupado por outra visita agendada.");
+      }
+      throw error;
+    }
     return visit;
   }
 
@@ -37,6 +57,8 @@ export class DrizzleVisitRepository implements IVisitRepository {
         propertyId: propertyVisits.propertyId,
         clientId: propertyVisits.clientId,
         scheduledAt: propertyVisits.scheduledAt,
+        reminderLeadMinutes: propertyVisits.reminderLeadMinutes,
+        notificationSent: propertyVisits.notificationSent,
         status: propertyVisits.status,
         notes: propertyVisits.notes,
         createdAt: propertyVisits.createdAt,
@@ -81,6 +103,8 @@ export class DrizzleVisitRepository implements IVisitRepository {
         propertyId: propertyVisits.propertyId,
         clientId: propertyVisits.clientId,
         scheduledAt: propertyVisits.scheduledAt,
+        reminderLeadMinutes: propertyVisits.reminderLeadMinutes,
+        notificationSent: propertyVisits.notificationSent,
         status: propertyVisits.status,
         notes: propertyVisits.notes,
         createdAt: propertyVisits.createdAt,
@@ -119,6 +143,8 @@ export class DrizzleVisitRepository implements IVisitRepository {
         propertyId: propertyVisits.propertyId,
         clientId: propertyVisits.clientId,
         scheduledAt: propertyVisits.scheduledAt,
+        reminderLeadMinutes: propertyVisits.reminderLeadMinutes,
+        notificationSent: propertyVisits.notificationSent,
         status: propertyVisits.status,
         notes: propertyVisits.notes,
         createdAt: propertyVisits.createdAt,
@@ -145,25 +171,59 @@ export class DrizzleVisitRepository implements IVisitRepository {
   }
 
   async update(visit: Visit): Promise<Visit> {
-    const updated = await db
-      .update(propertyVisits)
-      .set({
-        propertyId: visit.propertyId,
-        clientId: visit.clientId,
-        scheduledAt: visit.scheduledAt,
-        status: visit.status,
-        notes: visit.notes,
-        updatedAt: visit.updatedAt,
-      })
-      .where(eq(propertyVisits.id, visit.id))
-      .returning()
-      .get();
+    let updated;
+    try {
+      updated = await db
+        .update(propertyVisits)
+        .set({
+          propertyId: visit.propertyId,
+          clientId: visit.clientId,
+          scheduledAt: visit.scheduledAt,
+          reminderLeadMinutes: visit.reminderLeadMinutes,
+          notificationSent: visit.notificationSent,
+          status: visit.status,
+          notes: visit.notes,
+          updatedAt: visit.updatedAt,
+        })
+        .where(eq(propertyVisits.id, visit.id))
+        .returning()
+        .get();
+    } catch (error) {
+      if (isScheduleConflict(error)) {
+        throw new Error("Horário já ocupado por outra visita agendada.");
+      }
+      throw error;
+    }
 
     if (!updated) {
       throw new Error("Agendamento de visita não encontrado para atualização.");
     }
 
     return updated as Visit;
+  }
+
+  async markNotificationSent(
+    id: string,
+    scheduledAt: number,
+    reminderLeadMinutes: VisitReminderLeadMinutes,
+    now: number
+  ): Promise<boolean> {
+    const updated = await db
+      .update(propertyVisits)
+      .set({ notificationSent: true, updatedAt: now })
+      .where(
+        and(
+          eq(propertyVisits.id, id),
+          eq(propertyVisits.notificationSent, false),
+          eq(propertyVisits.status, "AGENDADA"),
+          eq(propertyVisits.scheduledAt, scheduledAt),
+          eq(propertyVisits.reminderLeadMinutes, reminderLeadMinutes),
+          gte(propertyVisits.scheduledAt, now + 1)
+        )
+      )
+      .returning({ id: propertyVisits.id })
+      .get();
+    return Boolean(updated);
   }
 
   async delete(id: string): Promise<void> {

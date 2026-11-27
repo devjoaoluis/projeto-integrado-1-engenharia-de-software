@@ -96,32 +96,32 @@ function Contatos() {
     <>
       <BotaoVoltar destino="/home" texto="Voltar" />
       <style>{`
-        .contatos { display: flex; flex-direction: column; gap: 20px; }
+        .contatos { display: flex; flex-direction: column; gap: var(--space-4); }
         .contatos-abas { display: flex; }
-        .contatos-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-        .contatos-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
-        .contatos-form label { display: flex; flex-direction: column; gap: 6px; color: #555; font-size: 12px; font-weight: 600; }
-        .contatos-form input, .contatos-form select { min-height: 40px; padding: 0 10px; border: 1px solid #c8cdd2; border-radius: 4px; }
+        .contatos-card { background: var(--color-surface); padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--elevation-2); }
+        .contatos-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); align-items: end; }
+        .contatos-form label { display: flex; flex-direction: column; gap: var(--space-1); color: var(--color-on-surface-variant); font-size: var(--font-body-sm); font-weight: 600; }
+        .contatos-form input, .contatos-form select { min-height: 40px; padding: 0 var(--space-2); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-xs); }
         .contatos-form .campo-largo { grid-column: span 2; }
         .contatos-filtro { margin-bottom: 16px; }
-        .contatos-filtro label { display: flex; flex-direction: column; gap: 6px; color: #555; font-size: 12px; font-weight: 600; }
-        .contatos-filtro input { width: 100%; box-sizing: border-box; min-height: 38px; padding: 0 10px; border: 1px solid #c8cdd2; border-radius: 4px; }
-        .contatos-acoes { display: flex; gap: 8px; }
-        .contatos-acoes button, .contato-acao { min-height: 38px; padding: 0 14px; border: none; border-radius: 4px; cursor: pointer; background: #1976d2; color: white; font-weight: 600; }
-        .contatos-acoes .cancelar, .contato-acao.excluir { background: #e5e7eb; color: #333; }
-        .contato-acao.excluir { color: #b42318; }
-        .contato-acao.repasse { background: #059669; color: white; }
+        .contatos-filtro label { display: flex; flex-direction: column; gap: var(--space-1); color: var(--color-on-surface-variant); font-size: var(--font-body-sm); font-weight: 600; }
+        .contatos-filtro input { width: 100%; box-sizing: border-box; min-height: 38px; padding: 0 var(--space-2); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-xs); }
+        .contatos-acoes { display: flex; gap: var(--space-2); }
+        .contatos-acoes button, .contato-acao { min-height: 38px; padding: 0 var(--space-3); border: none; border-radius: var(--radius-xs); cursor: pointer; background: var(--color-primary); color: var(--color-on-primary); font-weight: 600; }
+        .contatos-acoes .cancelar, .contato-acao.excluir { background: var(--color-background); color: var(--color-on-surface); }
+        .contato-acao.excluir { color: var(--color-error); }
+        .contato-acao.repasse { background: var(--color-success); color: var(--color-on-primary); }
         .contatos-tabela { width: 100%; border-collapse: collapse; }
-        .contatos-tabela th, .contatos-tabela td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; }
-        .contatos-tabela th { color: #555; font-size: 13px; }
-        .contatos-tabela td { font-size: 14px; }
-        .contato-acoes { display: flex; gap: 8px; }
-        .contatos-erro { padding: 14px 16px; border: 1px solid #f2b8b5; border-radius: 8px; background: #fff5f5; color: #8a1c1c; }
-        .confirmacao-exclusao { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.35); }
-        .confirmacao-exclusao-conteudo { width: min(420px, calc(100vw - 32px)); padding: 24px; border-radius: 8px; background: white; box-shadow: 0 8px 28px rgba(0,0,0,.2); }
-        .confirmacao-exclusao-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-        .confirmacao-exclusao-acoes button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 4px; cursor: pointer; }
-        .confirmacao-excluir { color: white; background: #d32f2f; }
+        .contatos-tabela th, .contatos-tabela td { padding: var(--space-3) var(--space-2); border-bottom: 1px solid var(--color-outline-variant); text-align: left; }
+        .contatos-tabela th { color: var(--color-on-surface); font-size: var(--font-body-md); }
+        .contatos-tabela td { font-size: var(--font-body-md); }
+        .contato-acoes { display: flex; gap: var(--space-2); }
+        .contatos-erro { padding: var(--space-3) var(--space-4); border: 1px solid var(--color-error); border-radius: var(--radius-sm); background: var(--color-error-container); color: var(--color-error); }
+        .confirmacao-exclusao { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: var(--color-scrim); }
+        .confirmacao-exclusao-conteudo { width: min(420px, calc(100vw - 32px)); padding: var(--space-5); border-radius: var(--radius-sm); background: var(--color-surface); box-shadow: var(--elevation-2); }
+        .confirmacao-exclusao-acoes { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: 20px; }
+        .confirmacao-exclusao-acoes button { min-height: 38px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-xs); cursor: pointer; }
+        .confirmacao-excluir { color: var(--color-on-primary); background: var(--color-error); }
         @media (max-width: 900px) {
           .contatos-form { grid-template-columns: repeat(2, 1fr); }
           .contatos-form .campo-largo { grid-column: span 2; }
@@ -268,33 +268,33 @@ function ModalRepasse({ proprietario, onClose }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center",
-      background: "rgba(0,0,0,0.45)", backdropFilter: "blur(2px)", fontFamily: "Inter, sans-serif"
+      background: "var(--color-scrim)", backdropFilter: "blur(2px)", fontFamily: "var(--font-family-base)"
     }} role="dialog" aria-modal="true">
       <div style={{
-        background: "white", width: "min(720px, calc(100vw - 32px))", maxHeight: "90vh", borderRadius: "10px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", overflow: "hidden"
+        background: "var(--color-surface)", width: "min(720px, calc(100vw - 32px))", maxHeight: "90vh", borderRadius: "var(--radius-md)",
+        boxShadow: "var(--elevation-4)", display: "flex", flexDirection: "column", overflow: "hidden"
       }}>
-        <div style={{ padding: "16px 20px", background: "#0f274a", color: "white", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ padding: "var(--space-4) var(--space-4)", background: "var(--color-primary)", color: "var(--color-on-primary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h2 style={{ fontSize: "16px", margin: 0, fontWeight: 700 }}>Relatório de Repasse ao Proprietário (RF18)</h2>
-            <span style={{ fontSize: "12px", opacity: 0.85 }}>Prestação de contas: {proprietario.name}</span>
+            <h2 style={{ fontSize: "var(--font-body-lg)", margin: 0, fontWeight: 700 }}>Relatório de Repasse ao Proprietário (RF18)</h2>
+            <span style={{ fontSize: "var(--font-body-sm)", opacity: 0.85 }}>Prestação de contas: {proprietario.name}</span>
           </div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "white", fontSize: "20px", cursor: "pointer" }}>×</button>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "var(--color-on-primary)", fontSize: "var(--font-title-lg)", cursor: "pointer" }}>×</button>
         </div>
 
-        <div style={{ padding: "20px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "12px", fontWeight: 600, color: "#374151" }}>
+        <div style={{ padding: "var(--space-4)", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", fontSize: "var(--font-body-sm)", fontWeight: 600, color: "var(--color-on-surface-variant)" }}>
               Competência (MM/AAAA)
               <input
                 type="text"
                 value={mesAno}
                 onChange={(e) => setMesAno(e.target.value)}
                 placeholder="Ex: 03/2026"
-                style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px" }}
+                style={{ padding: "var(--space-2) var(--space-2)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)" }}
               />
             </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "12px", fontWeight: 600, color: "#374151" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", fontSize: "var(--font-body-sm)", fontWeight: 600, color: "var(--color-on-surface-variant)" }}>
               Taxa de Administração (%)
               <input
                 type="number"
@@ -303,72 +303,72 @@ function ModalRepasse({ proprietario, onClose }) {
                 step="0.5"
                 value={taxaAdm}
                 onChange={(e) => setTaxaAdm(e.target.value)}
-                style={{ padding: "8px 10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px" }}
+                style={{ padding: "var(--space-2) var(--space-2)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)" }}
               />
             </label>
           </div>
 
           {erro && (
-            <div style={{ padding: "10px 14px", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: "6px", color: "#991b1b", fontSize: "13px" }}>
+            <div style={{ padding: "var(--space-2) var(--space-3)", background: "var(--color-error-container)", border: "1px solid var(--color-error)", borderRadius: "var(--radius-sm)", color: "var(--color-error)", fontSize: "var(--font-body-md)" }}>
               {erro}
             </div>
           )}
 
           {sucesso && (
-            <div style={{ padding: "10px 14px", background: "#dcfce7", border: "1px solid #bbf7d0", borderRadius: "6px", color: "#166534", fontSize: "13px" }}>
+            <div style={{ padding: "var(--space-2) var(--space-3)", background: "var(--color-success-container)", border: "1px solid var(--color-success)", borderRadius: "var(--radius-sm)", color: "var(--color-success)", fontSize: "var(--font-body-md)" }}>
               {sucesso}
             </div>
           )}
 
           {carregando ? (
-            <p style={{ textAlign: "center", color: "#64748b", padding: "20px" }}>Calculando repasse...</p>
+            <p style={{ textAlign: "center", color: "var(--color-on-surface)", padding: "var(--space-4)" }}>Calculando repasse...</p>
           ) : relatorio ? (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-                <div style={{ padding: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#166534" }}>TOTAL RECEBIDO</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#14532d", marginTop: "4px" }}>{formatarMoeda(relatorio.totalGrossAmount)}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-3)" }}>
+                <div style={{ padding: "var(--space-3)", background: "var(--color-success-container)", border: "1px solid var(--color-success)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "var(--font-body-sm)", fontWeight: 700, color: "var(--color-success)" }}>TOTAL RECEBIDO</div>
+                  <div style={{ fontSize: "var(--font-title-lg)", fontWeight: 700, color: "var(--color-success)", marginTop: "var(--space-1)" }}>{formatarMoeda(relatorio.totalGrossAmount)}</div>
                 </div>
-                <div style={{ padding: "12px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "8px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#92400e" }}>TAXA ADM ({relatorio.adminFeePercent}%)</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#78350f", marginTop: "4px" }}>- {formatarMoeda(relatorio.totalAdminFeeAmount)}</div>
+                <div style={{ padding: "var(--space-3)", background: "var(--color-warning-container)", border: "1px solid var(--color-warning)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "var(--font-body-sm)", fontWeight: 700, color: "var(--color-warning)" }}>TAXA ADM ({relatorio.adminFeePercent}%)</div>
+                  <div style={{ fontSize: "var(--font-title-lg)", fontWeight: 700, color: "var(--color-warning)", marginTop: "var(--space-1)" }}>- {formatarMoeda(relatorio.totalAdminFeeAmount)}</div>
                 </div>
-                <div style={{ padding: "12px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: "8px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#1e40af" }}>VALOR LÍQUIDO</div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#1e3a8a", marginTop: "4px" }}>{formatarMoeda(relatorio.totalNetAmount)}</div>
+                <div style={{ padding: "var(--space-3)", background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)" }}>
+                  <div style={{ fontSize: "var(--font-body-sm)", fontWeight: 700, color: "var(--color-on-surface)" }}>VALOR LÍQUIDO</div>
+                  <div style={{ fontSize: "var(--font-title-lg)", fontWeight: 700, color: "var(--color-on-surface)", marginTop: "var(--space-1)" }}>{formatarMoeda(relatorio.totalNetAmount)}</div>
                 </div>
               </div>
 
               <div>
-                <h3 style={{ fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "8px" }}>
+                <h3 style={{ fontSize: "var(--font-body-md)", fontWeight: 600, color: "var(--color-on-surface)", marginBottom: "var(--space-2)" }}>
                   Discriminação dos Recebimentos ({relatorio.items.length})
                 </h3>
                 {relatorio.items.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "#64748b", background: "#f8fafc", padding: "12px", borderRadius: "6px" }}>
+                  <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", background: "var(--color-primary-container)", padding: "var(--space-3)", borderRadius: "var(--radius-sm)" }}>
                     Nenhum pagamento recebido dos locatários nesta competência.
                   </p>
                 ) : (
-                  <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "6px" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                  <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "var(--font-body-sm)" }}>
                       <thead>
-                        <tr style={{ background: "#f1f5f9", textAlign: "left", color: "#475569" }}>
-                          <th style={{ padding: "8px" }}>Data</th>
-                          <th style={{ padding: "8px" }}>Imóvel</th>
-                          <th style={{ padding: "8px" }}>Locatário</th>
-                          <th style={{ padding: "8px" }}>Valor Pago</th>
-                          <th style={{ padding: "8px" }}>Taxa</th>
-                          <th style={{ padding: "8px" }}>Líquido</th>
+                        <tr style={{ background: "var(--color-primary-container)", textAlign: "left", color: "var(--color-on-surface)" }}>
+                          <th style={{ padding: "var(--space-2)" }}>Data</th>
+                          <th style={{ padding: "var(--space-2)" }}>Imóvel</th>
+                          <th style={{ padding: "var(--space-2)" }}>Locatário</th>
+                          <th style={{ padding: "var(--space-2)" }}>Valor Pago</th>
+                          <th style={{ padding: "var(--space-2)" }}>Taxa</th>
+                          <th style={{ padding: "var(--space-2)" }}>Líquido</th>
                         </tr>
                       </thead>
                       <tbody>
                         {relatorio.items.map((item, idx) => (
-                          <tr key={item.paymentId || idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <td style={{ padding: "8px" }}>{new Date(item.paidAt).toLocaleDateString("pt-BR")}</td>
-                            <td style={{ padding: "8px" }}>{item.propertyTitle}</td>
-                            <td style={{ padding: "8px" }}>{item.tenantName}</td>
-                            <td style={{ padding: "8px", color: "#166534" }}>{formatarMoeda(item.grossAmount)}</td>
-                            <td style={{ padding: "8px", color: "#b45309" }}>- {formatarMoeda(item.adminFeeAmount)}</td>
-                            <td style={{ padding: "8px", fontWeight: 600, color: "#1e40af" }}>{formatarMoeda(item.netAmount)}</td>
+                          <tr key={item.paymentId || idx} style={{ borderBottom: "1px solid var(--color-outline-variant)" }}>
+                            <td style={{ padding: "var(--space-2)" }}>{new Date(item.paidAt).toLocaleDateString("pt-BR")}</td>
+                            <td style={{ padding: "var(--space-2)" }}>{item.propertyTitle}</td>
+                            <td style={{ padding: "var(--space-2)" }}>{item.tenantName}</td>
+                            <td style={{ padding: "var(--space-2)", color: "var(--color-success)" }}>{formatarMoeda(item.grossAmount)}</td>
+                            <td style={{ padding: "var(--space-2)", color: "var(--color-warning)" }}>- {formatarMoeda(item.adminFeeAmount)}</td>
+                            <td style={{ padding: "var(--space-2)", fontWeight: 600, color: "var(--color-on-surface)" }}>{formatarMoeda(item.netAmount)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -380,11 +380,11 @@ function ModalRepasse({ proprietario, onClose }) {
           ) : null}
         </div>
 
-        <div style={{ padding: "12px 20px", background: "#f8fafc", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-          <button type="button" onClick={onClose} style={{ padding: "8px 16px", background: "#e2e8f0", color: "#334155", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer", fontSize: "13px" }}>
+        <div style={{ padding: "var(--space-3) var(--space-4)", background: "var(--color-primary-container)", borderTop: "1px solid var(--color-outline-variant)", display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
+          <button type="button" onClick={onClose} style={{ padding: "var(--space-2) var(--space-4)", background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 600, cursor: "pointer", fontSize: "var(--font-body-md)" }}>
             Fechar
           </button>
-          <button type="button" onClick={exportarPdf} disabled={exportando} style={{ padding: "8px 16px", background: "#1d4ed8", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: exportando ? "not-allowed" : "pointer", fontSize: "13px" }}>
+          <button type="button" onClick={exportarPdf} disabled={exportando} style={{ padding: "var(--space-2) var(--space-4)", background: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", borderRadius: "var(--radius-sm)", fontWeight: 600, cursor: exportando ? "not-allowed" : "pointer", fontSize: "var(--font-body-md)" }}>
             {exportando ? "Gerando PDF..." : "Exportar Relatório PDF"}
           </button>
         </div>

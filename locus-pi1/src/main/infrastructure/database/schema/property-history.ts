@@ -33,9 +33,13 @@ export const propertyPayments = sqliteTable("property_payments", {
   paidAt: integer("paid_at").notNull(),
   description: text("description").notNull(),
   createdAt: integer("created_at").notNull(),
+  referenceMonth: text("reference_month"),
+  dueDate: integer("due_date"),
+  receiptPath: text("receipt_path"),
 }, (table) => [
   foreignKey({ columns: [table.contractId, table.propertyId], foreignColumns: [propertyContracts.id, propertyContracts.propertyId] }).onDelete("restrict"),
   index("property_payments_property_date_idx").on(table.propertyId, table.paidAt),
+  uniqueIndex("property_payments_contract_reference_unique").on(table.contractId, table.referenceMonth),
   check("property_payments_amount_check", sql`${table.amount} > 0`),
   check("property_payments_date_check", sql`${table.paidAt} >= 0`),
 ]);

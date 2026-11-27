@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 
 const CATEGORIAS = [
-  { valor: "identificacao", rotulo: "Identificação (RG / CNH / CPF)", cor: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" },
-  { valor: "comprovante_renda", rotulo: "Comprovante de Renda", cor: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
-  { valor: "antecedentes", rotulo: "Antecedentes Criminais", cor: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" },
-  { valor: "contrato", rotulo: "Contrato", cor: "#d97706", bg: "#fffbeb", border: "#fde68a" },
-  { valor: "outros", rotulo: "Outros Documentos", cor: "#4b5563", bg: "#f3f4f6", border: "#e5e7eb" },
+  { valor: "identificacao", rotulo: "Identificação (RG / CNH / CPF)", cor: "var(--color-primary)", bg: "var(--color-primary-container)", border: "var(--color-outline-variant)" },
+  { valor: "comprovante_renda", rotulo: "Comprovante de Renda", cor: "var(--color-success)", bg: "var(--color-success-container)", border: "var(--color-success)" },
+  { valor: "antecedentes", rotulo: "Antecedentes Criminais", cor: "var(--color-tertiary)", bg: "var(--color-primary-container)", border: "var(--color-outline-variant)" },
+  { valor: "contrato", rotulo: "Contrato", cor: "var(--color-warning)", bg: "var(--color-warning-container)", border: "var(--color-warning)" },
+  { valor: "outros", rotulo: "Outros Documentos", cor: "var(--color-on-surface-variant)", bg: "var(--color-primary-container)", border: "var(--color-outline-variant)" },
 ];
 
 function obterInfoCategoria(catValor) {
@@ -32,9 +32,9 @@ function obterInfoCategoria(catValor) {
     CATEGORIAS.find((c) => c.valor === catValor) || {
       valor: catValor || "outros",
       rotulo: "Outros",
-      cor: "#4b5563",
-      bg: "#f3f4f6",
-      border: "#e5e7eb",
+      cor: "var(--color-on-surface-variant)",
+      bg: "var(--color-primary-container)",
+      border: "var(--color-outline-variant)",
     }
   );
 }
@@ -316,9 +316,9 @@ export default function VisaoGeralLocatario() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "60px",
-          gap: "10px",
-          color: "#64748b",
+          padding: "var(--space-8)",
+          gap: "var(--space-2)",
+          color: "var(--color-on-surface)",
         }}
       >
         <Loader2 size={22} className="animate-spin" />
@@ -329,16 +329,16 @@ export default function VisaoGeralLocatario() {
 
   if (!locatario) {
     return (
-      <div style={{ maxWidth: "900px", margin: "40px auto", textAlign: "center" }}>
-        <p style={{ color: "#64748b", marginBottom: "16px" }}>Locatário não encontrado.</p>
+      <div style={{ maxWidth: "900px", margin: "var(--space-6) auto", textAlign: "center" }}>
+        <p style={{ color: "var(--color-on-surface)", marginBottom: "var(--space-4)" }}>Locatário não encontrado.</p>
         <button
           type="button"
           onClick={() => navigate("/locatarios")}
           style={{
-            padding: "8px 16px",
-            borderRadius: "6px",
-            border: "1px solid #cbd5e1",
-            background: "#ffffff",
+            padding: "var(--space-2) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--color-outline-variant)",
+            background: "var(--color-surface)",
             cursor: "pointer",
           }}
         >
@@ -352,22 +352,22 @@ export default function VisaoGeralLocatario() {
   const dataTerminoFormatada = formatarDataSomenteDia(imovelAssociado?.dataFim);
 
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", paddingBottom: "48px" }}>
+    <div style={{ maxWidth: "1100px", margin: "0 auto", paddingBottom: "var(--space-7)" }}>
       {/* Navegação topo */}
-      <div style={{ marginBottom: "16px" }}>
+      <div style={{ marginBottom: "var(--space-4)" }}>
         <button
           type="button"
           onClick={() => navigate("/locatarios")}
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            border: "1px solid #cbd5e1",
-            backgroundColor: "#ffffff",
-            color: "#334155",
-            fontSize: "14px",
+            gap: "var(--space-1)",
+            padding: "var(--space-2) var(--space-3)",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--color-outline-variant)",
+            backgroundColor: "var(--color-surface)",
+            color: "var(--color-on-surface)",
+            fontSize: "var(--font-body-md)",
             fontWeight: "600",
             cursor: "pointer",
           }}
@@ -382,19 +382,19 @@ export default function VisaoGeralLocatario() {
         <div
           role="status"
           style={{
-            backgroundColor: "#ecfdf5",
-            border: "1px solid #10b981",
-            color: "#065f46",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            marginBottom: "16px",
+            backgroundColor: "var(--color-success-container)",
+            border: "1px solid var(--color-success)",
+            color: "var(--color-success)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            fontSize: "14px",
+            gap: "var(--space-2)",
+            fontSize: "var(--font-body-md)",
           }}
         >
-          <CheckCircle2 size={18} color="#10b981" />
+          <CheckCircle2 size={18} color="var(--color-success)" />
           <span>{toast}</span>
         </div>
       )}
@@ -403,19 +403,19 @@ export default function VisaoGeralLocatario() {
         <div
           role="alert"
           style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #ef4444",
-            color: "#991b1b",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            marginBottom: "16px",
+            backgroundColor: "var(--color-error-container)",
+            border: "1px solid var(--color-error)",
+            color: "var(--color-error)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            fontSize: "14px",
+            gap: "var(--space-2)",
+            fontSize: "var(--font-body-md)",
           }}
         >
-          <AlertCircle size={18} color="#ef4444" />
+          <AlertCircle size={18} color="var(--color-error)" />
           <span>{erro}</span>
         </div>
       )}
@@ -423,12 +423,12 @@ export default function VisaoGeralLocatario() {
       {/* Cabeçalho / Ficha Principal do Locatário */}
       <div
         style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "12px",
-          padding: "24px",
-          marginBottom: "24px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-outline-variant)",
+          borderRadius: "var(--radius-md)",
+          padding: "var(--space-5)",
+          marginBottom: "var(--space-5)",
+          boxShadow: "var(--elevation-1)",
         }}
       >
         <div
@@ -437,14 +437,14 @@ export default function VisaoGeralLocatario() {
             justifyContent: "space-between",
             alignItems: "flex-start",
             flexWrap: "wrap",
-            gap: "16px",
+            gap: "var(--space-4)",
           }}
         >
           <div>
-            <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#0f172a", margin: "0 0 6px" }}>
+            <h1 style={{ fontSize: "var(--font-headline-sm)", fontWeight: "bold", color: "var(--color-on-surface)", margin: "0 0 var(--space-1)" }}>
               {locatario.nome}
             </h1>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "14px", color: "#475569" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-4)", fontSize: "var(--font-body-md)", color: "var(--color-on-surface)" }}>
               <span>
                 <strong>CPF/CNPJ:</strong> {locatario.cpf}
               </span>
@@ -464,14 +464,14 @@ export default function VisaoGeralLocatario() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#1877f2",
-                color: "#ffffff",
+                gap: "var(--space-2)",
+                backgroundColor: "var(--color-primary)",
+                color: "var(--color-on-primary)",
                 border: "none",
-                borderRadius: "8px",
-                padding: "10px 16px",
+                borderRadius: "var(--radius-sm)",
+                padding: "var(--space-2) var(--space-4)",
                 fontWeight: "600",
-                fontSize: "14px",
+                fontSize: "var(--font-body-md)",
                 cursor: "pointer",
               }}
             >
@@ -479,46 +479,66 @@ export default function VisaoGeralLocatario() {
               Gerar / Ver Contrato
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => navigate(`/pagamentos?tenantId=${id}`)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              backgroundColor: "var(--color-info)",
+              color: "var(--color-on-info)",
+              border: "none",
+              borderRadius: "var(--radius-sm)",
+              padding: "var(--space-2) var(--space-4)",
+              fontWeight: "600",
+              fontSize: "var(--font-body-md)",
+              cursor: "pointer",
+            }}
+          >
+            <FileText size={16} />
+            Histórico financeiro
+          </button>
         </div>
 
         {/* Secção de Locação Ativa e Data de Término do Contrato */}
         <div
           style={{
-            marginTop: "20px",
-            paddingTop: "20px",
-            borderTop: "1px solid #e2e8f0",
+            marginTop: "var(--space-4)",
+            paddingTop: "var(--space-4)",
+            borderTop: "1px solid var(--color-outline-variant)",
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "16px",
+            gap: "var(--space-4)",
           }}
         >
           <div
             style={{
-              backgroundColor: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              borderRadius: "8px",
-              padding: "14px 16px",
+              backgroundColor: "var(--color-primary-container)",
+              border: "1px solid var(--color-outline-variant)",
+              borderRadius: "var(--radius-sm)",
+              padding: "var(--space-3) var(--space-4)",
             }}
           >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                fontSize: "12px",
+                gap: "var(--space-1)",
+                fontSize: "var(--font-body-sm)",
                 fontWeight: "700",
-                color: "#64748b",
+                color: "var(--color-on-surface)",
                 textTransform: "uppercase",
               }}
             >
               <Building2 size={14} />
               <span>Imóvel Locado</span>
             </div>
-            <div style={{ marginTop: "6px", fontSize: "15px", fontWeight: "bold", color: "#0f172a" }}>
+            <div style={{ marginTop: "var(--space-1)", fontSize: "var(--font-body-md)", fontWeight: "bold", color: "var(--color-on-surface)" }}>
               {imovelAssociado ? imovelAssociado.titulo : "Nenhum imóvel associado"}
             </div>
             {imovelAssociado?.aluguel != null && (
-              <div style={{ marginTop: "4px", fontSize: "13px", color: "#475569" }}>
+              <div style={{ marginTop: "var(--space-1)", fontSize: "var(--font-body-md)", color: "var(--color-on-surface)" }}>
                 Aluguel:{" "}
                 {Number(imovelAssociado.aluguel).toLocaleString("pt-BR", {
                   style: "currency",
@@ -531,27 +551,27 @@ export default function VisaoGeralLocatario() {
           {dataInicioFormatada && (
             <div
               style={{
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e2e8f0",
-                borderRadius: "8px",
-                padding: "14px 16px",
+                backgroundColor: "var(--color-primary-container)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-sm)",
+                padding: "var(--space-3) var(--space-4)",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "6px",
-                  fontSize: "12px",
+                  gap: "var(--space-1)",
+                  fontSize: "var(--font-body-sm)",
                   fontWeight: "700",
-                  color: "#64748b",
+                  color: "var(--color-on-surface)",
                   textTransform: "uppercase",
                 }}
               >
                 <Calendar size={14} />
                 <span>Início do Contrato</span>
               </div>
-              <div style={{ marginTop: "6px", fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>
+              <div style={{ marginTop: "var(--space-1)", fontSize: "var(--font-body-lg)", fontWeight: "bold", color: "var(--color-on-surface)" }}>
                 {dataInicioFormatada}
               </div>
             </div>
@@ -560,27 +580,27 @@ export default function VisaoGeralLocatario() {
           {/* Campo visual claro mostrando a "Data de Término do Contrato" */}
           <div
             style={{
-              backgroundColor: "#eff6ff",
-              border: "1px solid #93c5fd",
-              borderRadius: "8px",
-              padding: "14px 16px",
+              backgroundColor: "var(--color-primary-container)",
+              border: "1px solid var(--color-outline-variant)",
+              borderRadius: "var(--radius-sm)",
+              padding: "var(--space-3) var(--space-4)",
             }}
           >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                fontSize: "12px",
+                gap: "var(--space-1)",
+                fontSize: "var(--font-body-sm)",
                 fontWeight: "700",
-                color: "#1d4ed8",
+                color: "var(--color-on-surface)",
                 textTransform: "uppercase",
               }}
             >
               <ClipboardCheck size={14} />
               <span>Data de Término do Contrato</span>
             </div>
-            <div style={{ marginTop: "6px", fontSize: "17px", fontWeight: "bold", color: "#1e3a8a" }}>
+            <div style={{ marginTop: "var(--space-1)", fontSize: "var(--font-body-lg)", fontWeight: "bold", color: "var(--color-on-surface)" }}>
               {dataTerminoFormatada ||
                 (imovelAssociado ? "Prazo indeterminado / não informado" : "Sem contrato ativo")}
             </div>
@@ -591,16 +611,16 @@ export default function VisaoGeralLocatario() {
       {/* Secção de Dossiê de Documentos */}
       <div
         style={{
-          backgroundColor: "#ffffff",
-          border: "1px solid #e2e8f0",
-          borderRadius: "12px",
-          padding: "24px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-outline-variant)",
+          borderRadius: "var(--radius-md)",
+          padding: "var(--space-5)",
+          boxShadow: "var(--elevation-1)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-          <FolderCheck size={20} color="#1877f2" />
-          <h2 style={{ fontSize: "18px", fontWeight: "bold", color: "#0f172a", margin: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>
+          <FolderCheck size={20} color="var(--color-primary)" />
+          <h2 style={{ fontSize: "var(--font-title-lg)", fontWeight: "bold", color: "var(--color-on-surface)", margin: 0 }}>
             Dossiê de Documentos ({documentos.length})
           </h2>
         </div>
@@ -611,9 +631,9 @@ export default function VisaoGeralLocatario() {
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 220px auto",
-            gap: "12px",
+            gap: "var(--space-3)",
             alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: "var(--space-4)",
           }}
         >
           <div
@@ -625,19 +645,19 @@ export default function VisaoGeralLocatario() {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             style={{
-              border: `2px dashed ${dragOver ? "#1877f2" : "#cbd5e1"}`,
-              borderRadius: "8px",
-              padding: "12px 16px",
-              backgroundColor: dragOver ? "#eff6ff" : "#f8fafc",
+              border: `2px dashed ${dragOver ? "var(--color-primary)" : "var(--color-primary-container)"}`,
+              borderRadius: "var(--radius-sm)",
+              padding: "var(--space-3) var(--space-4)",
+              backgroundColor: dragOver ? "var(--color-primary-container)" : "var(--color-primary-container)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: "10px",
-              fontSize: "14px",
-              color: "#334155",
+              gap: "var(--space-2)",
+              fontSize: "var(--font-body-md)",
+              color: "var(--color-on-surface)",
             }}
           >
-            <UploadCloud size={18} color="#1877f2" />
+            <UploadCloud size={18} color="var(--color-primary)" />
             <span>
               {arquivoSelecionado
                 ? `${arquivoSelecionado.name} (${formatarTamanho(arquivoSelecionado.size)})`
@@ -656,11 +676,11 @@ export default function VisaoGeralLocatario() {
             value={categoriaUpload}
             onChange={(e) => setCategoriaUpload(e.target.value)}
             style={{
-              padding: "11px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              fontSize: "14px",
-              backgroundColor: "#ffffff",
+              padding: "var(--space-3)",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--color-outline-variant)",
+              fontSize: "var(--font-body-md)",
+              backgroundColor: "var(--color-surface)",
             }}
           >
             {CATEGORIAS.map((cat) => (
@@ -674,13 +694,13 @@ export default function VisaoGeralLocatario() {
             type="submit"
             disabled={enviando || !arquivoSelecionado}
             style={{
-              padding: "11px 18px",
-              borderRadius: "8px",
+              padding: "var(--space-3) var(--space-4)",
+              borderRadius: "var(--radius-sm)",
               border: "none",
-              backgroundColor: enviando || !arquivoSelecionado ? "#94a3b8" : "#1877f2",
-              color: "#ffffff",
+              backgroundColor: enviando || !arquivoSelecionado ? "var(--color-primary-container)" : "var(--color-primary)",
+              color: enviando || !arquivoSelecionado ? "var(--color-on-primary-container)" : "var(--color-on-primary)",
               fontWeight: "600",
-              fontSize: "14px",
+              fontSize: "var(--font-body-md)",
               cursor: enviando || !arquivoSelecionado ? "not-allowed" : "pointer",
             }}
           >
@@ -689,11 +709,11 @@ export default function VisaoGeralLocatario() {
         </form>
 
         {/* Barra de Filtros */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "var(--space-3)", marginBottom: "var(--space-4)", flexWrap: "wrap" }}>
           <div style={{ position: "relative", flex: 1, minWidth: "220px" }}>
             <Search
               size={16}
-              color="#94a3b8"
+              color="var(--color-primary)"
               style={{ position: "absolute", left: "12px", top: "11px" }}
             />
             <input
@@ -703,10 +723,10 @@ export default function VisaoGeralLocatario() {
               onChange={(e) => setBuscaNome(e.target.value)}
               style={{
                 width: "100%",
-                padding: "9px 12px 9px 36px",
-                borderRadius: "8px",
-                border: "1px solid #cbd5e1",
-                fontSize: "14px",
+                padding: "var(--space-2) var(--space-3) var(--space-2) var(--space-6)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-outline-variant)",
+                fontSize: "var(--font-body-md)",
                 boxSizing: "border-box",
               }}
             />
@@ -716,11 +736,11 @@ export default function VisaoGeralLocatario() {
             value={filtroCategoria}
             onChange={(e) => setFiltroCategoria(e.target.value)}
             style={{
-              padding: "9px 12px",
-              borderRadius: "8px",
-              border: "1px solid #cbd5e1",
-              fontSize: "14px",
-              backgroundColor: "#ffffff",
+              padding: "var(--space-2) var(--space-3)",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--color-outline-variant)",
+              fontSize: "var(--font-body-md)",
+              backgroundColor: "var(--color-surface)",
             }}
           >
             <option value="todas">Todas as categorias</option>
@@ -734,11 +754,11 @@ export default function VisaoGeralLocatario() {
 
         {/* Lista de Documentos */}
         {documentosFiltrados.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#64748b", padding: "24px 0", fontSize: "14px" }}>
+          <p style={{ textAlign: "center", color: "var(--color-on-surface)", padding: "var(--space-5) 0", fontSize: "var(--font-body-md)" }}>
             Nenhum documento encontrado para os filtros aplicados.
           </p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
             {documentosFiltrados.map((doc) => {
               const infoCat = obterInfoCategoria(doc.categoria || doc.category);
               const nome = doc.nomeOriginal || doc.name || "Documento";
@@ -751,25 +771,25 @@ export default function VisaoGeralLocatario() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
-                    backgroundColor: "#f8fafc",
-                    gap: "12px",
+                    padding: "var(--space-3) var(--space-4)",
+                    borderRadius: "var(--radius-sm)",
+                    border: "1px solid var(--color-outline-variant)",
+                    backgroundColor: "var(--color-primary-container)",
+                    gap: "var(--space-3)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-3)", minWidth: 0 }}>
                     {isImg ? (
-                      <ImageIcon size={20} color="#2563eb" />
+                      <ImageIcon size={20} color="var(--color-primary)" />
                     ) : (
-                      <File size={20} color="#475569" />
+                      <File size={20} color="var(--color-primary)" />
                     )}
                     <div style={{ minWidth: 0 }}>
                       <div
                         style={{
                           fontWeight: "600",
-                          fontSize: "14px",
-                          color: "#0f172a",
+                          fontSize: "var(--font-body-md)",
+                          color: "var(--color-on-surface)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -781,10 +801,10 @@ export default function VisaoGeralLocatario() {
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "8px",
-                          marginTop: "4px",
-                          fontSize: "12px",
-                          color: "#64748b",
+                          gap: "var(--space-2)",
+                          marginTop: "var(--space-1)",
+                          fontSize: "var(--font-body-sm)",
+                          color: "var(--color-on-surface)",
                         }}
                       >
                         <span
@@ -792,8 +812,8 @@ export default function VisaoGeralLocatario() {
                             backgroundColor: infoCat.bg,
                             color: infoCat.cor,
                             border: `1px solid ${infoCat.border}`,
-                            padding: "1px 8px",
-                            borderRadius: "999px",
+                            padding: "var(--space-1) var(--space-2)",
+                            borderRadius: "var(--radius-full)",
                             fontWeight: "600",
                           }}
                         >
@@ -805,7 +825,7 @@ export default function VisaoGeralLocatario() {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
                     <button
                       type="button"
                       onClick={() => handleVisualizarDocumento(doc)}
@@ -814,12 +834,12 @@ export default function VisaoGeralLocatario() {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #cbd5e1",
-                        backgroundColor: "#ffffff",
-                        fontSize: "13px",
+                        gap: "var(--space-1)",
+                        padding: "var(--space-1) var(--space-2)",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--color-outline-variant)",
+                        backgroundColor: "var(--color-surface)",
+                        fontSize: "var(--font-body-md)",
                         cursor: "pointer",
                       }}
                     >
@@ -833,12 +853,12 @@ export default function VisaoGeralLocatario() {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "4px",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #cbd5e1",
-                        backgroundColor: "#ffffff",
-                        fontSize: "13px",
+                        gap: "var(--space-1)",
+                        padding: "var(--space-1) var(--space-2)",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--color-outline-variant)",
+                        backgroundColor: "var(--color-surface)",
+                        fontSize: "var(--font-body-md)",
                         cursor: "pointer",
                       }}
                     >
@@ -859,18 +879,18 @@ export default function VisaoGeralLocatario() {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.6)",
+            backgroundColor: "var(--color-primary)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 50,
-            padding: "20px",
+            padding: "var(--space-4)",
           }}
         >
           <div
             style={{
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
+              backgroundColor: "var(--color-surface)",
+              borderRadius: "var(--radius-md)",
               width: "100%",
               maxWidth: "800px",
               maxHeight: "85vh",
@@ -881,31 +901,31 @@ export default function VisaoGeralLocatario() {
           >
             <div
               style={{
-                padding: "14px 20px",
-                borderBottom: "1px solid #e2e8f0",
+                padding: "var(--space-3) var(--space-4)",
+                borderBottom: "1px solid var(--color-outline-variant)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
               }}
             >
-              <strong style={{ fontSize: "15px", color: "#0f172a" }}>
+              <strong style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)" }}>
                 {previewDoc.nomeOriginal || previewDoc.name || "Pré-visualização"}
               </strong>
               <button
                 type="button"
                 onClick={() => setPreviewDoc(null)}
-                style={{ border: "none", background: "none", cursor: "pointer", color: "#64748b" }}
+                style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-on-surface)" }}
               >
                 <X size={20} />
               </button>
             </div>
-            <div style={{ padding: "20px", overflow: "auto", flex: 1, textAlign: "center" }}>
+            <div style={{ padding: "var(--space-4)", overflow: "auto", flex: 1, textAlign: "center" }}>
               {previewDoc.dataUrl ? (
                 previewDoc.dataUrl.startsWith("data:image/") ? (
                   <img
                     src={previewDoc.dataUrl}
                     alt={previewDoc.nomeOriginal || "Documento"}
-                    style={{ maxWidth: "100%", maxHeight: "65vh", borderRadius: "6px" }}
+                    style={{ maxWidth: "100%", maxHeight: "65vh", borderRadius: "var(--radius-sm)" }}
                   />
                 ) : (
                   <iframe
@@ -915,7 +935,7 @@ export default function VisaoGeralLocatario() {
                   />
                 )
               ) : (
-                <p style={{ color: "#64748b" }}>
+                <p style={{ color: "var(--color-on-surface)" }}>
                   Pré-visualização direta indisponível. Clique em "Baixar" para abrir o ficheiro.
                 </p>
               )}

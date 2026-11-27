@@ -55,7 +55,7 @@ describe("Rental SQLite persistence", () => {
       await initializeDatabase(bootstrap);
       assert.equal((await bootstrap.execute("PRAGMA table_info(rentals)")).rows.length, 14);
       assert.equal((await bootstrap.execute("PRAGMA foreign_keys")).rows[0].foreign_keys, 1);
-      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 18);
+      assert.equal((await bootstrap.execute("SELECT name FROM sqlite_master WHERE type = 'table'")).rows.length, 19);
     } finally { bootstrap.close(); }
   });
   it("saves the association and ALUGADO status together", async () => {
@@ -112,7 +112,10 @@ describe("Rental SQLite persistence", () => {
     await repo.create(rental());
     const contract = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
     assert.notEqual(contract.id, "rental");
-    await sqlite.execute({ sql: "INSERT INTO property_payments VALUES ('payment', 'property', ?, 1000, 10, 'Aluguel', 10)", args: [contract.id] });
+    await sqlite.execute({
+      sql: "INSERT INTO property_payments (id, property_id, contract_id, amount, paid_at, description, created_at) VALUES ('payment', 'property', ?, 1000, 10, 'Aluguel', 10)",
+      args: [contract.id],
+    });
     await repo.cancel("rental", 20, { notes: "Rescisão antecipada amigável", hasDebts: false });
     const saved = (await sqlite.execute("SELECT * FROM property_contracts")).rows[0];
     assert.equal(saved.id, contract.id);

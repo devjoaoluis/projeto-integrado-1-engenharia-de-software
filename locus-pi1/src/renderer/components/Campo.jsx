@@ -1,54 +1,29 @@
-function Campo({ label, opcoes, multilinha = false, required = false, placeholder, ...props }) {
+import { useId } from "react";
+
+function Campo({
+    label,
+    opcoes,
+    multilinha = false,
+    required = false,
+    placeholder,
+    id,
+    className = "",
+    ...props
+}) {
+    const generatedId = useId();
+    const controlId = id || generatedId;
     const textoPlaceholder = placeholder || (required ? "" : "Opcional");
 
     return (
-        <>
-            <style>
-                {`
-                    .campo-form {
-                        width: 100%;
-                    }
-
-                    .campo-form-label {
-                        display: block;
-                        margin: 0 0 6px;
-                        color: #555;
-                        font-size: 13px;
-                        font-weight: 600;
-                    }
-
-                    .campo-form-controle {
-                        width: 100%;
-                        min-height: 54px;
-                        padding: 0 14px;
-                        border: 1px solid #b0b0b0;
-                        border-radius: 4px;
-                        background-color: white;
-                        font-size: 14px;
-                    }
-
-                    textarea.campo-form-controle {
-                        padding: 16px 14px;
-                        resize: vertical;
-                    }
-
-                    .campo-form-controle:focus {
-                        outline: none;
-                        border: 2px solid #1976d2;
-                    }
-
-                `}
-            </style>
-
-            <div className="campo-form">
-                <label className="campo-form-label">
+        <div className={`campo-form ${className}`.trim()}>
+            <label className="campo-form-label" htmlFor={controlId}>
                     {label}{required ? " *" : " (Opcional)"}
-                </label>
-                {opcoes ? (
+            </label>
+            {opcoes ? (
                     <select
+                        id={controlId}
                         className="campo-form-controle"
                         required={required}
-                        aria-label={label}
                         {...props}
                     >
                         <option value="" disabled={required}>
@@ -65,24 +40,23 @@ function Campo({ label, opcoes, multilinha = false, required = false, placeholde
                     </select>
                 ) : multilinha ? (
                     <textarea
+                        id={controlId}
                         className="campo-form-controle"
                         rows={1}
                         required={required}
-                        aria-label={label}
                         placeholder={textoPlaceholder}
                         {...props}
                     />
                 ) : (
                     <input
+                        id={controlId}
                         className="campo-form-controle"
                         required={required}
-                        aria-label={label}
                         placeholder={textoPlaceholder}
                         {...props}
                     />
                 )}
-            </div>
-        </>
+        </div>
     );
 }
 

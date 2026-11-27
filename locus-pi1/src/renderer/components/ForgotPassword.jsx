@@ -78,14 +78,14 @@ export default function ForgotPassword() {
 
           .forgot-page {
             margin: 0;
-            background-color: #1976d2;
-            font-family: Arial, sans-serif;
+            background-color: var(--color-primary);
+            font-family: var(--font-family-base);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: var(--space-5);
           }
 
           .forgot-container {
@@ -97,53 +97,53 @@ export default function ForgotPassword() {
           }
 
           .bem-vindo {
-            font-size: 26px;
+            font-size: var(--font-headline-sm);
             font-weight: bold;
-            color: #ffffff;
-            margin: 0 0 20px 0;
+            color: var(--color-on-primary);
+            margin: 0 0 var(--space-4) 0;
             text-align: center;
           }
 
           .card-forgot {
             width: 100%;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-            padding: 32px;
+            background-color: var(--color-surface);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--elevation-2);
+            padding: var(--space-6);
             text-align: left;
           }
 
           .titulo-card {
-            font-size: 22px;
+            font-size: var(--font-title-lg);
             font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 6px 0;
+            color: var(--color-on-surface);
+            margin: 0 0 var(--space-1) 0;
           }
 
           .subtitulo-card {
-            font-size: 14px;
-            color: #64748b;
-            margin: 0 0 20px 0;
+            font-size: var(--font-body-md);
+            color: var(--color-on-surface);
+            margin: 0 0 var(--space-4) 0;
             line-height: 1.4;
           }
 
           .mensagem-erro {
-            color: #b91c1c;
-            background-color: #fef2f2;
-            border: 1px solid #fecaca;
-            padding: 10px 14px;
-            border-radius: 4px;
-            font-size: 14px;
+            color: var(--color-error);
+            background-color: var(--color-error-container);
+            border: 1px solid var(--color-error);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-xs);
+            font-size: var(--font-body-md);
             margin-bottom: 16px;
           }
 
           .mensagem-sucesso {
-            color: #15803d;
-            background-color: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            padding: 10px 14px;
-            border-radius: 4px;
-            font-size: 14px;
+            color: var(--color-success);
+            background-color: var(--color-success-container);
+            border: 1px solid var(--color-success);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-xs);
+            font-size: var(--font-body-md);
             margin-bottom: 16px;
           }
 
@@ -153,33 +153,33 @@ export default function ForgotPassword() {
 
           .rotulo {
             display: block;
-            font-size: 13px;
+            font-size: var(--font-body-md);
             font-weight: 600;
-            color: #334155;
+            color: var(--color-on-surface-variant);
             margin-bottom: 6px;
           }
 
           .dica {
             display: block;
-            font-size: 12px;
-            color: #64748b;
+            font-size: var(--font-body-sm);
+            color: var(--color-on-surface-variant);
             margin-top: 4px;
           }
 
           .caixa-pergunta {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-left: 4px solid #1976d2;
-            border-radius: 6px;
-            padding: 12px 14px;
+            background-color: var(--color-primary-container);
+            border: 1px solid var(--color-outline-variant);
+            border-left: 4px solid var(--color-outline);
+            border-radius: var(--radius-sm);
+            padding: var(--space-3) var(--space-3);
             margin-bottom: 18px;
           }
 
           .pergunta-badge {
             display: block;
-            font-size: 11px;
+            font-size: var(--font-body-sm);
             font-weight: 700;
-            color: #1976d2;
+            color: var(--color-on-surface);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
@@ -187,25 +187,25 @@ export default function ForgotPassword() {
 
           .pergunta-texto {
             margin: 0;
-            font-size: 15px;
+            font-size: var(--font-body-md);
             font-weight: 600;
-            color: #0f172a;
+            color: var(--color-on-surface);
           }
 
           .botao-voltar-recuperacao {
             display: block;
-            margin: 20px auto 0;
+            margin: var(--space-4) auto 0;
             padding: 0;
             border: none;
             background: none;
-            color: #1976d2;
+            color: var(--color-primary);
             cursor: pointer;
-            font-size: 14px;
+            font-size: var(--font-body-md);
             text-decoration: underline;
           }
 
           .botao-voltar-recuperacao:hover {
-            color: #125aa3;
+            color: var(--color-primary);
           }
 
         `}

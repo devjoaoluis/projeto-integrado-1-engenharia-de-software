@@ -35,9 +35,9 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
             <style>
                 {`
                     .card-imovel {
-                        background-color: white;
-                        border-radius: 8px;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+                        background-color: var(--color-surface);
+                        border-radius: var(--radius-sm);
+                        box-shadow: var(--elevation-2);
                         overflow: hidden;
                         display: flex;
                         flex-direction: column;
@@ -49,52 +49,52 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                         height: 174px;
                         object-fit: cover;
                         display: block;
-                        background-color: #d9d9d9;
+                        background-color: var(--color-surface-variant);
                     }
 
                     .card-imovel-corpo {
-                        padding: 16px;
+                        padding: var(--space-4);
                         display: flex;
                         flex-direction: column;
                         flex-grow: 1;
                     }
 
                     .card-imovel-titulo {
-                        font-size: 16px;
+                        font-size: var(--font-body-lg);
                         font-weight: bold;
                         margin-bottom: 8px;
                     }
 
                     .card-imovel-endereco {
-                        font-size: 13px;
-                        color: #555555;
+                        font-size: var(--font-body-md);
+                        color: var(--color-on-surface);
                         margin-bottom: 20px;
                         flex-grow: 1;
                     }
 
                     .card-imovel-etiquetas {
                         display: flex;
-                        gap: 8px;
+                        gap: var(--space-2);
                         flex-wrap: wrap;
                         margin-bottom: 16px;
                     }
 
                     .card-imovel-acoes {
                         display: flex;
-                        gap: 10px;
-                        border-top: 1px solid #eeeeee;
+                        gap: var(--space-2);
+                        border-top: 1px solid var(--color-outline-variant);
                         padding-top: 16px;
                     }
 
                     .card-btn-editar, .card-btn-excluir, .card-btn-vistorias {
                         flex: 1;
-                        padding: 8px;
+                        padding: var(--space-2);
                         border: none;
-                        border-radius: 4px;
+                        border-radius: var(--radius-xs);
                         cursor: pointer;
                         font-weight: 500;
                         transition: background-color 0.2s;
-                        font-size: 13px;
+                        font-size: var(--font-body-md);
                         text-decoration: none;
                         display: flex;
                         align-items: center;
@@ -102,35 +102,35 @@ function CardImovel({ id, titulo, endereco, valor, tipo, status, foto, onEditar,
                     }
 
                     .card-btn-vistorias {
-                        background-color: #f0fdf4;
-                        color: #166534;
+                        background-color: var(--color-success-container);
+                        color: var(--color-success);
                     }
 
                     .card-btn-vistorias:hover {
-                        background-color: #dcfce7;
+                        background-color: var(--color-success-container);
                     }
 
                     .card-btn-editar {
-                        background-color: #f0f0f0;
-                        color: #333333;
+                        background-color: var(--color-surface-variant);
+                        color: var(--color-on-surface);
                     }
 
                     .card-btn-editar:hover {
-                        background-color: #e0e0e0;
+                        background-color: var(--color-surface-variant);
                     }
 
                     .card-btn-excluir {
-                        background-color: #ffeeee;
-                        color: #d32f2f;
+                        background-color: var(--color-error-container);
+                        color: var(--color-error);
                     }
 
                     .card-btn-excluir:hover {
-                        background-color: #ffdddd;
+                        background-color: var(--color-error-container);
                     }
 
                     .card-btn-excluir:disabled {
-                        background-color: #e0e0e0;
-                        color: #888888;
+                        background-color: var(--color-surface-variant);
+                        color: var(--color-on-surface-variant);
                         cursor: not-allowed;
                     }
                 `}

@@ -1,700 +1,410 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { User, Bell, Clock, AlertTriangle, X } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Bell, CheckCheck, Inbox, Moon, Sun, Trash2, X } from "lucide-react";
 import { Sidebar } from "../components/Sidebar";
-import { notificarSistema } from "../components/Header";
 
-const JANELA_ANTECEDENCIA_MIN = 30;
-const CHAVE_ATRASO_MANUAL = "locus_atrasos_manuais";
+const AVISO_NOTIFICACOES_NATIVAS = "locus:notificacoes-nativas-indisponiveis";
 
-const titulos = {
-    "/home": "Home",
-    "/imoveis": "Imóveis",
+function construirBreadcrumb(pathname) {
+  const painel = { label: "Painel", to: "/home" };
+
+  if (pathname === "/home") return [{ label: "Painel" }];
+  if (pathname === "/imoveis") return [painel, { label: "Imóveis" }];
+  if (pathname === "/imoveis/cadastrar") {
+    return [painel, { label: "Imóveis", to: "/imoveis" }, { label: "Novo imóvel" }];
+  }
+  if (pathname.startsWith("/imoveis/")) {
+    return [painel, { label: "Imóveis", to: "/imoveis" }, { label: "Detalhes" }];
+  }
+  if (pathname === "/locatarios") return [painel, { label: "Locatários" }];
+  if (pathname.startsWith("/locatarios/")) {
+    return [painel, { label: "Locatários", to: "/locatarios" }, { label: "Detalhes" }];
+  }
+
+  const paginas = {
     "/contatos": "Contatos",
-    "/imoveis/cadastrar": "Cadastrar Imóvel",
     "/contratos": "Contratos",
     "/pagamentos": "Pagamentos",
     "/visitas": "Visitas",
     "/vistorias": "Vistorias",
-    "/locatarios": "Locatários",
-};
-
-function lerMapaAtrasoManual() {
-    try {
-        return JSON.parse(localStorage.getItem(CHAVE_ATRASO_MANUAL) || "{}");
-    } catch {
-        return {};
-    }
+  };
+  return paginas[pathname]
+    ? [painel, { label: paginas[pathname] }]
+    : [{ label: "Painel" }];
 }
 
-function formatarDataLocal(data = new Date()) {
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const dia = String(data.getDate()).padStart(2, "0");
-    return `${ano}-${mes}-${dia}`;
-}
-
-function formatarHoraLocal(data) {
-    const hh = String(data.getHours()).padStart(2, "0");
-    const mm = String(data.getMinutes()).padStart(2, "0");
-    return `${hh}:${mm}`;
-}
-
-function obterDataObjeto(visita) {
-    const bruto = visita.scheduledAt ?? visita.date ?? visita.visitDate;
-    if (!bruto) return null;
-    if (typeof bruto === "number") {
-        const d = new Date(bruto);
-        return Number.isNaN(d.getTime()) ? null : d;
-    }
-    const str = String(bruto).trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-        const [ano, mes, dia] = str.split("-").map(Number);
-        return new Date(ano, mes - 1, dia, 0, 0, 0, 0);
-    }
-    const d = new Date(str);
-    return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function obterHoraVisita(visita, dataObj) {
-    const rawHora = visita.time || visita.horario || visita.hour;
-    if (typeof rawHora === "string" && rawHora.trim()) {
-        return rawHora.trim().slice(0, 5);
-    }
-    if (!dataObj) return "";
-    const bruto = visita.scheduledAt ?? visita.date ?? visita.visitDate;
-    if (typeof bruto === "string" && /^\d{4}-\d{2}-\d{2}$/.test(bruto.trim())) {
-        return "";
-    }
-    return formatarHoraLocal(dataObj);
-}
-
-function calcularMinutosAteVisita(dataObj, horaStr, agora = new Date()) {
-    if (!dataObj || !horaStr) return null;
-    const match = horaStr.match(/^(\d{1,2}):(\d{2})/);
-    if (!match) return null;
-
-    const horas = Number(match[1]);
-    const minutos = Number(match[2]);
-    if (horas > 23 || minutos > 59) return null;
-
-    const alvo = new Date(
-        dataObj.getFullYear(),
-        dataObj.getMonth(),
-        dataObj.getDate(),
-        horas,
-        minutos,
-        0,
-        0
-    );
-    return Math.round((alvo.getTime() - agora.getTime()) / 60000);
-}
-
-function locacaoEstaEmAtraso(aluguel, agora = new Date()) {
-    if (!aluguel) return false;
-    const statusLoc = String(aluguel.status || "").trim().toUpperCase();
-    if (["TERMINATED", "CANCELLED", "CANCELED", "CLOSED", "INACTIVE"].includes(statusLoc)) {
-        return false;
-    }
-
-    if (aluguel.initialPaymentsPaid === false) {
-        return true;
-    }
-
-    const dueDay = Number(aluguel.dueDay);
-    if (!Number.isNaN(dueDay) && dueDay >= 1 && dueDay <= 31) {
-        const startMs = aluguel.startDate ? new Date(aluguel.startDate).getTime() : NaN;
-        const jaIniciou = Number.isNaN(startMs) || startMs <= agora.getTime();
-        if (jaIniciou && agora.getDate() > dueDay && aluguel.initialPaymentsPaid !== true) {
-            return true;
-        }
-    }
-
-    return false;
+function formatarData(timestamp) {
+  const data = new Date(timestamp);
+  if (Number.isNaN(data.getTime())) return "Data indisponível";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(data);
 }
 
 function AppLayout() {
-    const { pathname } = useLocation();
-    const titulo = titulos[pathname] ?? (
-        pathname === "/imoveis/cadastrar" ? "Cadastrar imóvel" :
-            pathname.startsWith("/imoveis/") ? "Visão geral do imóvel" :
-                pathname.startsWith("/locatarios/") ? "Visão geral do locatário" :
-                    "Locus"
-    );
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const breadcrumb = construirBreadcrumb(pathname);
+  const [notifications, setNotifications] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [error, setError] = useState("");
+  const [nativeUnavailable, setNativeUnavailable] = useState(false);
+  const [theme, setTheme] = useState(() => (
+    document.documentElement.dataset.theme === "dark" ? "dark" : "light"
+  ));
+  const dropdownRef = useRef(null);
 
-    const [visitasHoje, setVisitasHoje] = useState([]);
-    const [alertasAtraso, setAlertasAtraso] = useState([]);
-    const [mostrarDropdown, setMostrarDropdown] = useState(false);
-    const [bannerAberto, setBannerAberto] = useState(false);
-    const [mensagemBanner, setMensagemBanner] = useState("");
-    const [bannerCritico, setBannerCritico] = useState(false);
-    const dropdownRef = useRef(null);
-    const alertasEnviadosRef = useRef(new Set());
+  function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    setTheme(nextTheme);
+    try {
+      localStorage.setItem("locus:theme", nextTheme);
+    } catch (storageError) {
+      console.error("Não foi possível salvar a preferência de tema:", storageError);
+      setError("Tema alterado, mas não foi possível salvar essa preferência.");
+    }
+  }
 
-    useEffect(() => {
-        let ativo = true;
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const items = await window.api.notifications.list();
+      setNotifications(Array.isArray(items) ? items : []);
+      setError("");
+    } catch (loadError) {
+      console.error("Não foi possível carregar as notificações:", loadError);
+      setError("Não foi possível carregar o histórico de notificações.");
+    }
+  }, []);
 
-        async function verificarNotificacoes() {
-            try {
-                const [visitas, clientes, alugueis, imoveis, pagamentos] = await Promise.all([
-                    window.api && window.api.visits && typeof window.api.visits.list === "function"
-                        ? window.api.visits.list().catch(() => [])
-                        : [],
-                    window.api && window.api.clients && typeof window.api.clients.list === "function"
-                        ? window.api.clients.list().catch(() => [])
-                        : [],
-                    window.api && window.api.rentals && typeof window.api.rentals.list === "function"
-                        ? window.api.rentals.list().catch(() => [])
-                        : [],
-                    window.api && window.api.properties && typeof window.api.properties.list === "function"
-                        ? window.api.properties.list().catch(() => [])
-                        : [],
-                    window.api && window.api.payments && typeof window.api.payments.list === "function"
-                        ? window.api.payments.list().catch(() => [])
-                        : [],
-                ]);
+  useEffect(() => {
+    void refreshNotifications();
+    const unsubscribe = window.api.notifications.onChanged(() => {
+      void refreshNotifications();
+    });
+    const unsubscribeUnavailable = window.api.notifications.onNativeUnavailable(() => {
+      try {
+        if (localStorage.getItem(AVISO_NOTIFICACOES_NATIVAS) === "1") return;
+        localStorage.setItem(AVISO_NOTIFICACOES_NATIVAS, "1");
+        setNativeUnavailable(true);
+      } catch (storageError) {
+        console.error("Não foi possível salvar a preferência de aviso:", storageError);
+        setNativeUnavailable(true);
+      }
+    });
+    return () => {
+      unsubscribe();
+      unsubscribeUnavailable();
+    };
+  }, [refreshNotifications]);
 
-                if (!ativo) return;
+  useEffect(() => {
+    function closeOnOutsideClick(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, []);
 
-                const agora = new Date();
-                const hojeStr = formatarDataLocal(agora);
+  const unreadCount = notifications.reduce(
+    (count, item) => count + (item.readAt == null ? 1 : 0),
+    0
+  );
 
-                const filtradasVisitas = (visitas || [])
-                    .map((v, index) => {
-                        const dataObj = obterDataObjeto(v);
-                        const dataISO = dataObj ? formatarDataLocal(dataObj) : "";
-                        const horaFormatada = obterHoraVisita(v, dataObj);
-                        const minutosAte =
-                            dataISO === hojeStr ? calcularMinutosAteVisita(dataObj, horaFormatada, agora) : null;
-                        const iminente = minutosAte !== null && minutosAte <= JANELA_ANTECEDENCIA_MIN;
-                        const chaveBase = String(v.id ?? `${dataISO}-${horaFormatada}-${index}`);
+  async function openNotification(id) {
+    try {
+      const item = await window.api.notifications.open(id);
+      if (item?.target) navigate(item.target);
+      setShowDropdown(false);
+    } catch (openError) {
+      console.error("Não foi possível abrir a notificação:", openError);
+      setError("Não foi possível abrir este item. Tente novamente.");
+    }
+  }
 
-                        return {
-                            ...v,
-                            _dataISO: dataISO,
-                            _chaveBase: chaveBase,
-                            _horaFormatada: horaFormatada || "Horário não informado",
-                            _minutosAte: minutosAte,
-                            _iminente: iminente,
-                        };
-                    })
-                    .filter((v) => {
-                        const status = (v.status || "").toUpperCase();
-                        const ativa = !["CANCELADA", "CANCELLED", "CONCLUIDA", "COMPLETED", "REALIZADA"].includes(status);
-                        return v._dataISO === hojeStr && ativa;
-                    });
+  async function markAsRead(id) {
+    try {
+      await window.api.notifications.markRead(id);
+    } catch (markError) {
+      console.error("Não foi possível marcar a notificação como lida:", markError);
+      setError("Não foi possível atualizar o estado da notificação.");
+    }
+  }
 
-                setVisitasHoje(filtradasVisitas);
+  async function markAllAsRead() {
+    try {
+      await window.api.notifications.markAllRead();
+    } catch (markError) {
+      console.error("Não foi possível marcar as notificações como lidas:", markError);
+      setError("Não foi possível atualizar as notificações.");
+    }
+  }
 
-                const imovelPorId = {};
-                (imoveis || []).forEach((im) => {
-                    imovelPorId[im.id] = im.title || im.address || `Imóvel #${String(im.id).slice(0, 5)}`;
-                });
+  async function deleteNotification(id) {
+    try {
+      await window.api.notifications.delete(id);
+    } catch (deleteError) {
+      console.error("Não foi possível excluir a notificação:", deleteError);
+      setError("Não foi possível excluir esta notificação.");
+    }
+  }
 
-                const imovelPorCliente = {};
-                const atrasoPorLocacaoCliente = {};
-                (alugueis || []).forEach((aluguel) => {
-                    const idCli = aluguel.tenantId || aluguel.clientId;
-                    if (!idCli) return;
-                    const chaveCli = String(idCli);
+  async function clearNotifications() {
+    try {
+      await window.api.notifications.clear();
+    } catch (clearError) {
+      console.error("Não foi possível limpar as notificações:", clearError);
+      setError("Não foi possível limpar o histórico.");
+    }
+  }
 
-                    const statusLoc = String(aluguel.status || "").trim().toUpperCase();
-                    if (aluguel.propertyId && !["TERMINATED", "CANCELLED", "CANCELED", "CLOSED"].includes(statusLoc)) {
-                        imovelPorCliente[chaveCli] = imovelPorId[aluguel.propertyId] || "Imóvel associado";
-                    }
-
-                    if (locacaoEstaEmAtraso(aluguel, agora)) {
-                        atrasoPorLocacaoCliente[chaveCli] = true;
-                    }
-                });
-
-                const agoraMs = agora.getTime();
-                const atrasosPorCliente = {};
-                (pagamentos || []).forEach((p) => {
-                    const st = String(p.status || "").trim().toUpperCase();
-                    const rawVenc = p.dueDate ?? p.vencimento ?? p.dueAt;
-                    const vencMs = rawVenc ? new Date(rawVenc).getTime() : NaN;
-                    const vencidoPendente =
-                        ["PENDENTE", "PENDING", "EM_ABERTO"].includes(st) &&
-                        !Number.isNaN(vencMs) &&
-                        vencMs < agoraMs;
-
-                    if (["ATRASADO", "OVERDUE"].includes(st) || vencidoPendente) {
-                        const idCli = p.clientId || p.tenantId;
-                        if (idCli) {
-                            atrasosPorCliente[String(idCli)] = (atrasosPorCliente[String(idCli)] || 0) + 1;
-                        }
-                    }
-                });
-
-                const mapaManual = lerMapaAtrasoManual();
-
-                const inadimplentes = (clientes || [])
-                    .filter((c) => {
-                        const isTenant = !c.type || String(c.type).toUpperCase() === "TENANT";
-                        const atrasadoStatus = ["atrasado", "overdue"].includes(
-                            String(c.status || "").trim().toLowerCase()
-                        );
-                        const temPgtoAtrasado = (atrasosPorCliente[String(c.id)] || 0) > 0;
-                        const temLocacaoAtrasada = Boolean(atrasoPorLocacaoCliente[String(c.id)]);
-                        const temAtrasoManual = Boolean(mapaManual[String(c.id)]);
-                        return isTenant && (atrasadoStatus || temPgtoAtrasado || temLocacaoAtrasada || temAtrasoManual);
-                    })
-                    .map((c, idx) => ({
-                        id: String(c.id ?? idx),
-                        nome: c.name || c.nome || "Locatário",
-                        imovel: imovelPorCliente[String(c.id)] || c.imovel || c.property || "—",
-                        qtdPagamentosAtrasados: atrasosPorCliente[String(c.id)] || 0,
-                    }));
-
-                setAlertasAtraso(inadimplentes);
-
-                // Limpa chaves de locatários que não estão mais atrasados
-                const idsAtrasadosAtuais = new Set(inadimplentes.map((l) => `atraso-${l.id}`));
-                Array.from(alertasEnviadosRef.current).forEach((chave) => {
-                    if (chave.startsWith("atraso-") && !idsAtrasadosAtuais.has(chave)) {
-                        alertasEnviadosRef.current.delete(chave);
-                    }
-                });
-
-                const visitasIminentesNovas = filtradasVisitas.filter((v) => {
-                    if (!v._iminente) return false;
-                    const chave = `visita-iminente-${v._chaveBase}`;
-                    if (alertasEnviadosRef.current.has(chave)) return false;
-                    alertasEnviadosRef.current.add(chave);
-                    return true;
-                });
-
-                const visitasDiaNovas = filtradasVisitas.filter((v) => {
-                    const chave = `visita-dia-${v._chaveBase}`;
-                    if (alertasEnviadosRef.current.has(chave)) return false;
-                    alertasEnviadosRef.current.add(chave);
-                    return true;
-                });
-
-                const inadimplentesNovos = inadimplentes.filter((l) => {
-                    const chave = `atraso-${l.id}`;
-                    if (alertasEnviadosRef.current.has(chave)) return false;
-                    alertasEnviadosRef.current.add(chave);
-                    return true;
-                });
-
-                const itensNotificacaoNativa = [];
-
-                if (inadimplentesNovos.length > 0) {
-                    inadimplentesNovos.forEach((l) => {
-                        itensNotificacaoNativa.push({
-                            titulo: `Locatário em atraso (${inadimplentes.length} no total)`,
-                            corpo: `${l.nome} — ${l.imovel}`,
-                            tag: `atraso-${l.id}-${inadimplentes.length}`,
-                        });
-                    });
-                }
-
-                const alvosVisitas = visitasIminentesNovas.length > 0 ? visitasIminentesNovas : visitasDiaNovas;
-                alvosVisitas.forEach((v) => {
-                    const cliente = v.clientName || v.nomeCliente || "Cliente";
-                    const imovel = v.propertyTitle || v.imovel || "";
-                    itensNotificacaoNativa.push({
-                        titulo: v._iminente ? `Visita próxima (${v._horaFormatada})` : `Visita hoje (${v._horaFormatada})`,
-                        corpo: imovel ? `${cliente} — ${imovel}` : cliente,
-                        tag: `visita-${v._chaveBase}`,
-                    });
-                });
-
-                if (inadimplentesNovos.length > 0 || visitasIminentesNovas.length > 0 || visitasDiaNovas.length > 0) {
-                    if (inadimplentes.length > 0) {
-                        setBannerCritico(true);
-                        if (inadimplentesNovos.length > 0) {
-                            const nomesNovos = inadimplentesNovos.map((n) => n.nome).join(", ");
-                            setMensagemBanner(
-                                inadimplentes.length === 1
-                                    ? `1 locatário em atraso: ${inadimplentes[0].nome}.`
-                                    : `${inadimplentes.length} locatários em atraso no total (novo: ${nomesNovos}).`
-                            );
-                        } else {
-                            setMensagemBanner(
-                                inadimplentes.length === 1
-                                    ? `1 locatário em atraso: ${inadimplentes[0].nome}.`
-                                    : `${inadimplentes.length} locatários com atraso pendente.`
-                            );
-                        }
-                    } else if (visitasIminentesNovas.length > 0) {
-                        const primeira = visitasIminentesNovas[0];
-                        const cliente = primeira.clientName || primeira.nomeCliente || "Cliente";
-                        setBannerCritico(true);
-                        setMensagemBanner(
-                            visitasIminentesNovas.length === 1
-                                ? `Visita em breve (${primeira._horaFormatada}) com ${cliente}.`
-                                : `${visitasIminentesNovas.length} visitas próximas do horário marcado.`
-                        );
-                    } else {
-                        setBannerCritico(false);
-                        setMensagemBanner(
-                            `Você tem ${filtradasVisitas.length} ${
-                                filtradasVisitas.length === 1 ? "visita agendada para hoje" : "visitas agendadas para hoje"
-                            }.`
-                        );
-                    }
-                    setBannerAberto(true);
-
-                    if (itensNotificacaoNativa.length > 0) {
-                        const rodar = () => {
-                            itensNotificacaoNativa.forEach((item) => {
-                                notificarSistema(item.titulo, item.corpo, item.tag, (t, b) => {
-                                    setMensagemBanner(`${t}: ${b}`);
-                                    setBannerAberto(true);
-                                });
-                            });
-                        };
-
-                        if (typeof Notification !== "undefined" && Notification.permission === "default") {
-                            Notification.requestPermission().finally(() => {
-                                if (ativo) rodar();
-                            });
-                        } else {
-                            rodar();
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error("Erro ao carregar notificações:", err);
-            }
+  return (
+    <>
+      <style>{`
+        .layout { display: flex; height: 100vh; overflow: hidden; }
+        .principal { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; min-width: 0; }
+        .topo { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); background: var(--color-primary); color: var(--color-on-primary); padding: var(--space-3) var(--space-5); position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
+        .topo-identidade, .topo-icones { display: flex; align-items: center; gap: var(--space-3); }
+        .topo-identidade { min-width: 0; }
+        .breadcrumb { min-width: 0; }
+        .breadcrumb ol { display: flex; align-items: center; gap: var(--space-2); list-style: none; min-width: 0; }
+        .breadcrumb li { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+        .breadcrumb a { color: inherit; opacity: 0.76; text-decoration: none; transition: opacity var(--motion-fast) var(--ease-standard); }
+        .breadcrumb a:hover { opacity: 1; text-decoration: underline; }
+        .breadcrumb-current { overflow: hidden; font-size: var(--font-title-lg); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+        .breadcrumb-separator { opacity: 0.65; }
+        .conteudo { flex: 1; background: var(--color-surface); padding: var(--space-5); min-width: 0; }
+        .topo-acao { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; position: relative; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-on-primary); cursor: pointer; }
+        .topo-acao:hover, .topo-acao:focus-visible { background: var(--state-layer-on-primary); outline: 2px solid var(--color-outline-variant); outline-offset: 2px; }
+        .notificacoes-dropdown { position: absolute; top: 52px; right: 0; width: min(390px, calc(100vw - 32px)); max-height: min(70vh, 560px); overflow: hidden; color: var(--color-on-surface); background: var(--color-surface); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); box-shadow: var(--elevation-2); z-index: 100; text-align: left; }
+        .notificacoes-cabecalho { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-outline-variant); background: var(--color-surface-variant); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+        .notificacoes-cabecalho strong { font-size: var(--font-body-md); }
+        .notificacoes-acoes { display: flex; gap: var(--space-1); }
+        .notificacoes-acoes button, .notificacao-excluir { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-sm); color: var(--color-primary); background: transparent; cursor: pointer; }
+        .notificacao-acoes-item { display: flex; flex-direction: column; align-items: center; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: calc(-1 * var(--space-1)); overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .notificacoes-acoes button:hover, .notificacao-excluir:hover { color: var(--color-primary); background: var(--color-surface-variant); }
+        .notificacoes-lista { max-height: 390px; overflow-y: auto; }
+        .notificacoes-vazio { padding: var(--space-6) var(--space-4); text-align: center; color: var(--color-on-surface-variant); }
+        .notificacoes-vazio svg { color: var(--color-primary); margin-bottom: 8px; }
+        .notificacao-item { display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: var(--space-1); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-outline-variant); }
+        .notificacao-item-nao-lida { background: var(--color-primary-container); }
+        .notificacao-conteudo { width: 100%; padding: var(--space-1) var(--space-1); border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+        .notificacao-conteudo:focus-visible, .notificacao-excluir:focus-visible, .notificacoes-acoes button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+        .notificacao-titulo { display: block; font-size: var(--font-body-md); font-weight: 700; color: var(--color-on-surface); }
+        .notificacao-mensagem { display: block; margin-top: 3px; font-size: var(--font-body-sm); line-height: 1.45; color: var(--color-on-surface-variant); overflow-wrap: anywhere; }
+        .notificacao-data { display: block; margin-top: 6px; font-size: var(--font-body-sm); color: var(--color-on-surface-variant); }
+        .notificacoes-aviso, .notificacoes-erro { margin: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: var(--font-body-sm); line-height: 1.45; }
+        .notificacoes-aviso { color: var(--color-warning); background: var(--color-warning-container); border: 1px solid var(--color-warning); }
+        .notificacoes-erro { color: var(--color-error); background: var(--color-error-container); border: 1px solid var(--color-error); }
+        @media (max-width: 680px) {
+          .topo { padding: var(--space-2) var(--space-3); }
+          .breadcrumb ol { gap: var(--space-1); }
+          .breadcrumb li { gap: var(--space-1); }
+          .conteudo { padding: var(--space-4); }
+          .notificacoes-dropdown { right: -54px; }
         }
-
-        verificarNotificacoes();
-        const intervalo = setInterval(verificarNotificacoes, 60000);
-        const aoAtualizar = () => verificarNotificacoes();
-        window.addEventListener("locus:locatarios-atualizados", aoAtualizar);
-
-        return () => {
-            ativo = false;
-            clearInterval(intervalo);
-            window.removeEventListener("locus:locatarios-atualizados", aoAtualizar);
-        };
-    }, []);
-
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setMostrarDropdown(false);
-            }
+        @media (max-width: 520px) {
+          .layout { display: block; height: auto; min-height: 100vh; overflow: visible; }
+          .layout > aside { width: 100% !important; height: auto !important; min-height: 0 !important; padding: var(--space-3) !important; position: relative !important; }
+          .layout > aside h2 { margin: 0 0 var(--space-2) !important; padding-right: 60px; font-size: var(--font-title-lg) !important; }
+          .layout > aside nav { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1) !important; }
+          .layout > aside nav a { min-height: 44px; justify-content: center; gap: var(--space-1) !important; padding: var(--space-1) !important; flex-direction: column; font-size: var(--font-body-sm) !important; text-align: center; }
+          .layout > aside > button { min-height: 44px; width: auto !important; padding: var(--space-2) !important; position: absolute; top: 8px; right: 12px; }
+          .principal { height: auto; min-height: 100vh; overflow: visible; }
+          .conteudo { padding: var(--space-3); }
         }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+      `}</style>
 
-    const totalNotificacoes = visitasHoje.length + alertasAtraso.length;
-    const temUrgencia = alertasAtraso.length > 0 || visitasHoje.some((v) => v._iminente);
-
-    return (
-        <>
-            <style>
-                {`
-                    .layout {
-                        display: flex;
-                        height: 100vh;
-                        overflow: hidden;
-                    }
-
-                    .principal {
-                        flex: 1;
-                        display: flex;
-                        flex-direction: column;
-                        height: 100vh;
-                        overflow-y: auto;
-                        min-width: 0;
-                    }
-
-                    .topo {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        background-color: #1877f2;
-                        color: white;
-                        padding: 16px 24px;
-                        position: sticky;
-                        top: 0;
-                        z-index: 10;
-                        flex-shrink: 0;
-                    }
-
-                    .topo h1 {
-                        font-size: 24px;
-                        font-weight: bold;
-                        margin: 0;
-                    }
-
-                    .topo-identidade {
-                        display: flex;
-                        align-items: baseline;
-                        gap: 16px;
-                    }
-
-                    .topo-marca {
-                        font-size: 22px;
-                        font-weight: 700;
-                    }
-
-                    .topo-icones {
-                        display: flex;
-                        gap: 16px;
-                        align-items: center;
-                    }
-
-                    .conteudo {
-                        flex: 1;
-                        background-color: #ffffff;
-                        padding: 24px;
-                    }
-
-                    .botao-voltar-padrao {
-                        align-self: flex-start;
-                        margin-bottom: 16px;
-                        padding: 8px 0;
-                        border: none;
-                        background: transparent;
-                        color: #1976d2;
-                        font-weight: 700;
-                        cursor: pointer;
-                    }
-
-                    .botao-voltar-padrao:hover {
-                        text-decoration: underline;
-                    }
-                `}
-            </style>
-
-            <div className="layout">
-                <Sidebar />
-
-                <div className="principal">
-                    <header className="topo">
-                        <div className="topo-identidade">
-                            <span className="topo-marca"></span>
-                            <h1>{titulo}</h1>
-                        </div>
-                        <div className="topo-icones">
-                            <button 
-                                style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
-                                aria-label="Perfil"
-                            >
-                                <User size={20} />
-                            </button>
-
-                            <div style={{ position: 'relative' }} ref={dropdownRef}>
-                                <button 
-                                    type="button"
-                                    onClick={() => setMostrarDropdown(!mostrarDropdown)}
-                                    style={{ 
-                                        background: 'none', 
-                                        border: 'none', 
-                                        color: '#fff', 
-                                        cursor: 'pointer', 
-                                        display: 'flex', 
-                                        alignItems: 'center',
-                                        padding: '4px',
-                                        position: 'relative'
-                                    }}
-                                    aria-label="Notificações"
-                                >
-                                    <Bell size={20} />
-                                    {totalNotificacoes > 0 && (
-                                        <span style={{
-                                            position: 'absolute',
-                                            top: '-3px',
-                                            right: '-3px',
-                                            backgroundColor: temUrgencia ? '#dc2626' : '#ef4444',
-                                            color: '#fff',
-                                            fontSize: '10px',
-                                            fontWeight: 'bold',
-                                            borderRadius: '50%',
-                                            width: '16px',
-                                            height: '16px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            border: '2px solid #1877f2',
-                                            pointerEvents: 'none'
-                                        }}>
-                                            {totalNotificacoes}
-                                        </span>
-                                    )}
-                                </button>
-
-                                {mostrarDropdown && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        right: 0,
-                                        top: '40px',
-                                        width: '330px',
-                                        backgroundColor: '#ffffff',
-                                        color: '#1e293b',
-                                        borderRadius: '8px',
-                                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                                        border: '1px solid #e2e8f0',
-                                        zIndex: 99999,
-                                        overflow: 'hidden',
-                                        textAlign: 'left'
-                                    }}>
-                                        <div style={{
-                                            padding: '12px 16px',
-                                            borderBottom: '1px solid #e2e8f0',
-                                            backgroundColor: '#f8fafc',
-                                            fontWeight: '600',
-                                            fontSize: '13px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center'
-                                        }}>
-                                            <span>Notificações ({alertasAtraso.length} atraso{alertasAtraso.length === 1 ? '' : 's'})</span>
-                                            <span style={{ backgroundColor: '#dbeafe', color: '#1e40af', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>
-                                                {totalNotificacoes}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                            {totalNotificacoes === 0 ? (
-                                                <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
-                                                    Nenhuma notificação no momento.
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    {alertasAtraso.map((l) => (
-                                                        <div
-                                                            key={`atraso-${l.id}`}
-                                                            style={{
-                                                                padding: '10px 14px',
-                                                                borderBottom: '1px solid #fee2e2',
-                                                                backgroundColor: '#fef2f2',
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                gap: '3px'
-                                                            }}
-                                                        >
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#b91c1c', fontWeight: '700' }}>
-                                                                <AlertTriangle size={12} /> Locatário em atraso
-                                                            </div>
-                                                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#7f1d1d' }}>
-                                                                {l.nome}
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#991b1b' }}>
-                                                                Imóvel: {l.imovel}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-
-                                                    {visitasHoje.map((v) => (
-                                                        <div
-                                                            key={`visita-${v._chaveBase}`}
-                                                            style={{
-                                                                padding: '10px 14px',
-                                                                borderBottom: '1px solid #f1f5f9',
-                                                                backgroundColor: v._iminente ? '#fff7ed' : '#ffffff',
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                gap: '3px'
-                                                            }}
-                                                        >
-                                                            <div
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'space-between',
-                                                                    gap: '5px',
-                                                                    fontSize: '11px',
-                                                                    color: v._iminente ? '#c2410c' : '#2563eb',
-                                                                    fontWeight: '600'
-                                                                }}
-                                                            >
-                                                                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                                    <Clock size={12} /> {v._horaFormatada}
-                                                                </span>
-                                                                {v._iminente && (
-                                                                    <span
-                                                                        style={{
-                                                                            backgroundColor: '#ffedd5',
-                                                                            color: '#c2410c',
-                                                                            padding: '1px 6px',
-                                                                            borderRadius: '8px',
-                                                                            fontSize: '10px'
-                                                                        }}
-                                                                    >
-                                                                        {v._minutosAte > 0 ? `Em ${v._minutosAte} min` : "Na hora"}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div style={{ fontSize: '12px', fontWeight: '500', color: '#0f172a' }}>
-                                                                Cliente: {v.clientName || v.nomeCliente || "Cliente"}
-                                                            </div>
-                                                            <div style={{ fontSize: '11px', color: '#64748b' }}>
-                                                                Imóvel: {v.propertyTitle || v.imovel || "—"}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </header>
-
-                    <main className="conteudo">
-                        <Outlet />
-                    </main>
-                </div>
+      <div className="layout">
+        <Sidebar />
+        <div className="principal">
+          <header className="topo">
+            <div className="topo-identidade">
+              <nav className="breadcrumb" aria-label="Navegação estrutural">
+                <ol>
+                  {breadcrumb.map((item, index) => {
+                    const atual = index === breadcrumb.length - 1;
+                    return (
+                      <li key={`${item.label}-${index}`}>
+                        {index > 0 && <span className="breadcrumb-separator" aria-hidden="true">/</span>}
+                        {item.to && !atual ? (
+                          <Link to={item.to}>{item.label}</Link>
+                        ) : (
+                          <span className="breadcrumb-current" aria-current="page">{item.label}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
             </div>
-
-            {bannerAberto && totalNotificacoes > 0 && (
-                <div
-                    role="status"
-                    style={{
-                        position: "fixed",
-                        bottom: "20px",
-                        right: "20px",
-                        width: "330px",
-                        backgroundColor: "#ffffff",
-                        color: "#0f172a",
-                        borderLeft: `4px solid ${bannerCritico ? "#dc2626" : "#1877f2"}`,
-                        borderRadius: "8px",
-                        boxShadow: "0 10px 25px rgba(0,0,0,0.18)",
-                        borderTop: "1px solid #e2e8f0",
-                        borderRight: "1px solid #e2e8f0",
-                        borderBottom: "1px solid #e2e8f0",
-                        padding: "14px 16px",
-                        zIndex: 99998,
-                        fontFamily: "Inter, sans-serif",
-                    }}
+            <div className="topo-icones">
+              <div style={{ position: "relative" }} ref={dropdownRef}>
+                <button
+                  type="button"
+                  className="topo-acao"
+                  onClick={() => setShowDropdown((visible) => !visible)}
+                  aria-label={`Notificações, ${unreadCount} não lidas`}
+                  aria-expanded={showDropdown}
+                  aria-controls="notificacoes-dropdown"
                 >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                        <strong style={{ fontSize: "13px", color: bannerCritico ? "#b91c1c" : "#1877f2" }}>
-                            {bannerCritico ? `Alerta do Sistema (${alertasAtraso.length} atraso${alertasAtraso.length === 1 ? '' : 's'})` : `Notificações (${totalNotificacoes})`}
-                        </strong>
+                  <Bell size={20} aria-hidden="true" />
+                  <span className="sr-only" aria-live="polite">
+                    {unreadCount} notificações não lidas
+                  </span>
+                  {unreadCount > 0 && (
+                    <span
+                      className="notificacoes-badge"
+                      style={{
+                        position: "absolute",
+                        top: 1,
+                        right: 0,
+                        minWidth: 18,
+                        height: 18,
+                        padding: "0 var(--space-1)",
+                        boxSizing: "border-box",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 9,
+                        background: "var(--color-error)",
+                        color: "var(--color-on-error)",
+                        border: "2px solid var(--color-surface)",
+                        fontSize: "var(--font-body-sm)",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showDropdown && (
+                  <section
+                    id="notificacoes-dropdown"
+                    className="notificacoes-dropdown"
+                    aria-label="Central de notificações"
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setShowDropdown(false);
+                    }}
+                  >
+                    <div className="notificacoes-cabecalho">
+                      <strong>Notificações</strong>
+                      <div className="notificacoes-acoes">
                         <button
-                            type="button"
-                            onClick={() => setBannerAberto(false)}
-                            aria-label="Fechar notificação"
-                            style={{
-                                background: "none",
-                                border: "none",
-                                color: "#64748b",
-                                cursor: "pointer",
-                                padding: "2px",
-                                display: "flex",
-                            }}
+                          type="button"
+                          aria-label="Marcar todas como lidas"
+                          title="Marcar todas como lidas"
+                          onClick={markAllAsRead}
+                          disabled={unreadCount === 0}
                         >
-                            <X size={15} />
+                          <CheckCheck size={18} aria-hidden="true" />
                         </button>
+                        <button
+                          type="button"
+                          aria-label="Limpar histórico de notificações"
+                          title="Limpar histórico"
+                          onClick={clearNotifications}
+                          disabled={notifications.length === 0}
+                        >
+                          <Trash2 size={17} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Fechar notificações"
+                          title="Fechar"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          <X size={18} aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
-                    <p style={{ margin: 0, fontSize: "12px", color: "#334155" }}>
-                        {mensagemBanner} Clique no sino para ver os detalhes.
-                    </p>
-                </div>
-            )}
-        </>
-    );
+
+                    {nativeUnavailable && (
+                      <div className="notificacoes-aviso" role="status">
+                        As notificações do Windows não estão disponíveis. Ative-as em
+                        Configurações do Windows &gt; Sistema &gt; Notificações. Os eventos
+                        continuam salvos aqui.
+                      </div>
+                    )}
+                    {error && <div className="notificacoes-erro" role="alert">{error}</div>}
+
+                    <div className="notificacoes-lista">
+                      {notifications.length === 0 ? (
+                        <div className="notificacoes-vazio">
+                          <Inbox size={25} aria-hidden="true" />
+                          <div>Nenhuma notificação por enquanto.</div>
+                          <small>Os lembretes importantes aparecerão aqui.</small>
+                        </div>
+                      ) : (
+                        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                          {notifications.map((item) => (
+                            <li
+                              className={`notificacao-item ${item.readAt == null ? "notificacao-item-nao-lida" : ""}`}
+                              key={item.id}
+                            >
+                              <button
+                                type="button"
+                                className="notificacao-conteudo"
+                                onClick={() => openNotification(item.id)}
+                              >
+                                <span className="notificacao-titulo">{item.title}</span>
+                                <span className="notificacao-mensagem">{item.message}</span>
+                                <span className="notificacao-data">{formatarData(item.createdAt)}</span>
+                              </button>
+                              <div className="notificacao-acoes-item">
+                                {item.readAt == null && (
+                                  <button
+                                    type="button"
+                                    className="notificacao-excluir"
+                                    aria-label={`Marcar como lida: ${item.title}`}
+                                    title="Marcar como lida"
+                                    onClick={() => markAsRead(item.id)}
+                                  >
+                                    <CheckCheck size={17} aria-hidden="true" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="notificacao-excluir"
+                                  aria-label={`Excluir notificação: ${item.title}`}
+                                  title="Excluir notificação"
+                                  onClick={() => deleteNotification(item.id)}
+                                >
+                                  <X size={17} aria-hidden="true" />
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </section>
+                )}
+              </div>
+              <button
+                type="button"
+                className="topo-acao"
+                onClick={toggleTheme}
+                aria-label={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+                aria-pressed={theme === "dark"}
+                title={theme === "dark" ? "Ativar tema claro" : "Ativar tema escuro"}
+              >
+                {theme === "dark" ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
+              </button>
+            </div>
+          </header>
+          <main className="conteudo">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default AppLayout;

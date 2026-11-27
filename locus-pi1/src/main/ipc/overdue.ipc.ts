@@ -9,8 +9,9 @@ import { DrizzleClientRepository } from "../infrastructure/repositories/DrizzleC
 import { DrizzlePropertyRepository } from "../infrastructure/repositories/DrizzlePropertyRepository";
 import { DrizzleOverdueNotificationRepository } from "../infrastructure/repositories/DrizzleOverdueNotificationRepository";
 import { OverdueNotificationFilter } from "../domain/repositories/IOverdueNotificationRepository";
+import { NotificationService } from "../application/services/NotificationService";
 
-export function registerOverdueIpc() {
+export function registerOverdueIpc(notificationService: NotificationService) {
   const rentalRepo = new DrizzleRentalRepository();
   const historyRepo = new DrizzlePropertyHistoryRepository();
   const clientRepo = new DrizzleClientRepository();
@@ -18,7 +19,7 @@ export function registerOverdueIpc() {
   const notificationRepo = new DrizzleOverdueNotificationRepository();
 
   const checkOverdueRents = new CheckOverdueRents(rentalRepo, historyRepo, clientRepo, propertyRepo);
-  const triggerOverdueAlerts = new TriggerOverdueAlerts(checkOverdueRents, notificationRepo);
+  const triggerOverdueAlerts = new TriggerOverdueAlerts(checkOverdueRents, notificationService);
   const settleOverdueDebt = new SettleOverdueDebt(checkOverdueRents, historyRepo);
   const listOverdueNotifications = new ListOverdueNotifications(notificationRepo);
 
@@ -37,5 +38,7 @@ export function registerOverdueIpc() {
   ipcMain.handle("overdue:list-notifications", async (_, filter?: OverdueNotificationFilter) => {
     return listOverdueNotifications.execute(filter);
   });
+
+  return triggerOverdueAlerts;
 }
 

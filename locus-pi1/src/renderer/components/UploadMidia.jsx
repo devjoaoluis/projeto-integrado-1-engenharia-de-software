@@ -108,7 +108,7 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 12px;
+                        gap: var(--space-3);
                         width: 100%;
                         max-width: 600px;
                         margin: 0 auto;
@@ -118,34 +118,34 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                         display: flex;
                         justify-content: center;
                         align-items: baseline;
-                        gap: 10px;
+                        gap: var(--space-2);
                     }
 
                     .upload-titulo {
-                        font-size: 14px;
+                        font-size: var(--font-body-md);
                         font-weight: bold;
-                        color: #333333;
+                        color: var(--color-on-surface);
                     }
 
                     .upload-contador {
-                        font-size: 12px;
-                        color: #666666;
+                        font-size: var(--font-body-sm);
+                        color: var(--color-on-surface-variant);
                     }
 
                     .upload-lista {
                         display: flex;
                         flex-wrap: wrap;
                         justify-content: center;
-                        gap: 10px;
+                        gap: var(--space-2);
                     }
 
                     .upload-item {
                         position: relative;
                         width: 110px;
                         height: 66px;
-                        border-radius: 6px;
+                        border-radius: var(--radius-sm);
                         overflow: hidden;
-                        background-color: #000000;
+                        background-color: var(--color-primary);
                     }
 
                     .upload-item img,
@@ -160,10 +160,10 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                         position: absolute;
                         bottom: 3px;
                         left: 3px;
-                        padding: 2px 4px;
-                        border-radius: 4px;
-                        background-color: rgba(0, 0, 0, 0.65);
-                        color: white;
+                        padding: var(--space-1) var(--space-1);
+                        border-radius: var(--radius-xs);
+                        background-color: var(--color-scrim);
+                        color: var(--color-on-primary);
                         display: flex;
                     }
 
@@ -174,9 +174,9 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                         width: 18px;
                         height: 18px;
                         border: none;
-                        border-radius: 50%;
-                        background-color: rgba(0, 0, 0, 0.65);
-                        color: white;
+                        border-radius: var(--radius-full);
+                        background-color: var(--color-scrim);
+                        color: var(--color-on-primary);
                         cursor: pointer;
                         display: flex;
                         justify-content: center;
@@ -186,22 +186,22 @@ function UploadMidia({ fotos, setFotos, videos, setVideos }) {
                     .upload-adicionar {
                         width: 110px;
                         height: 66px;
-                        border: 2px dashed #1976d2;
-                        border-radius: 6px;
+                        border: 2px dashed var(--color-outline-variant);
+                        border-radius: var(--radius-sm);
                         background-color: transparent;
-                        color: #1976d2;
-                        font-size: 11px;
+                        color: var(--color-on-surface);
+                        font-size: var(--font-body-sm);
                         cursor: pointer;
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
                         align-items: center;
-                        gap: 2px;
+                        gap: var(--space-1);
                     }
 
                     .upload-aviso {
-                        color: #d32f2f;
-                        font-size: 13px;
+                        color: var(--color-error);
+                        font-size: var(--font-body-md);
                         text-align: center;
                     }
                 `}

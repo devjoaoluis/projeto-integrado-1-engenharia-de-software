@@ -57,6 +57,7 @@ class MockHistoryRepository implements IPropertyHistoryRepository {
       maintenances: [],
     };
   }
+  async findAllContracts(): Promise<PropertyContract[]> { return this.contracts; }
   async findContractById(id: string) {
     return this.contracts.find((c) => c.id === id) ?? null;
   }

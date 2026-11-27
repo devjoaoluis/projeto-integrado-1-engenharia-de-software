@@ -64,6 +64,62 @@
       "when": 1792603480264,
       "tag": "0008_contract_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792603480265,
+      "tag": "0009_tenant_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792603480266,
+      "tag": "0010_property_visits",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1792603480267,
+      "tag": "0011_visit_reminders",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792603480268,
+      "tag": "0012_overdue_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792603480269,
+      "tag": "0013_add_notes_to_property_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1792603480270,
+      "tag": "0014_visit_reminder_and_exclusivity",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1792603480271,
+      "tag": "0015_payment_installments_and_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1792603480272,
+      "tag": "0016_unified_notifications",
+      "breakpoints": true
     }
   ]
 }

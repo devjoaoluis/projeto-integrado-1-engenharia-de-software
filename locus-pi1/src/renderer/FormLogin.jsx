@@ -14,22 +14,25 @@ function FormLogin() {
         e.preventDefault();
         setErro("");
 
-        if (senha.length < 6) {
-            setErro("A senha deve ter no mínimo 6 caracteres.");
+        if (!window.api?.auth?.login) {
+            setErro("Não foi possível conectar ao serviço de autenticação.");
             return;
         }
 
-        if (window.api) {
-            // Trim no email para evitar erros de espaços acidentais no input
+        try {
             const res = await window.api.auth.login({ 
                 email: email.trim(), 
                 senha 
             });
             
             if (!res.success) {
-                setErro(res.error || "Email ou senha inválidos.");
+                setErro("Senha incorreta");
                 return;
             }
+        } catch (error) {
+            console.error("Não foi possível autenticar:", error);
+            setErro("Não foi possível realizar o login. Tente novamente.");
+            return;
         }
 
         if (lembrarEmail) {
@@ -50,8 +53,8 @@ function FormLogin() {
 
                     .login-page {
                         margin: 0;
-                        background-color: #1976d2;
-                        font-family: Arial, sans-serif;
+                        background-color: var(--color-primary);
+                        font-family: var(--font-family-base);
 
                         display: flex;
                         justify-content: center;
@@ -66,23 +69,23 @@ function FormLogin() {
                     }
 
                     .bem-vindo {
-                        font-size: 28px;
+                        font-size: var(--font-headline-md);
                         font-weight: bold;
-                        color: white;
+                        color: var(--color-on-primary);
                         margin-bottom: 24px;
                     }
 
                     .login {
                         width: 100%;
-                        padding: 32px;
-                        background-color: white;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                        padding: var(--space-6);
+                        background-color: var(--color-surface);
+                        border-radius: var(--radius-sm);
+                        box-shadow: var(--elevation-2);
                         text-align: left;
                     }
 
                     .titulo {
-                        font-size: 20px;
+                        font-size: var(--font-title-lg);
                         font-weight: normal;
                         margin-top: 0;
                         margin-bottom: 28px;
@@ -95,7 +98,7 @@ function FormLogin() {
                     .esqueci-senha {
                         display: block;
                         margin-bottom: 14px;
-                        color: #1976d2;
+                        color: var(--color-primary);
                         text-decoration: none;
                         cursor: pointer;
                     }
@@ -105,18 +108,18 @@ function FormLogin() {
                     }
 
                     .erro-login {
-                        color: #d32f2f;
-                        font-size: 14px;
+                        color: var(--color-error);
+                        font-size: var(--font-body-md);
                         margin-bottom: 14px;
                     }
 
                     .lembrar-email {
                         display: flex;
                         align-items: center;
-                        gap: 8px;
-                        margin: 4px 0 14px;
-                        color: #555;
-                        font-size: 14px;
+                        gap: var(--space-2);
+                        margin: var(--space-1) 0 var(--space-3);
+                        color: var(--color-on-surface);
+                        font-size: var(--font-body-md);
                     }
 
                     .lembrar-email input {

@@ -254,6 +254,10 @@ contextBridge.exposeInMainWorld("api", {
     list: () => ipcRenderer.invoke("payments:list"),
     getByTenant: (tenantId: string) =>
       ipcRenderer.invoke("payments:get-by-tenant", tenantId),
+    settleInstallment: (
+      input: import("../main/application/use-cases/SettleRentalInstallment").SettleRentalInstallmentInput
+    ) => ipcRenderer.invoke("payments:settle-installment", input),
+    openReceipt: (paymentId: string) => ipcRenderer.invoke("payments:open-receipt", paymentId),
   },
 
   visits: {
@@ -298,17 +302,24 @@ contextBridge.exposeInMainWorld("api", {
       stage: import("../main/domain/entities/VisitReminder").VisitReminderStage;
     }) =>
       ipcRenderer.invoke("visits:dismiss-reminder", data),
+  },
 
-    onReminderNotification: (
-      callback: (
-        alert: import("../main/domain/entities/VisitReminder").VisitAlert
-      ) => void
-    ) => {
-      const subscription = (_event: any, alert: any) => callback(alert);
-      ipcRenderer.on("visits:reminder-notification", subscription);
-      return () => {
-        ipcRenderer.removeListener("visits:reminder-notification", subscription);
-      };
+  notifications: {
+    list: () => ipcRenderer.invoke("notifications:list"),
+    markRead: (id: string) => ipcRenderer.invoke("notifications:mark-read", id),
+    markAllRead: () => ipcRenderer.invoke("notifications:mark-all-read"),
+    delete: (id: string) => ipcRenderer.invoke("notifications:delete", id),
+    clear: () => ipcRenderer.invoke("notifications:clear"),
+    open: (id: string) => ipcRenderer.invoke("notifications:open", id),
+    onChanged: (callback: () => void) => {
+      const subscription = () => callback();
+      ipcRenderer.on("notifications:changed", subscription);
+      return () => ipcRenderer.removeListener("notifications:changed", subscription);
+    },
+    onNativeUnavailable: (callback: () => void) => {
+      const subscription = () => callback();
+      ipcRenderer.on("notifications:native-unavailable", subscription);
+      return () => ipcRenderer.removeListener("notifications:native-unavailable", subscription);
     },
   },
 

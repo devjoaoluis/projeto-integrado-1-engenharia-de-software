@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "./Input";
 import Button from "./Button";
-import BotaoVoltar from "./components/BotaoVoltar";
 
 export default function Register({ onSuccess }) {
   const [nome, setNome] = useState("");
@@ -60,68 +59,67 @@ export default function Register({ onSuccess }) {
         {`
           .register-container {
             min-height: 100vh;
-            background-color: #1976d2;
+            background-color: var(--color-primary);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: var(--space-4);
             box-sizing: border-box;
-            font-family: sans-serif;
+            font-family: var(--font-family-base);
           }
 
           .register-title {
-            color: white;
-            font-size: 28px;
+            color: var(--color-on-primary);
+            font-size: var(--font-headline-md);
             font-weight: bold;
             margin-bottom: 24px;
             text-align: center;
           }
 
           .register-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 32px;
+            background-color: var(--color-surface);
+            border-radius: var(--radius-sm);
+            padding: var(--space-6);
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--elevation-2);
             box-sizing: border-box;
           }
 
           .register-card h2 {
-            font-size: 22px;
+            font-size: var(--font-title-lg);
             font-weight: 600;
-            margin: 0 0 8px 0;
-            color: #333;
+            margin: 0 0 var(--space-2) 0;
+            color: var(--color-on-surface);
           }
 
           .register-card p {
-            font-size: 14px;
-            color: #666;
-            margin: 0 0 20px 0;
+            font-size: var(--font-body-md);
+            color: var(--color-on-surface-variant);
+            margin: 0 0 var(--space-4) 0;
           }
 
           .error-message {
-            color: #d32f2f;
-            background-color: #fde8e8;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
+            color: var(--color-error);
+            background-color: var(--color-error-container);
+            padding: var(--space-2);
+            border-radius: var(--radius-xs);
+            font-size: var(--font-body-md);
             margin-bottom: 16px;
-            border: 1px solid #f8b4b4;
+            border: 1px solid var(--color-error);
           }
 
           .form-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3);
             margin-bottom: 20px;
           }
         `}
       </style>
 
       <div className="register-container">
-        <BotaoVoltar destino="/login" texto="Voltar para o login" />
         <h1 className="register-title">Bem-vindo à Locus Marismar</h1>
 
         <div className="register-card">
@@ -156,7 +154,7 @@ export default function Register({ onSuccess }) {
                 minLength={6}
                 required
               />
-              <span style={{ color: "#666", fontSize: "12px", marginTop: "-8px" }}>
+              <span style={{ color: "var(--color-on-surface-variant)", fontSize: "var(--font-body-sm)", marginTop: "calc(-1 * var(--space-2))" }}>
                 A senha deve ter pelo menos 6 caracteres.
               </span>
 

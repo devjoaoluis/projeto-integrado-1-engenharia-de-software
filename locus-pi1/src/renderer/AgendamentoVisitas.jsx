@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, X } from "lucide-react";
 
 export const AgendamentoVisitas = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedVisitId = searchParams.get("visitId");
   const [visitas, setVisitas] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [imoveis, setImoveis] = useState([]);
@@ -17,6 +19,7 @@ export const AgendamentoVisitas = () => {
   const [clientId, setClientId] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [reminderLeadMinutes, setReminderLeadMinutes] = useState(30);
   const [status, setStatus] = useState("AGENDADA");
   const [notes, setNotes] = useState("");
 
@@ -25,6 +28,18 @@ export const AgendamentoVisitas = () => {
   useEffect(() => {
     carregarDadosIniciais();
   }, []);
+
+  useEffect(() => {
+    if (!requestedVisitId || loading) return;
+    const visit = visitas.find((item) => String(item.id) === requestedVisitId);
+    if (!visit) return;
+    setCurrentDate(new Date(Number(visit.scheduledAt)));
+    window.requestAnimationFrame(() => {
+      const target = Array.from(document.querySelectorAll("[data-visit-id]"))
+        .find((element) => element.dataset.visitId === requestedVisitId);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [requestedVisitId, loading, visitas]);
 
   const carregarDadosIniciais = async () => {
     try {
@@ -58,6 +73,7 @@ export const AgendamentoVisitas = () => {
     setClientId("");
     setScheduledDate("");
     setScheduledTime("");
+    setReminderLeadMinutes(30);
     setStatus("AGENDADA");
     setNotes("");
     setModalFeedback({ type: "", message: "" });
@@ -87,6 +103,19 @@ export const AgendamentoVisitas = () => {
 
     try {
       const scheduledAt = Number(new Date(`${scheduledDate}T${scheduledTime}:00`).getTime());
+      const conflict = visitas.find((visita) =>
+        visita.id !== editingId &&
+        visita.status === "AGENDADA" &&
+        Number(visita.scheduledAt) === scheduledAt
+      );
+      if (conflict) {
+        const conflictTime = new Date(Number(conflict.scheduledAt)).toLocaleString("pt-BR");
+        setModalFeedback({
+          type: "error",
+          message: `Horário ocupado: ${obterNomeCliente(conflict.clientId)} já tem uma visita para "${obterNomeImovel(conflict.propertyId)}" em ${conflictTime}.`,
+        });
+        return;
+      }
 
       if (editingId) {
         if (window.api && window.api.visits && typeof window.api.visits.update === "function") {
@@ -95,6 +124,7 @@ export const AgendamentoVisitas = () => {
             propertyId,
             clientId,
             scheduledAt,
+            reminderLeadMinutes,
             status,
             notes,
           });
@@ -108,6 +138,7 @@ export const AgendamentoVisitas = () => {
             propertyId,
             clientId,
             scheduledAt,
+            reminderLeadMinutes,
             status,
             notes,
           });
@@ -121,7 +152,10 @@ export const AgendamentoVisitas = () => {
       carregarDadosIniciais();
     } catch (error) {
       console.error("Erro ao salvar visita:", error);
-      setModalFeedback({ type: "error", message: "Erro ao salvar visita. Verifique os dados selecionados." });
+      setModalFeedback({
+        type: "error",
+        message: error?.message || "Erro ao salvar visita. Verifique os dados selecionados.",
+      });
     }
   };
 
@@ -129,6 +163,7 @@ export const AgendamentoVisitas = () => {
     setEditingId(visita.id);
     setPropertyId(visita.propertyId || "");
     setClientId(visita.clientId || "");
+    setReminderLeadMinutes(visita.reminderLeadMinutes ?? 30);
     setStatus(visita.status || "AGENDADA");
     setNotes(visita.notes || "");
 
@@ -210,26 +245,26 @@ export const AgendamentoVisitas = () => {
   };
 
   if (loading) {
-    return <div style={{ padding: "40px", textAlign: "center", color: "#64748b", fontFamily: "Inter, sans-serif" }}>A carregar dados...</div>;
+    return <div style={{ padding: "var(--space-6)", textAlign: "center", color: "var(--color-on-surface)", fontFamily: "var(--font-family-base)" }}>A carregar dados...</div>;
   }
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: "1200px", margin: "0 auto", fontFamily: "Inter, sans-serif", color: "#1e293b" }}>
+    <div style={{ padding: "var(--space-5) var(--space-6)", maxWidth: "1200px", margin: "0 auto", fontFamily: "var(--font-family-base)", color: "var(--color-on-surface)" }}>
       
       {/* Top Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-4)", flexWrap: "wrap", gap: "var(--space-4)" }}>
         <div>
           <button 
             type="button"
             onClick={() => navigate("/imoveis")} 
-            style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: "14px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px", padding: 0, marginBottom: "8px" }}
+            style={{ background: "none", border: "none", color: "var(--color-on-surface)", cursor: "pointer", fontSize: "var(--font-body-md)", fontWeight: "500", display: "flex", alignItems: "center", gap: "var(--space-1)", padding: 0, marginBottom: "var(--space-2)" }}
           >
             &larr; Voltar para Imóveis
           </button>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+          <h1 style={{ fontSize: "var(--font-headline-sm)", fontWeight: "700", color: "var(--color-on-surface)", margin: 0 }}>
             Agendamento de Visitas
           </h1>
-          <p style={{ fontSize: "14px", color: "#64748b", margin: "4px 0 0 0" }}>
+          <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", margin: "var(--space-1) 0 0 0" }}>
             Acompanhe o calendário e gerencie as visitas aos imóveis cadastrados.
           </p>
         </div>
@@ -237,18 +272,18 @@ export const AgendamentoVisitas = () => {
         <button
           onClick={() => handleAbrirNovoAgendamento()}
           style={{
-            background: "#2563eb",
-            color: "#ffffff",
+            background: "var(--color-primary)",
+            color: "var(--color-on-primary)",
             border: "none",
-            borderRadius: "6px",
-            padding: "10px 18px",
-            fontSize: "14px",
+            borderRadius: "var(--radius-sm)",
+            padding: "var(--space-2) var(--space-4)",
+            fontSize: "var(--font-body-md)",
             fontWeight: "600",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            boxShadow: "0 1px 3px rgba(37,99,235,0.2)"
+            gap: "var(--space-2)",
+            boxShadow: "var(--elevation-1)"
           }}
         >
           <Plus size={18} />
@@ -259,13 +294,13 @@ export const AgendamentoVisitas = () => {
       {/* Global Feedback Banner */}
       {feedback.message && (
         <div style={{ 
-          padding: "12px 16px", 
-          borderRadius: "6px", 
-          marginBottom: "20px", 
-          fontSize: "14px",
-          backgroundColor: feedback.type === "error" ? "#fee2e2" : "#dcfce7",
-          color: feedback.type === "error" ? "#991b1b" : "#166534",
-          border: `1px solid ${feedback.type === "error" ? "#fecaca" : "#bbf7d0"}`,
+          padding: "var(--space-3) var(--space-4)",
+          borderRadius: "var(--radius-sm)",
+          marginBottom: "var(--space-4)",
+          fontSize: "var(--font-body-md)",
+          backgroundColor: feedback.type === "error" ? "var(--color-error-container)" : "var(--color-success-container)",
+          color: feedback.type === "error" ? "var(--color-error)" : "var(--color-success)",
+          border: `1px solid ${feedback.type === "error" ? "var(--color-error-container)" : "var(--color-success-container)"}`,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center"
@@ -273,7 +308,7 @@ export const AgendamentoVisitas = () => {
           <span>{feedback.message}</span>
           <button
             onClick={() => setFeedback({ type: "", message: "" })}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontWeight: "700", padding: "0 4px" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontWeight: "700", padding: "0 var(--space-1)" }}
           >
             &times;
           </button>
@@ -281,31 +316,31 @@ export const AgendamentoVisitas = () => {
       )}
 
       {/* CALENDÁRIO VISUAL E TABELA */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
         
         {/* Bloco do Calendario */}
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-md)", padding: "var(--space-5)", boxShadow: "var(--elevation-1)" }}>
           
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
-            <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)", flexWrap: "wrap", gap: "var(--space-3)" }}>
+            <h2 style={{ fontSize: "var(--font-title-lg)", fontWeight: "700", color: "var(--color-on-surface)", margin: 0 }}>
               {nomeMeses[mesAtual]} de {anoAtual}
             </h2>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "var(--space-2)" }}>
               <button
                 onClick={() => mudarMes(-1)}
-                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
+                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 &larr; Mês Anterior
               </button>
               <button
                 onClick={() => setCurrentDate(new Date())}
-                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
+                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 Hoje
               </button>
               <button
                 onClick={() => mudarMes(1)}
-                style={{ background: "#f1f5f9", border: "1px solid #cbd5e1", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "600", color: "#334155" }}
+                style={{ background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", cursor: "pointer", fontWeight: "600", color: "var(--color-on-surface)" }}
               >
                 Próximo Mês &rarr;
               </button>
@@ -313,30 +348,30 @@ export const AgendamentoVisitas = () => {
           </div>
 
           {/* Legenda de Cores */}
-          <div style={{ display: "flex", gap: "16px", marginBottom: "16px", fontSize: "12px", fontWeight: "500", color: "#475569", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "12px", height: "12px", background: "#dbeafe", border: "1px solid #93c5fd", borderRadius: "3px" }}></span>
+          <div style={{ display: "flex", gap: "var(--space-4)", marginBottom: "var(--space-4)", fontSize: "var(--font-body-sm)", fontWeight: "500", color: "var(--color-on-surface)", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+              <span style={{ width: "12px", height: "12px", background: "var(--color-primary-container)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-xs)" }}></span>
               Agendada
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "12px", height: "12px", background: "#dcfce7", border: "1px solid #86efac", borderRadius: "3px" }}></span>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+              <span style={{ width: "12px", height: "12px", background: "var(--color-success-container)", border: "1px solid var(--color-success)", borderRadius: "var(--radius-xs)" }}></span>
               Realizada
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "12px", height: "12px", background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: "3px" }}></span>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+              <span style={{ width: "12px", height: "12px", background: "var(--color-error-container)", border: "1px solid var(--color-error)", borderRadius: "var(--radius-xs)" }}></span>
               Cancelada
             </div>
           </div>
 
           {/* Dias da Semana */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px", textAlign: "center", fontWeight: "600", color: "#64748b", fontSize: "13px", marginBottom: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-2)", textAlign: "center", fontWeight: "600", color: "var(--color-on-surface)", fontSize: "var(--font-body-md)", marginBottom: "var(--space-2)" }}>
             <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
           </div>
 
           {/* Grelha do Calendario */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-2)" }}>
             {Array.from({ length: primeiroDiaDoMes }).map((_, index) => (
-              <div key={`empty-${index}`} style={{ minHeight: "110px", background: "#f8fafc", borderRadius: "6px", border: "1px solid #f1f5f9" }} />
+              <div key={`empty-${index}`} style={{ minHeight: "110px", background: "var(--color-primary-container)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)" }} />
             ))}
 
             {Array.from({ length: ultimoDiaDoMes }).map((_, index) => {
@@ -352,17 +387,17 @@ export const AgendamentoVisitas = () => {
                   key={`day-${dia}`}
                   style={{
                     minHeight: "110px",
-                    background: ehHoje ? "#eff6ff" : "#ffffff",
-                    border: ehHoje ? "2px solid #2563eb" : "1px solid #e2e8f0",
-                    borderRadius: "6px",
-                    padding: "6px",
+                    background: ehHoje ? "var(--color-primary-container)" : "var(--color-surface)",
+                    border: ehHoje ? "2px solid var(--color-primary)" : "1px solid var(--color-outline-variant)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "var(--space-1)",
                     boxSizing: "border-box",
                     overflowY: "auto",
                     maxHeight: "150px"
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: ehHoje ? "#2563eb" : "#334155" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-1)" }}>
+                    <span style={{ fontSize: "var(--font-body-sm)", fontWeight: "700", color: ehHoje ? "var(--color-primary)" : "var(--color-on-surface)" }}>
                       {dia}
                     </span>
                     <button
@@ -373,9 +408,9 @@ export const AgendamentoVisitas = () => {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "#94a3b8",
-                        padding: "2px",
-                        borderRadius: "4px",
+                        color: "var(--color-on-surface)",
+                        padding: "var(--space-1)",
+                        borderRadius: "var(--radius-xs)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center"
@@ -390,32 +425,34 @@ export const AgendamentoVisitas = () => {
                     const statusVisita = v.status || "AGENDADA";
                     const nomeCliente = obterNomeCliente(v.clientId);
                     
-                    let bgCard = "#dbeafe";
-                    let colorCard = "#1e40af";
+                    let bgCard = "var(--color-primary-container)";
+                    let colorCard = "var(--color-on-surface)";
                     if (statusVisita === "REALIZADA") {
-                      bgCard = "#dcfce7";
-                      colorCard = "#166534";
+                      bgCard = "var(--color-success-container)";
+                      colorCard = "var(--color-success)";
                     } else if (statusVisita === "CANCELADA") {
-                      bgCard = "#fee2e2";
-                      colorCard = "#991b1b";
+                      bgCard = "var(--color-error-container)";
+                      colorCard = "var(--color-error)";
                     }
 
                     return (
                       <div
                         key={v.id}
+                        data-visit-id={v.id}
                         onClick={() => handleEditarVisita(v)}
                         title={`Status: ${statusVisita}\nCliente: ${nomeCliente}\nImóvel: ${obterNomeImovel(v.propertyId)}`}
                         style={{
                           background: bgCard,
                           color: colorCard,
-                          fontSize: "11px",
-                          padding: "4px 6px",
-                          borderRadius: "4px",
-                          marginBottom: "4px",
+                          fontSize: "var(--font-body-sm)",
+                          padding: "var(--space-1) var(--space-1)",
+                          borderRadius: "var(--radius-xs)",
+                          marginBottom: "var(--space-1)",
                           cursor: "pointer",
                           wordBreak: "break-word",
                           lineHeight: "1.3",
-                          fontWeight: "500"
+                          fontWeight: "500",
+                          outline: String(v.id) === requestedVisitId ? "2px solid var(--color-primary)" : undefined,
                         }}
                       >
                         <strong>{horaFormatada}</strong> - {nomeCliente}
@@ -429,53 +466,60 @@ export const AgendamentoVisitas = () => {
         </div>
 
         {/* Bloco da Tabela logo abaixo do Calendario */}
-        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "28px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-          <h2 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "20px", color: "#0f172a" }}>Lista Geral de Visitas</h2>
+        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-md)", padding: "var(--space-5)", boxShadow: "var(--elevation-1)" }}>
+          <h2 style={{ fontSize: "var(--font-title-lg)", fontWeight: "700", marginBottom: "var(--space-4)", color: "var(--color-on-surface)" }}>Lista Geral de Visitas</h2>
 
           {visitas.length === 0 ? (
-            <p style={{ color: "#64748b", fontSize: "14px", textAlign: "center", padding: "30px 0" }}>Nenhuma visita registrada até ao momento.</p>
+            <p style={{ color: "var(--color-on-surface)", fontSize: "var(--font-body-md)", textAlign: "center", padding: "var(--space-6) 0" }}>Nenhuma visita registrada até ao momento.</p>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "var(--font-body-md)" }}>
                 <thead>
-                  <tr style={{ background: "#f8fafc", color: "#475569", borderBottom: "2px solid #e2e8f0" }}>
-                    <th style={{ padding: "12px" }}>Data / Hora</th>
-                    <th style={{ padding: "12px" }}>Imóvel</th>
-                    <th style={{ padding: "12px" }}>Cliente</th>
-                    <th style={{ padding: "12px" }}>Status</th>
-                    <th style={{ padding: "12px" }}>Notas</th>
-                    <th style={{ padding: "12px" }}>Ações</th>
+                  <tr style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", borderBottom: "2px solid var(--color-outline-variant)" }}>
+                    <th style={{ padding: "var(--space-3)" }}>Data / Hora</th>
+                    <th style={{ padding: "var(--space-3)" }}>Imóvel</th>
+                    <th style={{ padding: "var(--space-3)" }}>Cliente</th>
+                    <th style={{ padding: "var(--space-3)" }}>Status</th>
+                    <th style={{ padding: "var(--space-3)" }}>Notas</th>
+                    <th style={{ padding: "var(--space-3)" }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visitas.map((v) => (
-                    <tr key={v.id} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                      <td style={{ padding: "12px", fontWeight: "500" }}>{new Date(Number(v.scheduledAt)).toLocaleString()}</td>
-                      <td style={{ padding: "12px" }}>{obterNomeImovel(v.propertyId)}</td>
-                      <td style={{ padding: "12px" }}>{obterNomeCliente(v.clientId)}</td>
-                      <td style={{ padding: "12px" }}>
+                    <tr
+                      key={v.id}
+                      data-visit-id={v.id}
+                      style={{
+                        borderBottom: "1px solid var(--color-outline-variant)",
+                        background: String(v.id) === requestedVisitId ? "var(--color-primary-container)" : undefined,
+                      }}
+                    >
+                      <td style={{ padding: "var(--space-3)", fontWeight: "500" }}>{new Date(Number(v.scheduledAt)).toLocaleString()}</td>
+                      <td style={{ padding: "var(--space-3)" }}>{obterNomeImovel(v.propertyId)}</td>
+                      <td style={{ padding: "var(--space-3)" }}>{obterNomeCliente(v.clientId)}</td>
+                      <td style={{ padding: "var(--space-3)" }}>
                         <span style={{ 
-                          padding: "4px 8px", 
-                          borderRadius: "4px", 
-                          fontSize: "11px", 
+                          padding: "var(--space-1) var(--space-2)",
+                          borderRadius: "var(--radius-xs)",
+                          fontSize: "var(--font-body-sm)",
                           fontWeight: "600",
-                          background: v.status === "REALIZADA" ? "#dcfce7" : v.status === "CANCELADA" ? "#fee2e2" : "#dbeafe",
-                          color: v.status === "REALIZADA" ? "#166534" : v.status === "CANCELADA" ? "#991b1b" : "#1e40af"
+                          background: v.status === "REALIZADA" ? "var(--color-success-container)" : v.status === "CANCELADA" ? "var(--color-error-container)" : "var(--color-primary-container)",
+                          color: v.status === "REALIZADA" ? "var(--color-success)" : v.status === "CANCELADA" ? "var(--color-error)" : "var(--color-on-surface-variant)"
                         }}>
                           {v.status || "AGENDADA"}
                         </span>
                       </td>
-                      <td style={{ padding: "12px", color: "#64748b" }}>{v.notes || "-"}</td>
-                      <td style={{ padding: "12px", display: "flex", gap: "8px" }}>
+                      <td style={{ padding: "var(--space-3)", color: "var(--color-on-surface)" }}>{v.notes || "-"}</td>
+                      <td style={{ padding: "var(--space-3)", display: "flex", gap: "var(--space-2)" }}>
                         <button
                           onClick={() => handleEditarVisita(v)}
-                          style={{ background: "#e0f2fe", color: "#0369a1", border: "none", padding: "6px 12px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                          style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => handleDeletarVisita(v.id)}
-                          style={{ background: "#fee2e2", color: "#991b1b", border: "none", padding: "6px 12px", borderRadius: "4px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}
+                          style={{ background: "var(--color-error-container)", color: "var(--color-error)", border: "none", padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-xs)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                         >
                           Excluir
                         </button>
@@ -499,13 +543,13 @@ export const AgendamentoVisitas = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "var(--color-scrim)",
             backdropFilter: "blur(2px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 1000,
-            padding: "16px"
+            padding: "var(--space-4)"
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) handleFecharModal();
@@ -513,24 +557,24 @@ export const AgendamentoVisitas = () => {
         >
           <div
             style={{
-              background: "#ffffff",
-              borderRadius: "12px",
+              background: "var(--color-surface)",
+              borderRadius: "var(--radius-md)",
               width: "100%",
               maxWidth: "620px",
               maxHeight: "90vh",
               overflowY: "auto",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
-              padding: "28px",
+              boxShadow: "var(--elevation-5)",
+              padding: "var(--space-5)",
               position: "relative"
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-4)" }}>
               <div>
-                <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", margin: 0 }}>
+                <h2 style={{ fontSize: "var(--font-title-lg)", fontWeight: "700", color: "var(--color-on-surface)", margin: 0 }}>
                   {editingId ? "Editar Agendamento de Visita" : "Registrar Novo Agendamento"}
                 </h2>
-                <p style={{ fontSize: "13px", color: "#64748b", margin: "4px 0 0 0" }}>
+                <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", margin: "var(--space-1) 0 0 0" }}>
                   {editingId ? "Atualize as informações da visita selecionada." : "Preencha os dados abaixo para agendar uma nova visita."}
                 </p>
               </div>
@@ -539,12 +583,12 @@ export const AgendamentoVisitas = () => {
                 onClick={handleFecharModal}
                 aria-label="Fechar"
                 style={{
-                  background: "#f1f5f9",
+                  background: "var(--color-primary-container)",
                   border: "none",
                   cursor: "pointer",
-                  color: "#64748b",
-                  padding: "6px",
-                  borderRadius: "6px",
+                  color: "var(--color-on-surface)",
+                  padding: "var(--space-1)",
+                  borderRadius: "var(--radius-sm)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center"
@@ -558,13 +602,13 @@ export const AgendamentoVisitas = () => {
             {modalFeedback.message && (
               <div
                 style={{
-                  padding: "12px 16px",
-                  borderRadius: "6px",
-                  marginBottom: "20px",
-                  fontSize: "14px",
-                  backgroundColor: modalFeedback.type === "error" ? "#fee2e2" : "#dcfce7",
-                  color: modalFeedback.type === "error" ? "#991b1b" : "#166534",
-                  border: `1px solid ${modalFeedback.type === "error" ? "#fecaca" : "#bbf7d0"}`
+                  padding: "var(--space-3) var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
+                  marginBottom: "var(--space-4)",
+                  fontSize: "var(--font-body-md)",
+                  backgroundColor: modalFeedback.type === "error" ? "var(--color-error-container)" : "var(--color-success-container)",
+                  color: modalFeedback.type === "error" ? "var(--color-error)" : "var(--color-success)",
+                  border: `1px solid ${modalFeedback.type === "error" ? "var(--color-error-container)" : "var(--color-success-container)"}`
                 }}
               >
                 {modalFeedback.message}
@@ -573,16 +617,16 @@ export const AgendamentoVisitas = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleSalvarVisita}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "18px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+                  <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                     Imóvel *
                   </label>
                   <select
                     value={propertyId}
                     onChange={(e) => setPropertyId(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", background: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", background: "var(--color-surface)", boxSizing: "border-box" }}
                   >
                     <option value="">Selecione um imóvel...</option>
                     {imoveis.length > 0 ? (
@@ -602,14 +646,14 @@ export const AgendamentoVisitas = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+                  <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                     Cliente Interessado *
                   </label>
                   <select
                     value={clientId}
                     onChange={(e) => setClientId(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", background: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", background: "var(--color-surface)", boxSizing: "border-box" }}
                   >
                     <option value="">Selecione um cliente...</option>
                     {clientes.length > 0 ? (
@@ -629,15 +673,15 @@ export const AgendamentoVisitas = () => {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginBottom: "18px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+                  <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                     Status da Visita *
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", background: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", background: "var(--color-surface)", boxSizing: "border-box" }}
                   >
                     <option value="AGENDADA">Agendada</option>
                     <option value="REALIZADA">Realizada</option>
@@ -646,7 +690,7 @@ export const AgendamentoVisitas = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+                  <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                     Data da Visita *
                   </label>
                   <input
@@ -654,12 +698,12 @@ export const AgendamentoVisitas = () => {
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", boxSizing: "border-box" }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+                  <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                     Horário *
                   </label>
                   <input
@@ -667,13 +711,30 @@ export const AgendamentoVisitas = () => {
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
                     required
-                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", boxSizing: "border-box" }}
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#334155" }}>
+              <div style={{ marginBottom: "var(--space-4)" }}>
+                <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
+                  Notificar antes da visita
+                </label>
+                <select
+                  value={reminderLeadMinutes === null ? "none" : reminderLeadMinutes}
+                  onChange={(e) => setReminderLeadMinutes(e.target.value === "none" ? null : Number(e.target.value))}
+                  style={{ width: "100%", padding: "var(--space-2) var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", background: "var(--color-surface)", boxSizing: "border-box" }}
+                >
+                  <option value={30}>30 minutos antes</option>
+                  <option value={1440}>1 dia antes</option>
+                  <option value={2880}>2 dias antes</option>
+                  <option value={10080}>1 semana antes</option>
+                  <option value="none">Sem notificação</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: "var(--space-5)" }}>
+                <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", marginBottom: "var(--space-1)", color: "var(--color-on-surface-variant)" }}>
                   Descrição e Observações da Visita
                 </label>
                 <textarea
@@ -681,21 +742,21 @@ export const AgendamentoVisitas = () => {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Insira notas detalhadas sobre a visita..."
                   rows={4}
-                  style={{ width: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box", resize: "vertical" }}
+                  style={{ width: "100%", padding: "var(--space-3)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", boxSizing: "border-box", resize: "vertical" }}
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-3)" }}>
                 <button
                   type="button"
                   onClick={handleFecharModal}
-                  style={{ background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", padding: "10px 18px", borderRadius: "6px", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}
+                  style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)", fontWeight: "600", fontSize: "var(--font-body-md)", cursor: "pointer" }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  style={{ background: "#2563eb", color: "#fff", border: "none", padding: "10px 22px", borderRadius: "6px", fontWeight: "600", fontSize: "14px", cursor: "pointer" }}
+                  style={{ background: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", padding: "var(--space-2) var(--space-5)", borderRadius: "var(--radius-sm)", fontWeight: "600", fontSize: "var(--font-body-md)", cursor: "pointer" }}
                 >
                   {editingId ? "Salvar Alterações" : "Salvar Agendamento"}
                 </button>

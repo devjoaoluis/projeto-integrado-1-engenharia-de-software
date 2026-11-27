@@ -12,7 +12,7 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
                         display: flex;
                         justify-content: center;
                         align-items: center;
-                        gap: 12px;
+                        gap: var(--space-3);
                         margin-top: 24px;
                     }
 
@@ -20,10 +20,10 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
                         width: 28px;
                         height: 28px;
                         border: none;
-                        border-radius: 50%;
+                        border-radius: var(--radius-full);
                         background-color: transparent;
-                        color: #333333;
-                        font-size: 13px;
+                        color: var(--color-on-surface);
+                        font-size: var(--font-body-md);
                         cursor: pointer;
                         display: flex;
                         justify-content: center;
@@ -36,8 +36,8 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
                     }
 
                     .pag-btn.ativo {
-                        background-color: #1976d2;
-                        color: white;
+                        background-color: var(--color-primary);
+                        color: var(--color-on-primary);
                     }
                 `}
             </style>

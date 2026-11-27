@@ -18,6 +18,10 @@ export class DrizzlePropertyHistoryRepository implements IPropertyHistoryReposit
     return (await db.select().from(propertyContracts).where(eq(propertyContracts.id, id)).get()) ?? null;
   }
 
+  async findPaymentById(id: string): Promise<PropertyPayment | null> {
+    return (await db.select().from(propertyPayments).where(eq(propertyPayments.id, id)).get()) ?? null;
+  }
+
   async findAllContracts(): Promise<PropertyContract[]> {
   return db
     .select()

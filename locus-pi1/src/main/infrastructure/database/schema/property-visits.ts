@@ -14,6 +14,8 @@ export const propertyVisits = sqliteTable(
       .notNull()
       .references(() => clients.id, { onDelete: "restrict" }),
     scheduledAt: integer("scheduled_at").notNull(),
+    reminderLeadMinutes: integer("reminder_lead_minutes").default(30),
+    notificationSent: integer("notification_sent", { mode: "boolean" }).notNull().default(false),
     status: text("status", { enum: ["AGENDADA", "REALIZADA", "CANCELADA"] })
       .notNull()
       .default("AGENDADA"),

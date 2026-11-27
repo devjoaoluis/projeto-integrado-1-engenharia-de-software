@@ -33,48 +33,19 @@ export function Sidebar() {
   }
 
   return (
-    <aside
-      style={{
-        width: "220px",
-        backgroundColor: "#1877f2",
-        color: "#ffffff",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "20px 12px 12px",
-        height: "100vh",
-        position: "sticky",
-        top: 0,
-        left: 0,
-        flexShrink: 0,
-        boxSizing: "border-box",
-        overflowY: "auto",
-        zIndex: 50,
-      }}
-    >
+    <aside className="sidebar">
       <div>
-        <h2 style={{ marginBottom: "30px", fontSize: "22px", fontWeight: "bold" }}>Locus</h2>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <h2 className="sidebar-brand">Locus</h2>
+        <nav className="sidebar-nav" aria-label="Navegação principal">
           {menuItens.map((item) => {
             const Icone = item.icone;
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
-                style={({ isActive }) => ({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  backgroundColor: isActive ? "#52a3f7" : "transparent",
-                  color: "#ffffff",
-                  textDecoration: "none",
-                  fontSize: "14px",
-                  fontWeight: isActive ? "bold" : "normal",
-                })}
+                className={({ isActive }) => `sidebar-link${isActive ? " is-active" : ""}`}
               >
-                <Icone size={18} />
+                <Icone size={20} aria-hidden="true" />
                 {item.nome}
               </NavLink>
             );
@@ -83,24 +54,11 @@ export function Sidebar() {
       </div>
 
       <button
+        type="button"
+        className="sidebar-logout"
         onClick={handleSair}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-          backgroundColor: "#ffffff",
-          color: "#1877f2",
-          border: "none",
-          borderRadius: "6px",
-          padding: "10px 16px",
-          width: "100%",
-          fontWeight: "bold",
-          cursor: "pointer",
-          flexShrink: 0,
-        }}
       >
-        <LogOut size={18} color="#FF0000" />
+        <LogOut size={20} aria-hidden="true" />
         Sair
       </button>
     </aside>

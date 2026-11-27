@@ -346,33 +346,33 @@ export default function Contratos() {
       style={{
         maxWidth: "1200px",
         margin: "0 auto",
-        paddingBottom: "40px",
+        paddingBottom: "var(--space-6)",
       }}
     >
-      <div style={{ marginBottom: "16px" }}>
+      <div style={{ marginBottom: "var(--space-4)" }}>
         <BotaoVoltar fallbackTo="/home" />
       </div>
 
-      <header style={{ marginBottom: "24px" }}>
+      <header style={{ marginBottom: "var(--space-5)" }}>
         <h1
           style={{
-            fontSize: "26px",
+            fontSize: "var(--font-headline-sm)",
             fontWeight: "bold",
-            color: "#0f172a",
-            marginBottom: "4px",
+            color: "var(--color-on-surface)",
+            marginBottom: "var(--space-1)",
           }}
         >
           Contratos de Locação
         </h1>
 
-        <p style={{ color: "#64748b", fontSize: "14px" }}>
+        <p style={{ color: "var(--color-on-surface)", fontSize: "var(--font-body-md)" }}>
           Gere documentos em PDF automaticamente preenchidos com os dados
           disponíveis do imóvel, proprietário e locatário.
         </p>
       </header>
 
       {/* Navegação por Abas */}
-      <div className="abas-padrao" style={{ marginBottom: "20px" }}>
+      <div className="abas-padrao" style={{ marginBottom: "var(--space-4)" }}>
         <button
           className={`aba-padrao ${abaAtiva === "gerar" ? "ativa" : ""}`}
           onClick={() => setAbaAtiva("gerar")}
@@ -387,19 +387,19 @@ export default function Contratos() {
         <div
           role="status"
           style={{
-            backgroundColor: "#ecfdf5",
-            border: "1px solid #10b981",
-            color: "#065f46",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            marginBottom: "20px",
+            backgroundColor: "var(--color-success-container)",
+            border: "1px solid var(--color-success)",
+            color: "var(--color-success)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            fontSize: "14px",
+            gap: "var(--space-2)",
+            fontSize: "var(--font-body-md)",
           }}
         >
-          <CheckCircle2 size={20} color="#10b981" />
+          <CheckCircle2 size={20} color="var(--color-success)" />
           <span>{mensagemSucesso}</span>
         </div>
       )}
@@ -408,19 +408,19 @@ export default function Contratos() {
         <div
           role="alert"
           style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #ef4444",
-            color: "#991b1b",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            marginBottom: "20px",
+            backgroundColor: "var(--color-error-container)",
+            border: "1px solid var(--color-error)",
+            color: "var(--color-error)",
+            padding: "var(--space-3) var(--space-4)",
+            borderRadius: "var(--radius-sm)",
+            marginBottom: "var(--space-4)",
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            fontSize: "14px",
+            gap: "var(--space-2)",
+            fontSize: "var(--font-body-md)",
           }}
         >
-          <AlertCircle size={20} color="#ef4444" />
+          <AlertCircle size={20} color="var(--color-error)" />
           <span>{mensagemErro}</span>
         </div>
       )}
@@ -430,7 +430,7 @@ export default function Contratos() {
           style={{
             display: "grid",
             gridTemplateColumns: "360px 1fr",
-            gap: "24px",
+            gap: "var(--space-5)",
           }}
         >
           {/* Painel Esquerdo: Seleção dos Parâmetros */}
@@ -438,25 +438,25 @@ export default function Contratos() {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: "16px",
+              gap: "var(--space-4)",
             }}
           >
             {/* 1. Imóvel */}
             <div
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-4)",
+                boxShadow: "var(--elevation-1)",
               }}
             >
               <h2
                 style={{
-                  fontSize: "16px",
+                  fontSize: "var(--font-body-lg)",
                   fontWeight: "bold",
-                  color: "#1e293b",
-                  marginBottom: "16px",
+                  color: "var(--color-on-surface)",
+                  marginBottom: "var(--space-4)",
                 }}
               >
                 1. Selecione o Imóvel
@@ -465,10 +465,10 @@ export default function Contratos() {
               <label
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "var(--font-body-md)",
                   fontWeight: "600",
-                  color: "#475569",
-                  marginBottom: "6px",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 Imóvel:
@@ -479,12 +479,12 @@ export default function Contratos() {
                 onChange={(e) => handleTrocarImovel(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  marginBottom: "14px",
-                  backgroundColor: "#f8fafc",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
+                  marginBottom: "var(--space-3)",
+                  backgroundColor: "var(--color-primary-container)",
                 }}
               >
                 <option value="">Selecione um imóvel...</option>
@@ -499,23 +499,23 @@ export default function Contratos() {
               {dadosMontados?.property && (
                 <div
                   style={{
-                    backgroundColor: "#f8fafc",
-                    padding: "12px",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    color: "#334155",
+                    backgroundColor: "var(--color-primary-container)",
+                    padding: "var(--space-3)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "var(--space-1)",
                       fontWeight: "bold",
-                      marginBottom: "4px",
+                      marginBottom: "var(--space-1)",
                     }}
                   >
-                    <Building2 size={16} color="#1877f2" />
+                    <Building2 size={16} color="var(--color-primary)" />
                     {dadosMontados.property.title}
                   </div>
 
@@ -543,9 +543,9 @@ export default function Contratos() {
                   {dadosMontados.owner && (
                     <div
                       style={{
-                        marginTop: "6px",
-                        borderTop: "1px dashed #cbd5e1",
-                        paddingTop: "6px",
+                        marginTop: "var(--space-1)",
+                        borderTop: "1px dashed var(--color-outline-variant)",
+                        paddingTop: "var(--space-1)",
                       }}
                     >
                       <strong>Proprietário:</strong>{" "}
@@ -560,19 +560,19 @@ export default function Contratos() {
             {/* 2. Locatário */}
             <div
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-4)",
+                boxShadow: "var(--elevation-1)",
               }}
             >
               <h2
                 style={{
-                  fontSize: "16px",
+                  fontSize: "var(--font-body-lg)",
                   fontWeight: "bold",
-                  color: "#1e293b",
-                  marginBottom: "16px",
+                  color: "var(--color-on-surface)",
+                  marginBottom: "var(--space-4)",
                 }}
               >
                 2. Locatário Associado
@@ -581,13 +581,13 @@ export default function Contratos() {
               {dadosMontados?.rental ? (
                 <div
                   style={{
-                    backgroundColor: "#eff6ff",
-                    border: "1px solid #bfdbfe",
-                    padding: "10px",
-                    borderRadius: "6px",
-                    marginBottom: "12px",
-                    fontSize: "13px",
-                    color: "#1e40af",
+                    backgroundColor: "var(--color-primary-container)",
+                    border: "1px solid var(--color-outline-variant)",
+                    padding: "var(--space-2)",
+                    borderRadius: "var(--radius-sm)",
+                    marginBottom: "var(--space-3)",
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   ✓ Locação ativa identificada para este imóvel!
@@ -604,12 +604,12 @@ export default function Contratos() {
                 onChange={(e) => setLocatarioSelecionadoId(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  marginBottom: "10px",
-                  backgroundColor: "#f8fafc",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
+                  marginBottom: "var(--space-2)",
+                  backgroundColor: "var(--color-primary-container)",
                 }}
               >
                 <option value="">Selecione o locatário...</option>
@@ -624,23 +624,23 @@ export default function Contratos() {
               {dadosMontados?.tenant && (
                 <div
                   style={{
-                    backgroundColor: "#f8fafc",
-                    padding: "12px",
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    color: "#334155",
+                    backgroundColor: "var(--color-primary-container)",
+                    padding: "var(--space-3)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "var(--space-1)",
                       fontWeight: "bold",
-                      marginBottom: "4px",
+                      marginBottom: "var(--space-1)",
                     }}
                   >
-                    <User size={16} color="#1877f2" />
+                    <User size={16} color="var(--color-primary)" />
                     {dadosMontados.tenant.name}
                   </div>
 
@@ -665,19 +665,19 @@ export default function Contratos() {
             {/* 3. Vigência do Contrato */}
             <div
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-4)",
+                boxShadow: "var(--elevation-1)",
               }}
             >
               <h2
                 style={{
-                  fontSize: "16px",
+                  fontSize: "var(--font-body-lg)",
                   fontWeight: "bold",
-                  color: "#1e293b",
-                  marginBottom: "6px",
+                  color: "var(--color-on-surface)",
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 3. Vigência do Contrato
@@ -685,10 +685,10 @@ export default function Contratos() {
 
               <p
                 style={{
-                  fontSize: "12px",
-                  color: "#64748b",
+                  fontSize: "var(--font-body-sm)",
+                  color: "var(--color-on-surface)",
                   marginTop: 0,
-                  marginBottom: "14px",
+                  marginBottom: "var(--space-3)",
                 }}
               >
                 Ajuste as datas de início e término antes de exportar ou salvar
@@ -699,10 +699,10 @@ export default function Contratos() {
                 htmlFor="contrato-data-inicio"
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "var(--font-body-md)",
                   fontWeight: "600",
-                  color: "#475569",
-                  marginBottom: "6px",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 Data de Início:
@@ -715,12 +715,12 @@ export default function Contratos() {
                 onChange={(e) => setDataInicioVigencia(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  marginBottom: "12px",
-                  backgroundColor: "#f8fafc",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
+                  marginBottom: "var(--space-3)",
+                  backgroundColor: "var(--color-primary-container)",
                   boxSizing: "border-box",
                 }}
               />
@@ -729,10 +729,10 @@ export default function Contratos() {
                 htmlFor="contrato-data-fim"
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "var(--font-body-md)",
                   fontWeight: "600",
-                  color: "#475569",
-                  marginBottom: "6px",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 Data de Fim:
@@ -746,13 +746,13 @@ export default function Contratos() {
                 onChange={(e) => setDataFimVigencia(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px",
-                  borderRadius: "6px",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-sm)",
                   border: datasInvalidas
-                    ? "1px solid #ef4444"
-                    : "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  backgroundColor: "#f8fafc",
+                    ? "1px solid var(--color-error)"
+                    : "1px solid var(--color-primary)",
+                  fontSize: "var(--font-body-md)",
+                  backgroundColor: "var(--color-primary-container)",
                   boxSizing: "border-box",
                 }}
               />
@@ -760,10 +760,10 @@ export default function Contratos() {
               {datasInvalidas && (
                 <p
                   style={{
-                    marginTop: "8px",
+                    marginTop: "var(--space-2)",
                     marginBottom: 0,
-                    fontSize: "12px",
-                    color: "#dc2626",
+                    fontSize: "var(--font-body-sm)",
+                    color: "var(--color-error)",
                   }}
                 >
                   A Data de Fim deve ser posterior à Data de Início.
@@ -774,19 +774,19 @@ export default function Contratos() {
             {/* 4. Modelo e Vistoria */}
             <div
               style={{
-                background: "#ffffff",
-                border: "1px solid #e2e8f0",
-                borderRadius: "10px",
-                padding: "20px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-4)",
+                boxShadow: "var(--elevation-1)",
               }}
             >
               <h2
                 style={{
-                  fontSize: "16px",
+                  fontSize: "var(--font-body-lg)",
                   fontWeight: "bold",
-                  color: "#1e293b",
-                  marginBottom: "16px",
+                  color: "var(--color-on-surface)",
+                  marginBottom: "var(--space-4)",
                 }}
               >
                 4. Modelo de Contrato
@@ -796,10 +796,10 @@ export default function Contratos() {
                 htmlFor="modelo-contrato"
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "var(--font-body-md)",
                   fontWeight: "600",
-                  color: "#475569",
-                  marginBottom: "6px",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-1)",
                 }}
               >
                 Selecione o modelo:
@@ -811,11 +811,11 @@ export default function Contratos() {
                 onChange={(e) => setModeloSelecionadoId(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  border: "1px solid #cbd5e1",
-                  fontSize: "14px",
-                  backgroundColor: "#f8fafc",
+                  padding: "var(--space-2)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  fontSize: "var(--font-body-md)",
+                  backgroundColor: "var(--color-primary-container)",
                   boxSizing: "border-box",
                 }}
               >
@@ -836,9 +836,9 @@ export default function Contratos() {
 
               <p
                 style={{
-                  fontSize: "12px",
-                  color: "#64748b",
-                  marginTop: "8px",
+                  fontSize: "var(--font-body-sm)",
+                  color: "var(--color-on-surface)",
+                  marginTop: "var(--space-2)",
                   marginBottom: 0,
                 }}
               >
@@ -849,24 +849,24 @@ export default function Contratos() {
               {imovelSelecionadoId && (
                 <div
                   style={{
-                    marginTop: "16px",
-                    backgroundColor: "#f0fdf4",
-                    border: "1px solid #bbf7d0",
-                    borderRadius: "8px",
-                    padding: "12px 14px",
+                    marginTop: "var(--space-4)",
+                    backgroundColor: "var(--color-success-container)",
+                    border: "1px solid var(--color-success)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "var(--space-3) var(--space-3)",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "6px",
+                    gap: "var(--space-1)",
                   }}
                 >
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "8px",
-                      color: "#166534",
+                      gap: "var(--space-2)",
+                      color: "var(--color-success)",
                       fontWeight: "600",
-                      fontSize: "13px",
+                      fontSize: "var(--font-body-md)",
                     }}
                   >
                     <ClipboardCheck size={16} />
@@ -878,8 +878,8 @@ export default function Contratos() {
                       <p
                         style={{
                           margin: 0,
-                          fontSize: "12px",
-                          color: "#15803d",
+                          fontSize: "var(--font-body-sm)",
+                          color: "var(--color-success)",
                         }}
                       >
                         Após assinar o contrato, realize a vistoria de entrada
@@ -894,14 +894,14 @@ export default function Contratos() {
                           )
                         }
                         style={{
-                          marginTop: "4px",
-                          backgroundColor: "#16a34a",
-                          color: "#ffffff",
+                          marginTop: "var(--space-1)",
+                          backgroundColor: "var(--color-success)",
+                          color: "var(--color-on-success)",
                           border: "none",
-                          borderRadius: "6px",
-                          padding: "6px 12px",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "var(--space-1) var(--space-3)",
                           fontWeight: "bold",
-                          fontSize: "12px",
+                          fontSize: "var(--font-body-sm)",
                           cursor: "pointer",
                           textAlign: "center",
                         }}
@@ -914,8 +914,8 @@ export default function Contratos() {
                       <p
                         style={{
                           margin: 0,
-                          fontSize: "12px",
-                          color: "#15803d",
+                          fontSize: "var(--font-body-sm)",
+                          color: "var(--color-success)",
                         }}
                       >
                         O locatário ainda não foi associado formalmente a este
@@ -929,14 +929,14 @@ export default function Contratos() {
                           navigate(`/imoveis/${imovelSelecionadoId}`)
                         }
                         style={{
-                          marginTop: "4px",
-                          backgroundColor: "#2563eb",
-                          color: "#ffffff",
+                          marginTop: "var(--space-1)",
+                          backgroundColor: "var(--color-primary)",
+                          color: "var(--color-on-primary)",
                           border: "none",
-                          borderRadius: "6px",
-                          padding: "6px 12px",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "var(--space-1) var(--space-3)",
                           fontWeight: "bold",
-                          fontSize: "12px",
+                          fontSize: "var(--font-body-sm)",
                           cursor: "pointer",
                           textAlign: "center",
                         }}
@@ -953,11 +953,11 @@ export default function Contratos() {
           {/* Painel Direito: Pré-visualização e Exportação */}
           <div
             style={{
-              background: "#ffffff",
-              border: "1px solid #e2e8f0",
-              borderRadius: "10px",
-              padding: "24px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-outline-variant)",
+              borderRadius: "var(--radius-md)",
+              padding: "var(--space-5)",
+              boxShadow: "var(--elevation-1)",
               display: "flex",
               flexDirection: "column",
             }}
@@ -967,15 +967,15 @@ export default function Contratos() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "16px",
+                marginBottom: "var(--space-4)",
               }}
             >
               <div>
                 <h2
                   style={{
-                    fontSize: "18px",
+                    fontSize: "var(--font-title-lg)",
                     fontWeight: "bold",
-                    color: "#0f172a",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   Pré-visualização do Documento Preenchido
@@ -983,8 +983,8 @@ export default function Contratos() {
 
                 <span
                   style={{
-                    fontSize: "13px",
-                    color: "#64748b",
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   {carregandoDados
@@ -1002,24 +1002,27 @@ export default function Contratos() {
                   datasInvalidas
                 }
                 style={{
-                  padding: "12px 24px",
+                  padding: "var(--space-3) var(--space-5)",
                   backgroundColor:
                     exportandoPdf || datasInvalidas
-                      ? "#94a3b8"
-                      : "#1877f2",
-                  color: "#ffffff",
+                      ? "var(--color-primary-container)"
+                      : "var(--color-primary)",
+                  color:
+                    exportandoPdf || datasInvalidas
+                      ? "var(--color-on-primary-container)"
+                      : "var(--color-on-primary)",
                   border: "none",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-sm)",
                   cursor:
                     exportandoPdf || datasInvalidas
                       ? "not-allowed"
                       : "pointer",
                   fontWeight: "bold",
-                  fontSize: "15px",
+                  fontSize: "var(--font-body-md)",
                   display: "flex",
                   alignItems: "center",
-                  gap: "10px",
-                  boxShadow: "0 2px 4px rgba(24, 119, 242, 0.2)",
+                  gap: "var(--space-2)",
+                  boxShadow: "var(--elevation-3)",
                   transition: "background 0.2s",
                 }}
               >
@@ -1035,11 +1038,11 @@ export default function Contratos() {
             <div
               style={{
                 flex: 1,
-                border: "1px solid #cbd5e1",
-                borderRadius: "8px",
-                backgroundColor: "#f8fafc",
-                padding: "20px",
-                boxShadow: "inset 0 1px 3px rgba(0,0,0,0.05)",
+                border: "1px solid var(--color-outline-variant)",
+                borderRadius: "var(--radius-sm)",
+                backgroundColor: "var(--color-surface)",
+                padding: "var(--space-4)",
+                boxShadow: "var(--elevation-1)",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -1051,16 +1054,16 @@ export default function Contratos() {
                 style={{
                   width: "100%",
                   minHeight: "550px",
-                  padding: "20px",
-                  borderRadius: "6px",
-                  border: "1px solid #e2e8f0",
-                  backgroundColor: "#ffffff",
-                  fontSize: "13px",
+                  padding: "var(--space-4)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--color-outline-variant)",
+                  backgroundColor: "var(--color-surface)",
+                  fontSize: "var(--font-body-md)",
                   lineHeight: "1.6",
-                  color: "#1e293b",
-                  fontFamily: "Courier New, monospace",
+                  color: "var(--color-on-surface)",
+                  fontFamily: "var(--font-family-base)",
                   resize: "vertical",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                  boxShadow: "var(--elevation-1)",
                   boxSizing: "border-box",
                 }}
               />

@@ -4,6 +4,8 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { initializeDatabase } from "../../database/initializeDatabase";
 import { VisitReminder } from "../../../domain/entities/VisitReminder";
+import { NotificationService } from "../../../application/services/NotificationService";
+import { AppNotification } from "../../../domain/entities/AppNotification";
 
 const sqlite = createClient({ url: "file::memory:" });
 const dbModule = require.resolve("../../database/db");
@@ -36,9 +38,13 @@ beforeEach(async () => {
   await sqlite.executeMultiple(`
     INSERT INTO properties (id, title, address, price, status, created_at, updated_at)
     VALUES ('prop-test-1', 'Apartamento Teste', 'Rua A, 100', 2500, 'DISPONIVEL', 1000, 1000);
+    INSERT INTO properties (id, title, address, price, status, created_at, updated_at)
+    VALUES ('prop-test-2', 'Casa Teste', 'Rua B, 200', 3500, 'DISPONIVEL', 1000, 1000);
 
     INSERT INTO clients (id, name, phone, email, created_at, updated_at)
     VALUES ('client-test-1', 'Cliente Teste', '(11) 98888-0000', 'cliente@teste.com', 1000, 1000);
+    INSERT INTO clients (id, name, phone, email, created_at, updated_at)
+    VALUES ('client-test-2', 'Outro Cliente', '(11) 97777-0000', 'outro@teste.com', 1000, 1000);
 
     INSERT INTO property_visits (id, property_id, client_id, scheduled_at, status, created_at, updated_at)
     VALUES ('visit-test-1', 'prop-test-1', 'client-test-1', 1799000000000, 'AGENDADA', 1000, 1000);
@@ -52,6 +58,68 @@ after(() => {
 });
 
 describe("HU-09: DrizzleVisitReminderRepository - SQLite Persistence", () => {
+  it("marca a notificação uma única vez e não marca visitas já ocorridas", async () => {
+    const firstClaim = await visitRepo.markNotificationSent(
+      "visit-test-1",
+      1799000000000,
+      30,
+      1798999999000
+    );
+    const duplicateClaim = await visitRepo.markNotificationSent(
+      "visit-test-1",
+      1799000000000,
+      30,
+      1798999999001
+    );
+
+    assert.equal(firstClaim, true);
+    assert.equal(duplicateClaim, false);
+    assert.equal((await visitRepo.findById("visit-test-1"))?.notificationSent, true);
+
+    const pastClaim = await visitRepo.markNotificationSent(
+      "visit-test-1",
+      1799000000000,
+      30,
+      1799000000000
+    );
+    assert.equal(pastClaim, false);
+  });
+
+  it("bloqueia horário ocupado mesmo quando imóvel e cliente são diferentes", async () => {
+    await assert.rejects(
+      visitRepo.create({
+        id: "visit-conflict",
+        propertyId: "prop-test-2",
+        clientId: "client-test-2",
+        scheduledAt: 1799000000000,
+        reminderLeadMinutes: 30,
+        notificationSent: false,
+        status: "AGENDADA",
+        notes: null,
+        createdAt: 1000,
+        updatedAt: 1000,
+      }),
+      /Horário já ocupado por outra visita agendada/
+    );
+
+    const secondVisit = await visitRepo.create({
+      id: "visit-to-update",
+      propertyId: "prop-test-2",
+      clientId: "client-test-2",
+      scheduledAt: 1799000001000,
+      reminderLeadMinutes: 30,
+      notificationSent: false,
+      status: "AGENDADA",
+      notes: null,
+      createdAt: 1000,
+      updatedAt: 1000,
+    });
+    await assert.rejects(
+      visitRepo.update({ ...secondVisit, scheduledAt: 1799000000000 }),
+      /Horário já ocupado por outra visita agendada/
+    );
+  });
+
   it("persiste disparo de lembrete com sucesso e verifica isTriggered", async () => {
     const isAlreadyTriggered = await reminderRepo.isTriggered("visit-test-1", "IMMINENT_1H");
     assert.equal(isAlreadyTriggered, false);
@@ -175,7 +243,13 @@ describe("HU-09: IPC Registration and Handlers", () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { registerVisitsIpc } = require("../../../ipc/visits.ipc");
-      const service = registerVisitsIpc();
+      const notificationService = {
+        publish: async () => ({
+          created: true,
+          notification: null as unknown as AppNotification,
+        }),
+      } as unknown as NotificationService;
+      const service = registerVisitsIpc(notificationService);
 
       assert.ok(handlers.has("visits:get-alerts"));
       assert.ok(handlers.has("visits:check-reminders"));

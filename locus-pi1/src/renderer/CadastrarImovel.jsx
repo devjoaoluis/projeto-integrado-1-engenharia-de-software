@@ -205,34 +205,34 @@ function CadastrarImovel() {
             <style>
                 {`
                     .cadastro-fundo {
-                        background-color: #1976d2;
-                        border-radius: 8px;
-                        padding: 32px;
+                        background-color: var(--color-primary);
+                        border-radius: var(--radius-sm);
+                        padding: var(--space-6);
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 28px;
+                        gap: var(--space-5);
                     }
 
                     .cadastro-card {
                         width: 100%;
-                        background-color: white;
-                        border-radius: 8px;
-                        padding: 32px;
-                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                        background-color: var(--color-surface);
+                        border-radius: var(--radius-sm);
+                        padding: var(--space-6);
+                        box-shadow: var(--elevation-2);
                     }
 
                     .cadastro-titulo {
-                        font-size: 32px;
+                        font-size: var(--font-headline-lg);
                         font-weight: bold;
-                        color: #1976d2;
+                        color: var(--color-on-surface);
                         margin-bottom: 28px;
                     }
 
                     .cadastro-grade {
                         display: grid;
                         grid-template-columns: 2fr 1fr 1fr;
-                        gap: 24px 32px;
+                        gap: var(--space-5) var(--space-6);
                     }
 
                     .cadastro-largo {
@@ -245,26 +245,26 @@ function CadastrarImovel() {
 
                     .galeria-existente {
                         margin-top: 16px;
-                        background: #f8f9fa;
-                        padding: 16px;
-                        border-radius: 6px;
-                        border: 1px solid #e0e0e0;
+                        background: var(--color-primary-container);
+                        padding: var(--space-4);
+                        border-radius: var(--radius-sm);
+                        border: 1px solid var(--color-outline-variant);
                     }
 
                     .grid-galeria {
                         display: flex;
-                        gap: 12px;
+                        gap: var(--space-3);
                         flex-wrap: wrap;
                         margin-top: 8px;
                     }
 
                     .item-galeria {
                         position: relative;
-                        border: 1px solid #ccc;
-                        border-radius: 6px;
+                        border: 1px solid var(--color-outline-variant);
+                        border-radius: var(--radius-sm);
                         overflow: hidden;
-                        background: white;
-                        padding: 4px;
+                        background: var(--color-surface);
+                        padding: var(--space-1);
                     }
 
                     .item-galeria img, .item-galeria video {
@@ -272,20 +272,20 @@ function CadastrarImovel() {
                         height: 90px;
                         object-fit: cover;
                         display: block;
-                        border-radius: 4px;
+                        border-radius: var(--radius-xs);
                     }
 
                     .item-galeria button {
                         position: absolute;
                         top: 6px;
                         right: 6px;
-                        background: rgba(220, 53, 69, 0.9);
-                        color: white;
+                        background: var(--color-error);
+                        color: var(--color-on-primary);
                         border: none;
-                        border-radius: 50%;
+                        border-radius: var(--radius-full);
                         width: 24px;
                         height: 24px;
-                        font-size: 14px;
+                        font-size: var(--font-body-md);
                         font-weight: bold;
                         cursor: pointer;
                         display: flex;
@@ -297,21 +297,21 @@ function CadastrarImovel() {
                         width: 260px;
                         height: 50px;
                         border: none;
-                        border-radius: 4px;
-                        background-color: #52a3f7;
-                        color: white;
-                        font-size: 18px;
+                        border-radius: var(--radius-xs);
+                        background-color: var(--color-primary);
+                        color: var(--color-on-primary);
+                        font-size: var(--font-title-lg);
                         letter-spacing: 1px;
                         cursor: pointer;
                     }
 
                     .cadastro-botao:hover {
-                        background-color: #3b93ee;
+                        background-color: var(--color-primary);
                     }
                 `}
             </style>
 
-            {erro && <p role="alert" style={{ color: "#8a1c1c", background: "#fff5f5", padding: "12px 16px", borderRadius: "8px" }}>{erro}</p>}
+            {erro && <p role="alert" style={{ color: "var(--color-error)", background: "var(--color-error-container)", padding: "var(--space-3) var(--space-4)", borderRadius: "var(--radius-sm)" }}>{erro}</p>}
             <form className="cadastro-fundo" onSubmit={handleSubmit}>
                 <div className="cadastro-card">
                     <h2 className="cadastro-titulo">{tituloPagina}</h2>
@@ -359,7 +359,7 @@ function CadastrarImovel() {
                                 required
                             />
                             {proprietarios.length === 0 && (
-                                <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#b45309" }}>
+                                <p style={{ margin: "var(--space-1) 0 0", fontSize: "var(--font-body-sm)", color: "var(--color-warning)" }}>
                                     Nenhum proprietário cadastrado.{" "}
                                     <button
                                         type="button"
@@ -367,7 +367,7 @@ function CadastrarImovel() {
                                         style={{
                                             background: "none",
                                             border: "none",
-                                            color: "#2563eb",
+                                            color: "var(--color-on-surface)",
                                             textDecoration: "underline",
                                             cursor: "pointer",
                                             padding: 0,
@@ -420,11 +420,11 @@ function CadastrarImovel() {
 
                         {imovelEditar && (
                             <div className="cadastro-cheio galeria-existente">
-                                <label style={{ fontWeight: 'bold', color: '#1976d2', display: 'block', marginBottom: '8px' }}>
+                                <label style={{ fontWeight: 'bold', color: 'var(--color-on-surface-variant)', display: 'block', marginBottom: "var(--space-2)" }}>
                                     Fotos e Vídeos Já Cadastrados ({midiasExistentes.length})
                                 </label>
                                 {midiasExistentes.length === 0 ? (
-                                    <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Nenhuma foto ou vídeo cadastrado para este imóvel.</p>
+                                    <p style={{ color: 'var(--color-on-surface-variant)', fontSize: "var(--font-body-md)", margin: 0 }}>Nenhuma foto ou vídeo cadastrado para este imóvel.</p>
                                 ) : (
                                     <div className="grid-galeria">
                                         {midiasExistentes.map((midia, idx) => {

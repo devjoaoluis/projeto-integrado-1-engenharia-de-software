@@ -23,6 +23,9 @@ export interface PropertyPayment {
   paidAt: number;
   description: string;
   createdAt: number;
+  referenceMonth?: string | null;
+  dueDate?: number | null;
+  receiptPath?: string | null;
 }
 
 export interface PropertyInspection {

@@ -1,628 +1,452 @@
-
-import { useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
+  AlertTriangle,
+  ArrowRight,
   Building2,
-  FileCheck,
-  Home as HomeIcon,
-  FileText,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FileCheck2,
+  FilePlus2,
   RefreshCw,
-  ChartNoAxesColumn,
-  ChartPie,
+  Users,
+  Wallet,
 } from "lucide-react";
+import { useAuth } from "./auth/AuthContext";
+
+const HomeCharts = lazy(() => import("./components/HomeCharts.jsx"));
+
+const resourceKeys = ["properties", "contracts", "payments", "visits"];
+const initialResource = { status: "loading", data: [], error: "" };
+
+function fetchResource(key) {
+  const requests = {
+    properties: () => window.api.properties.list(),
+    contracts: () => window.api.rentals.listContractHistory(),
+    payments: () => window.api.payments.list(),
+    visits: () => window.api.visits.upcoming(8),
+  };
+  return requests[key]();
+}
+
+function getTimestamp(value) {
+  if (value == null || value === "") return null;
+  const timestamp = typeof value === "number" && value < 1_000_000_000_000
+    ? value * 1000
+    : new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function formatDate(value) {
+  const timestamp = getTimestamp(value);
+  return timestamp == null
+    ? "Data indisponível"
+    : new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium" }).format(timestamp);
+}
+
+function isOverdue(payment, now = Date.now()) {
+  const status = String(payment.status || "").toUpperCase();
+  if (["ATRASADO", "OVERDUE"].includes(status)) return true;
+  if (!["PENDENTE", "PENDING", "EM_ABERTO"].includes(status)) return false;
+  const dueDate = getTimestamp(payment.dueDate ?? payment.dueAt ?? payment.vencimento);
+  return dueDate != null && dueDate < now;
+}
+
+function Skeleton({ rows = 2 }) {
+  return (
+    <div className="home-skeleton" aria-label="Carregando" aria-busy="true">
+      {Array.from({ length: rows }, (_, index) => (
+        <span key={index} />
+      ))}
+    </div>
+  );
+}
+
+function SectionError({ message, onRetry }) {
+  return (
+    <div className="home-erro-secao" role="alert">
+      <p>{message}</p>
+      <button type="button" onClick={onRetry}>
+        <RefreshCw size={15} aria-hidden="true" />
+        Tentar novamente
+      </button>
+    </div>
+  );
+}
 
 function Home() {
-  const [imoveis, setImoveis] = useState([]);
-  const [contratos, setContratos] = useState([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
+  const { user } = useAuth();
+  const [resources, setResources] = useState({
+    properties: { ...initialResource },
+    contracts: { ...initialResource },
+    payments: { ...initialResource },
+    visits: { ...initialResource },
+  });
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
-  async function carregarDados() {
-    setCarregando(true);
-    setErro("");
-
+  const loadResource = useCallback(async (key) => {
+    setResources((current) => ({
+      ...current,
+      [key]: { ...current[key], status: "loading", error: "" },
+    }));
     try {
-      const [listaImoveis, historicoContratos] = await Promise.all([
-        window.api.properties.list(),
-        window.api.rentals.listContractHistory(),
-      ]);
-
-      setImoveis(Array.isArray(listaImoveis) ? listaImoveis : []);
-      setContratos(
-        Array.isArray(historicoContratos) ? historicoContratos : []
-      );
+      const response = await fetchResource(key);
+      if (!Array.isArray(response)) {
+        throw new Error(`Resposta inválida ao carregar ${key}.`);
+      }
+      setResources((current) => ({
+        ...current,
+        [key]: { status: "success", data: response, error: "" },
+      }));
     } catch (error) {
-      console.error("Erro ao carregar dados da Home:", error);
-      setErro("Não foi possível carregar os dados do painel.");
-    } finally {
-      setCarregando(false);
+      console.error(`Não foi possível carregar ${key} na Home:`, error);
+      setResources((current) => ({
+        ...current,
+        [key]: {
+          ...current[key],
+          status: "error",
+          error: "Não foi possível carregar estes dados.",
+        },
+      }));
     }
-  }
-
-  useEffect(() => {
-    carregarDados();
   }, []);
 
-  const totalImoveis = imoveis.length;
-
-  const disponiveis = imoveis.filter(
-    (imovel) => String(imovel.status).toUpperCase() === "DISPONIVEL"
-  ).length;
-
-  const alugados = imoveis.filter(
-    (imovel) => String(imovel.status).toUpperCase() === "ALUGADO"
-  ).length;
-
-  const ativos = contratos.filter(
-    (contrato) => String(contrato.status).toUpperCase() === "ACTIVE"
-  ).length;
-
-  const encerrados = contratos.filter(
-    (contrato) => String(contrato.status).toUpperCase() === "ENDED"
-  ).length;
-
-  const cancelados = contratos.filter(
-    (contrato) => String(contrato.status).toUpperCase() === "CANCELLED"
-  ).length;
-
-  function obterData(valor) {
-    if (!valor) return null;
-
-    let data;
-
-    if (typeof valor === "number") {
-      data = new Date(valor < 1000000000000 ? valor * 1000 : valor);
-    } else {
-      data = new Date(valor);
-    }
-
-    return Number.isNaN(data.getTime()) ? null : data;
-  }
-
-  function obterMeses() {
-    const hoje = new Date();
-
-    return Array.from({ length: 6 }, (_, indice) => {
-      const data = new Date(
-        hoje.getFullYear(),
-        hoje.getMonth() - (5 - indice),
-        1
-      );
-
-      return {
-        chave: `${data.getFullYear()}-${data.getMonth()}`,
-        nome: data.toLocaleDateString("pt-BR", {
-          month: "short",
-        }).replace(".", ""),
-        quantidade: 0,
-      };
+  useEffect(() => {
+    resourceKeys.forEach((key) => {
+      void loadResource(key);
     });
-  }
+  }, [loadResource]);
 
-  const meses = obterMeses();
+  const propertyData = resources.properties.data;
+  const contractData = resources.contracts.data;
+  const paymentData = resources.payments.data;
+  const visitData = resources.visits.data;
+  const activeContracts = contractData.filter(
+    (contract) => String(contract.status).toUpperCase() === "ACTIVE"
+  ).length;
+  const availableProperties = propertyData.filter(
+    (property) => String(property.status).toUpperCase() === "DISPONIVEL"
+  ).length;
+  const overduePayments = paymentData.filter((payment) => isOverdue(payment));
 
-  contratos.forEach((contrato) => {
-    const data = obterData(contrato.createdAt);
-    if (!data) return;
+  const pendingItems = useMemo(() => {
+    const now = Date.now();
+    const paymentItems = paymentData
+      .filter((payment) => {
+        const status = String(payment.status || "").toUpperCase();
+        return isOverdue(payment, now) || ["PENDENTE", "PENDING", "EM_ABERTO"].includes(status);
+      })
+      .sort((left, right) => {
+        const leftOverdue = isOverdue(left, now);
+        const rightOverdue = isOverdue(right, now);
+        if (leftOverdue !== rightOverdue) return leftOverdue ? -1 : 1;
+        return (getTimestamp(left.dueDate) ?? 0) - (getTimestamp(right.dueDate) ?? 0);
+      })
+      .slice(0, 4)
+      .map((payment) => {
+        const daysLate = Math.max(
+          payment.daysOverdue || 0,
+          Math.floor((now - (getTimestamp(payment.dueDate) ?? now)) / 86_400_000)
+        );
+        return {
+          id: payment.id,
+          title: `${payment.tenantName || "Locatário"} · ${payment.propertyTitle || "Imóvel"}`,
+          detail: isOverdue(payment, now)
+            ? `${daysLate} dia(s) em atraso${daysLate >= 90 ? " · atenção jurídica" : ""}`
+            : `Vencimento ${formatDate(payment.dueDate)}`,
+          target: `/pagamentos?tenantId=${encodeURIComponent(payment.tenantId || payment.clientId || "")}`,
+          priority: isOverdue(payment, now) ? "overdue" : "pending",
+          date: getTimestamp(payment.dueDate) ?? now,
+        };
+      });
 
-    const chave = `${data.getFullYear()}-${data.getMonth()}`;
-    const mes = meses.find((item) => item.chave === chave);
+    const visitItems = visitData.slice(0, 4).map((visit) => ({
+      id: visit.id,
+      title: `Visita · ${visit.clientName || "Cliente"} · ${visit.propertyTitle || "Imóvel"}`,
+      detail: formatDate(visit.scheduledAt),
+      target: `/visitas?visitId=${encodeURIComponent(visit.id)}`,
+      priority: "visit",
+      date: getTimestamp(visit.scheduledAt) ?? now,
+    }));
 
-    if (mes) mes.quantidade++;
-  });
+    return [...paymentItems, ...visitItems].sort((a, b) => {
+      const weight = { overdue: 0, pending: 1, visit: 2 };
+      return weight[a.priority] - weight[b.priority] || a.date - b.date;
+    }).slice(0, 6);
+  }, [paymentData, visitData]);
 
-  const maiorQuantidade = Math.max(
-    ...meses.map((mes) => mes.quantidade),
-    1
-  );
+  const recentActivities = useMemo(() => {
+    const properties = propertyData.map((property) => ({
+      id: `property:${property.id}`,
+      title: property.title || property.address || "Imóvel cadastrado",
+      detail: "Imóvel",
+      date: getTimestamp(property.createdAt),
+      target: property.id ? `/imoveis/${property.id}` : "/imoveis",
+    }));
+    const contracts = contractData.map((contract) => ({
+      id: `contract:${contract.id}`,
+      title: contract.reference || `Contrato · ${contract.tenantName || "Locatário"}`,
+      detail: `Contrato ${String(contract.status || "").toLowerCase() || "registrado"}`,
+      date: getTimestamp(contract.createdAt),
+      target: contract.propertyId ? `/imoveis/${contract.propertyId}` : "/contratos",
+    }));
+    return [...properties, ...contracts]
+      .filter((item) => item.date != null)
+      .sort((a, b) => b.date - a.date)
+      .slice(0, 5);
+  }, [propertyData, contractData]);
 
-  const totalSituacaoImoveis = disponiveis + alugados;
-  const percentualDisponiveis = totalSituacaoImoveis
-    ? (disponiveis / totalSituacaoImoveis) * 100
-    : 0;
+  const greetingName = user?.name || user?.nome || user?.email?.split("@")[0] || "corretora";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
 
-  const totalSituacaoContratos = ativos + encerrados + cancelados;
-
-  const percentualAtivos = totalSituacaoContratos
-    ? (ativos / totalSituacaoContratos) * 100
-    : 0;
-
-  const percentualEncerrados = totalSituacaoContratos
-    ? (encerrados / totalSituacaoContratos) * 100
-    : 0;
-
-  const percentualCancelados = totalSituacaoContratos
-    ? (cancelados / totalSituacaoContratos) * 100
-    : 0;
-
-  if (carregando) {
-    return (
-      <div className="home-carregando">
-        <RefreshCw size={22} className="home-girando" />
-        <span>Carregando painel...</span>
-      </div>
-    );
-  }
-
-  if (erro) {
-    return (
-      <div className="home-erro">
-        <p>{erro}</p>
-        <button onClick={carregarDados}>
-          <RefreshCw size={16} />
-          Tentar novamente
-        </button>
-      </div>
-    );
-  }
+  const metrics = [
+    {
+      label: "Imóveis cadastrados",
+      value: propertyData.length,
+      detail: `${availableProperties} disponível(is)`,
+      icon: Building2,
+      target: "/imoveis",
+      resource: resources.properties,
+    },
+    {
+      label: "Contratos ativos",
+      value: activeContracts,
+      detail: "Locações em andamento",
+      icon: FileCheck2,
+      target: "/contratos",
+      resource: resources.contracts,
+    },
+    {
+      label: "Parcelas em atraso",
+      value: overduePayments.length,
+      detail: "Exigem acompanhamento",
+      icon: Wallet,
+      target: "/pagamentos",
+      resource: resources.payments,
+    },
+    {
+      label: "Próximas visitas",
+      value: visitData.length,
+      detail: "Visitas agendadas",
+      icon: CalendarDays,
+      target: "/visitas",
+      resource: resources.visits,
+    },
+  ];
 
   return (
     <div className="home-dashboard">
       <style>{`
-        .home-dashboard {
-          width: 100%;
-          max-width: 1400px;
-          margin: 0 auto;
-          color: #1e293b;
-        }
-
-        .home-boas-vindas {
-          margin-bottom: 24px;
-        }
-
-        .home-boas-vindas h2 {
-          font-size: 21px;
-          margin-bottom: 6px;
-          color: #1e293b;
-        }
-
-        .home-boas-vindas p {
-          color: #64748b;
-          font-size: 14px;
-        }
-
-        .home-indicadores {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-          margin-bottom: 22px;
-        }
-
-        .home-indicador {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 22px;
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          box-shadow: 0 2px 5px rgba(15, 23, 42, .04);
-        }
-
-        .home-indicador-icone {
-          width: 48px;
-          height: 48px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 10px;
-          background: #eff6ff;
-          color: #2563eb;
-          flex-shrink: 0;
-        }
-
-        .home-indicador-info span {
-          display: block;
-          color: #64748b;
-          font-size: 13px;
-          margin-bottom: 5px;
-        }
-
-        .home-indicador-info strong {
-          font-size: 27px;
-          color: #1e293b;
-        }
-
-        .home-graficos {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-        }
-
-        .home-grafico {
-          min-width: 0;
-          padding: 22px;
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          box-shadow: 0 2px 5px rgba(15, 23, 42, .04);
-        }
-
-        .home-grafico-largo {
-          grid-column: 1 / -1;
-        }
-
-        .home-grafico-cabecalho {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 22px;
-        }
-
-        .home-grafico-cabecalho h3 {
-          font-size: 15px;
-          color: #1e293b;
-        }
-
-        .home-grafico-cabecalho span {
-          font-size: 12px;
-          color: #94a3b8;
-        }
-
-        .home-donut-area {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 30px;
-          min-height: 190px;
-          flex-wrap: wrap;
-        }
-
-        .home-donut {
-          width: 155px;
-          height: 155px;
-          border-radius: 50%;
-          position: relative;
-          flex-shrink: 0;
-        }
-
-        .home-donut-centro {
-          position: absolute;
-          inset: 27px;
-          border-radius: 50%;
-          background: white;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .home-donut-centro strong {
-          font-size: 25px;
-          color: #1e293b;
-        }
-
-        .home-donut-centro span {
-          font-size: 11px;
-          color: #64748b;
-        }
-
-        .home-legenda {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-          min-width: 130px;
-        }
-
-        .home-legenda-item {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          font-size: 13px;
-          color: #475569;
-        }
-
-        .home-legenda-cor {
-          width: 11px;
-          height: 11px;
-          border-radius: 3px;
-          flex-shrink: 0;
-        }
-
-        .home-legenda-item strong {
-          margin-left: auto;
-          color: #1e293b;
-          padding-left: 12px;
-        }
-
-        .home-barras {
-          display: flex;
-          flex-direction: column;
-          gap: 19px;
-        }
-
-        .home-barra-item {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .home-barra-topo {
-          display: flex;
-          justify-content: space-between;
-          font-size: 13px;
-          color: #475569;
-        }
-
-        .home-barra-trilho {
-          height: 10px;
-          width: 100%;
-          background: #f1f5f9;
-          border-radius: 10px;
-          overflow: hidden;
-        }
-
-        .home-barra-preenchimento {
-          height: 100%;
-          border-radius: 10px;
-          transition: width .3s ease;
-        }
-
-        .home-grafico-colunas {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-around;
-          gap: 12px;
-          height: 205px;
-          padding-top: 10px;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .home-coluna-item {
-          flex: 1;
-          max-width: 85px;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: flex-end;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .home-coluna-valor {
-          font-size: 12px;
-          font-weight: 600;
-          color: #475569;
-        }
-
-        .home-coluna {
-          width: 100%;
-          max-width: 45px;
-          min-height: 3px;
-          background: #3b82f6;
-          border-radius: 5px 5px 0 0;
-          transition: height .3s ease;
-        }
-
-        .home-coluna-mes {
-          font-size: 11px;
-          color: #64748b;
-          text-transform: capitalize;
-          padding-bottom: 10px;
-        }
-
-        .home-vazio {
-          width: 100%;
-          text-align: center;
-          color: #94a3b8;
-          font-size: 13px;
-          padding: 35px 10px;
-        }
-
-        .home-carregando,
-        .home-erro {
-          min-height: 250px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-          gap: 12px;
-          color: #64748b;
-        }
-
-        .home-erro button {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 16px;
-          border: 0;
-          border-radius: 6px;
-          background: #2563eb;
-          color: white;
-          cursor: pointer;
-        }
-
-        .home-girando {
-          animation: home-girar 1s linear infinite;
-        }
-
-        @keyframes home-girar {
-          to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 850px) {
-          .home-graficos {
-            grid-template-columns: 1fr;
-          }
-
-          .home-grafico-largo {
-            grid-column: auto;
-          }
-        }
-
-        @media (max-width: 550px) {
-          .home-indicadores {
-            grid-template-columns: 1fr;
-          }
-
-          .home-grafico {
-            padding: 16px;
-          }
-
-          .home-donut-area {
-            gap: 20px;
-          }
+        .home-dashboard { width: 100%; max-width: 1440px; margin: 0 auto; color: var(--color-on-surface); }
+        .home-welcome { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-4); margin-bottom: 22px; }
+        .home-welcome h2 { margin: 0 0 var(--space-1); font-size: clamp(22px, 3vw, 29px); }
+        .home-welcome p { margin: 0; color: var(--color-on-surface-variant); font-size: var(--font-body-md); }
+        .home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--space-3); }
+        .home-metric { min-width: 0; padding: var(--space-4); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); background: var(--color-surface); color: inherit; text-decoration: none; box-shadow: var(--elevation-2); }
+        .home-metric:hover, .home-metric:focus-visible { border-color: var(--color-outline-variant); outline: 2px solid var(--color-primary); outline-offset: 1px; }
+        .home-metric-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+        .home-metric-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--color-primary-container); color: var(--color-primary); }
+        .home-metric-label { margin-top: 15px; color: var(--color-on-surface-variant); font-size: var(--font-body-md); }
+        .home-metric-value { display: block; margin-top: 3px; font-size: var(--font-headline-md); line-height: 1.15; font-weight: 750; color: var(--color-on-surface); }
+        .home-metric-detail { display: block; margin-top: 5px; color: var(--color-on-surface-variant); font-size: var(--font-body-sm); }
+        .home-card { min-width: 0; padding: var(--space-4); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); background: var(--color-surface); }
+        .home-section { margin-top: 22px; }
+        .home-section-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); margin-bottom: 12px; }
+        .home-section-header h3 { margin: 0; color: var(--color-on-surface); font-size: var(--font-body-lg); }
+        .home-section-header a, .home-quick-action { color: var(--color-primary); text-decoration: none; font-size: var(--font-body-md); font-weight: 650; }
+        .home-quick-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr)); gap: var(--space-2); }
+        .home-quick-action { min-height: 54px; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); background: var(--color-surface-variant); }
+        .home-quick-action:hover, .home-quick-action:focus-visible { border-color: var(--color-outline-variant); background: var(--color-surface-container); outline: 2px solid var(--color-primary); outline-offset: 1px; }
+        .home-pending-list, .home-recent-list { display: flex; flex-direction: column; }
+        .home-list-item { min-height: 60px; display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-1); border-bottom: 1px solid var(--color-outline-variant); color: inherit; text-decoration: none; }
+        .home-list-item:last-child { border-bottom: 0; }
+        .home-list-item:hover .home-list-title { color: var(--color-primary); }
+        .home-list-copy { min-width: 0; }
+        .home-list-title { display: block; overflow: hidden; color: var(--color-on-surface); font-size: var(--font-body-md); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+        .home-list-detail { display: block; margin-top: 4px; color: var(--color-on-surface-variant); font-size: var(--font-body-sm); }
+        .home-status { flex: 0 0 auto; padding: var(--space-1) var(--space-2); border-radius: var(--radius-xl); font-size: var(--font-body-sm); font-weight: 700; }
+        .home-status-overdue { color: var(--color-error); background: var(--color-error-container); }
+        .home-status-pending { color: var(--color-warning); background: var(--color-warning-container); }
+        .home-status-visit { color: var(--color-on-surface); background: var(--color-primary-container); }
+        .home-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-5) var(--space-3); color: var(--color-on-surface-variant); text-align: center; }
+        .home-empty a { display: inline-flex; min-height: 44px; align-items: center; gap: var(--space-1); margin-top: 4px; color: var(--color-primary); font-weight: 650; text-decoration: none; }
+        .home-skeleton { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-2) 0; }
+        .home-skeleton span { height: 14px; width: 100%; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--color-primary-container) 25%, var(--color-primary-container) 45%, var(--color-primary-container) 65%); background-size: 300% 100%; animation: home-shimmer 1.4s ease infinite; }
+        .home-skeleton span:last-child { width: 62%; }
+        @keyframes home-shimmer { to { background-position: -150% 0; } }
+        .home-erro-secao { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); color: var(--color-error); font-size: var(--font-body-md); }
+        .home-erro-secao p { margin: 0; }
+        .home-erro-secao button { min-height: 44px; display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-error); border-radius: var(--radius-sm); color: var(--color-error); background: var(--color-surface); cursor: pointer; }
+        .home-analytics { margin-top: 22px; border: 1px solid var(--color-outline-variant); border-radius: var(--radius-md); background: var(--color-surface-variant); }
+        .home-analytics summary { min-height: 52px; display: flex; align-items: center; padding: 0 var(--space-4); color: var(--color-on-surface); font-size: var(--font-body-md); font-weight: 700; cursor: pointer; }
+        .home-analytics-body { padding: 0 var(--space-3) var(--space-3); }
+        @media (max-width: 620px) {
+          .home-welcome { align-items: flex-start; flex-direction: column; }
+          .home-list-item { align-items: flex-start; }
+          .home-erro-secao { align-items: flex-start; flex-direction: column; }
         }
       `}</style>
 
-      <div className="home-boas-vindas">
-        <h2>Visão geral</h2>
-        <p>Acompanhe os principais dados da sua imobiliária.</p>
-      </div>
-
-      <section className="home-indicadores">
-        <div className="home-indicador">
-          <div className="home-indicador-icone">
-            <Building2 size={25} />
-          </div>
-          <div className="home-indicador-info">
-            <span>Total de imóveis</span>
-            <strong>{totalImoveis}</strong>
-          </div>
+      <header className="home-welcome">
+        <div>
+          <h2>{greeting}, {greetingName}</h2>
+          <p>Veja o que precisa de atenção na sua carteira hoje.</p>
         </div>
+      </header>
 
-        <div className="home-indicador">
-          <div className="home-indicador-icone">
-            <FileCheck size={25} />
-          </div>
-          <div className="home-indicador-info">
-            <span>Contratos ativos</span>
-            <strong>{ativos}</strong>
-          </div>
+      <section aria-label="Indicadores principais" className="home-grid">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+          return (
+            <Link className="home-metric" to={metric.target} key={metric.label}>
+              <div className="home-metric-head">
+                <span className="home-metric-icon"><Icon size={21} aria-hidden="true" /></span>
+                <ArrowRight size={17} aria-hidden="true" color="var(--color-primary)" />
+              </div>
+              <span className="home-metric-label">{metric.label}</span>
+              {metric.resource.status === "loading" ? (
+                <Skeleton rows={1} />
+              ) : metric.resource.status === "error" ? (
+                <>
+                  <strong className="home-metric-value">—</strong>
+                  <span className="home-metric-detail">Dados indisponíveis · tente novamente abaixo</span>
+                </>
+              ) : (
+                <>
+                  <strong className="home-metric-value">{metric.value}</strong>
+                  <span className="home-metric-detail">{metric.detail}</span>
+                </>
+              )}
+            </Link>
+          );
+        })}
+      </section>
+
+      <section className="home-section" aria-labelledby="home-quick-title">
+        <div className="home-section-header"><h3 id="home-quick-title">Ações rápidas</h3></div>
+        <nav className="home-quick-grid" aria-label="Ações rápidas">
+          <Link className="home-quick-action" to="/imoveis/cadastrar"><FilePlus2 size={19} aria-hidden="true" />Cadastrar imóvel</Link>
+          <Link className="home-quick-action" to="/visitas"><CalendarDays size={19} aria-hidden="true" />Agendar visita</Link>
+          <Link className="home-quick-action" to="/contratos"><FileCheck2 size={19} aria-hidden="true" />Consultar contratos</Link>
+          <Link className="home-quick-action" to="/pagamentos"><Wallet size={19} aria-hidden="true" />Registrar pagamento</Link>
+          <Link className="home-quick-action" to="/locatarios"><Users size={19} aria-hidden="true" />Consultar locatários</Link>
+        </nav>
+      </section>
+
+      <section className="home-section" aria-labelledby="home-pending-title">
+        <div className="home-section-header">
+          <h3 id="home-pending-title">Pendências e próximos compromissos</h3>
+          <Link to="/pagamentos">Ver pagamentos <ArrowRight size={14} aria-hidden="true" /></Link>
+        </div>
+        <div className="home-card home-pending-list">
+          {resources.payments.status === "error" && (
+            <SectionError
+              message={resources.payments.error}
+              onRetry={() => void loadResource("payments")}
+            />
+          )}
+          {resources.visits.status === "error" && (
+            <SectionError
+              message="Não foi possível carregar as próximas visitas."
+              onRetry={() => void loadResource("visits")}
+            />
+          )}
+          {(resources.payments.status === "loading" || resources.visits.status === "loading") && (
+            <Skeleton rows={3} />
+          )}
+          {resources.payments.status === "success" && resources.visits.status === "success" && pendingItems.length === 0 && (
+            <div className="home-empty">
+              <CheckCircle2 size={25} aria-hidden="true" color="var(--color-success)" />
+              <strong>Nenhuma pendência urgente.</strong>
+              <span>Os próximos compromissos e parcelas aparecerão aqui.</span>
+              <Link to="/pagamentos">Acessar pagamentos <ArrowRight size={15} aria-hidden="true" /></Link>
+            </div>
+          )}
+          {pendingItems.map((item) => (
+            <Link className="home-list-item" to={item.target} key={`${item.priority}:${item.id}`}>
+              <span className="home-list-copy">
+                <span className="home-list-title">{item.title}</span>
+                <span className="home-list-detail">{item.detail}</span>
+              </span>
+              <span className={`home-status home-status-${item.priority}`}>
+                {item.priority === "overdue" ? <><AlertTriangle size={12} aria-hidden="true" /> Atrasado</> :
+                  item.priority === "pending" ? "Pendente" : <><Clock3 size={12} aria-hidden="true" /> Visita</>}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
-      <section className="home-graficos">
-        <div className="home-grafico">
-          <div className="home-grafico-cabecalho">
-            <h3>
-              <HomeIcon size={17} style={{ verticalAlign: "middle", marginRight: 7 }} />
-              Situação dos imóveis
-            </h3>
-            <span>{totalImoveis} imóveis</span>
-          </div>
+      <section className="home-section" aria-labelledby="home-recent-title">
+        <div className="home-section-header">
+          <h3 id="home-recent-title">Atividade recente</h3>
+          <Link to="/contratos">Ver contratos <ArrowRight size={14} aria-hidden="true" /></Link>
+        </div>
+        <div className="home-card home-recent-list">
+          {(resources.properties.status === "loading" || resources.contracts.status === "loading") && (
+            <Skeleton rows={3} />
+          )}
+          {resources.properties.status === "error" && (
+            <SectionError
+              message="Não foi possível carregar imóveis recentes."
+              onRetry={() => void loadResource("properties")}
+            />
+          )}
+          {resources.contracts.status === "error" && (
+            <SectionError
+              message="Não foi possível carregar contratos recentes."
+              onRetry={() => void loadResource("contracts")}
+            />
+          )}
+          {resources.properties.status === "success" && resources.contracts.status === "success" && recentActivities.length === 0 && (
+            <div className="home-empty">
+              <Building2 size={25} aria-hidden="true" />
+              <strong>Ainda não há atividade registrada.</strong>
+              <span>Cadastre um imóvel ou contrato para começar.</span>
+              <Link to="/imoveis/cadastrar">Cadastrar imóvel <ArrowRight size={15} aria-hidden="true" /></Link>
+            </div>
+          )}
+          {recentActivities.map((activity) => (
+            <Link className="home-list-item" to={activity.target} key={activity.id}>
+              <span className="home-list-copy">
+                <span className="home-list-title">{activity.title}</span>
+                <span className="home-list-detail">{activity.detail}</span>
+              </span>
+              <time className="home-list-detail" dateTime={new Date(activity.date).toISOString()}>
+                {formatDate(activity.date)}
+              </time>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          {totalSituacaoImoveis === 0 ? (
-            <div className="home-vazio">Nenhum imóvel cadastrado.</div>
-          ) : (
-            <div className="home-donut-area">
-              <div
-                className="home-donut"
-                style={{
-                  background: `conic-gradient(#2563eb 0% ${percentualDisponiveis}%, #16a34a ${percentualDisponiveis}% 100%)`,
+      <details
+        className="home-analytics"
+        onToggle={(event) => setAnalyticsOpen(event.currentTarget.open)}
+      >
+        <summary>Análises da carteira · gráficos existentes</summary>
+        {analyticsOpen && (
+          <div className="home-analytics-body">
+            {resources.properties.status === "error" || resources.contracts.status === "error" ? (
+              <SectionError
+                message="Não foi possível carregar os dados das análises."
+                onRetry={() => {
+                  void loadResource("properties");
+                  void loadResource("contracts");
                 }}
-              >
-                <div className="home-donut-centro">
-                  <strong>{totalSituacaoImoveis}</strong>
-                  <span>Imóveis</span>
-                </div>
-              </div>
-
-              <div className="home-legenda">
-                <div className="home-legenda-item">
-                  <span className="home-legenda-cor" style={{ background: "#2563eb" }} />
-                  Disponíveis
-                  <strong>{disponiveis}</strong>
-                </div>
-                <div className="home-legenda-item">
-                  <span className="home-legenda-cor" style={{ background: "#16a34a" }} />
-                  Alugados
-                  <strong>{alugados}</strong>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="home-grafico">
-          <div className="home-grafico-cabecalho">
-            <h3>
-              <ChartPie size={17} style={{ verticalAlign: "middle", marginRight: 7 }} />
-              Situação dos contratos
-            </h3>
-            <span>{totalSituacaoContratos} contratos</span>
+              />
+            ) : resources.properties.status === "loading" || resources.contracts.status === "loading" ? (
+              <Skeleton rows={4} />
+            ) : (
+              <Suspense fallback={<Skeleton rows={4} />}>
+                <HomeCharts properties={propertyData} contracts={contractData} />
+              </Suspense>
+            )}
           </div>
-
-          {totalSituacaoContratos === 0 ? (
-            <div className="home-vazio">Nenhum contrato registrado.</div>
-          ) : (
-            <div className="home-barras">
-              <div className="home-barra-item">
-                <div className="home-barra-topo">
-                  <span>Ativos</span>
-                  <strong>{ativos}</strong>
-                </div>
-                <div className="home-barra-trilho">
-                  <div
-                    className="home-barra-preenchimento"
-                    style={{ width: `${percentualAtivos}%`, background: "#2563eb" }}
-                  />
-                </div>
-              </div>
-
-              <div className="home-barra-item">
-                <div className="home-barra-topo">
-                  <span>Encerrados</span>
-                  <strong>{encerrados}</strong>
-                </div>
-                <div className="home-barra-trilho">
-                  <div
-                    className="home-barra-preenchimento"
-                    style={{ width: `${percentualEncerrados}%`, background: "#16a34a" }}
-                  />
-                </div>
-              </div>
-
-              <div className="home-barra-item">
-                <div className="home-barra-topo">
-                  <span>Cancelados</span>
-                  <strong>{cancelados}</strong>
-                </div>
-                <div className="home-barra-trilho">
-                  <div
-                    className="home-barra-preenchimento"
-                    style={{ width: `${percentualCancelados}%`, background: "#f59e0b" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="home-grafico home-grafico-largo">
-          <div className="home-grafico-cabecalho">
-            <h3>
-              <ChartNoAxesColumn size={17} style={{ verticalAlign: "middle", marginRight: 7 }} />
-              Contratos criados por mês
-            </h3>
-            <span>Últimos 6 meses</span>
-          </div>
-
-          {meses.every((mes) => mes.quantidade === 0) ? (
-            <div className="home-vazio">
-              Nenhum contrato criado nesse período.
-            </div>
-          ) : (
-            <div className="home-grafico-colunas">
-              {meses.map((mes) => (
-                <div className="home-coluna-item" key={mes.chave}>
-                  <span className="home-coluna-valor">
-                    {mes.quantidade}
-                  </span>
-                  <div
-                    className="home-coluna"
-                    style={{
-                      height: `${(mes.quantidade / maiorQuantidade) * 140}px`,
-                    }}
-                    title={`${mes.quantidade} contratos`}
-                  />
-                  <span className="home-coluna-mes">{mes.nome}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        )}
+      </details>
     </div>
   );
 }

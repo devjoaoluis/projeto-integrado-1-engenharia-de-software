@@ -1,4 +1,9 @@
-import { Visit, VisitStatus, VisitWithDetails } from "../entities/Visit";
+import {
+  Visit,
+  VisitReminderLeadMinutes,
+  VisitStatus,
+  VisitWithDetails,
+} from "../entities/Visit";
 
 export interface VisitFilter {
   propertyId?: string;
@@ -16,6 +21,12 @@ export interface IVisitRepository {
   findByPropertyId(propertyId: string): Promise<VisitWithDetails[]>;
   findByClientId(clientId: string): Promise<VisitWithDetails[]>;
   findUpcoming(limit?: number, nowTimestamp?: number): Promise<VisitWithDetails[]>;
+  markNotificationSent(
+    id: string,
+    scheduledAt: number,
+    reminderLeadMinutes: VisitReminderLeadMinutes,
+    now: number
+  ): Promise<boolean>;
   update(visit: Visit): Promise<Visit>;
   delete(id: string): Promise<void>;
 }

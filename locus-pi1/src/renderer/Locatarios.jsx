@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, CheckCircle, BellRing, X } from "lucide-react";
 import BotaoVoltar from "./components/BotaoVoltar";
 
 const POR_PAGINA = 5;
-const AZUL = "#2563eb";
 const COLUNAS = "1.8fr 1.2fr 1fr 1fr 80px 240px";
 const CHAVE_ATRASO_MANUAL = "locus_atrasos_manuais";
 
@@ -68,14 +67,14 @@ function Avatar({ nome }) {
       style={{
         width: "36px",
         height: "36px",
-        borderRadius: "50%",
-        backgroundColor: "#dbeafe",
-        color: "#1e40af",
+        borderRadius: "var(--radius-full)",
+        backgroundColor: "var(--color-primary-container)",
+        color: "var(--color-on-surface)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontWeight: "bold",
-        fontSize: "13px",
+        fontSize: "var(--font-body-md)",
         flexShrink: 0
       }}
     >
@@ -88,15 +87,15 @@ function Pilula({ status }) {
   const isEmDia = status === "Em dia";
   const isAtrasado = status === "Atrasado";
 
-  const bg = isEmDia ? "#dcfce7" : isAtrasado ? "#fee2e2" : "#fef3c7";
-  const color = isEmDia ? "#15803d" : isAtrasado ? "#b91c1c" : "#b45309";
+  const bg = isEmDia ? "var(--color-success-container)" : isAtrasado ? "var(--color-error-container)" : "var(--color-warning-container)";
+  const color = isEmDia ? "var(--color-success)" : isAtrasado ? "var(--color-error)" : "var(--color-warning)";
 
   return (
     <span
       style={{
-        padding: "4px 10px",
-        borderRadius: "12px",
-        fontSize: "12px",
+        padding: "var(--space-1) var(--space-2)",
+        borderRadius: "var(--radius-md)",
+        fontSize: "var(--font-body-sm)",
         fontWeight: "600",
         backgroundColor: bg,
         color: color,
@@ -112,21 +111,21 @@ function Paginacao({ paginaAtual, totalPaginas, onMudar }) {
   if (totalPaginas <= 1) return null;
 
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "20px" }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "var(--space-3)", marginTop: "var(--space-4)" }}>
       <button
         onClick={() => onMudar(Math.max(1, paginaAtual - 1))}
         disabled={paginaAtual === 1}
-        style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff", cursor: paginaAtual === 1 ? "not-allowed" : "pointer" }}
+        style={{ padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)", cursor: paginaAtual === 1 ? "not-allowed" : "pointer" }}
       >
         Anterior
       </button>
-      <span style={{ fontSize: "14px", color: "#475569" }}>
+      <span style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)" }}>
         Página <strong>{paginaAtual}</strong> de {totalPaginas}
       </span>
       <button
         onClick={() => onMudar(Math.min(totalPaginas, paginaAtual + 1))}
         disabled={paginaAtual === totalPaginas}
-        style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff", cursor: paginaAtual === totalPaginas ? "not-allowed" : "pointer" }}
+        style={{ padding: "var(--space-1) var(--space-3)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)", cursor: paginaAtual === totalPaginas ? "not-allowed" : "pointer" }}
       >
         Seguinte
       </button>
@@ -230,56 +229,56 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
   return (
     <div style={{
       position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.5)", display: "flex",
+      backgroundColor: "var(--color-scrim)", display: "flex",
       alignItems: "center", justifyContent: "center", zIndex: 1000,
-      fontFamily: "Inter, sans-serif"
+      fontFamily: "var(--font-family-base)"
     }}>
       <div style={{
-        background: "#ffffff", padding: "28px", borderRadius: "10px",
-        width: "100%", maxWidth: "500px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+        background: "var(--color-surface)", padding: "var(--space-5)", borderRadius: "var(--radius-md)",
+        width: "100%", maxWidth: "500px", boxShadow: "var(--elevation-4)"
       }}>
-        <h2 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", marginBottom: "12px" }}>
+        <h2 style={{ fontSize: "var(--font-title-lg)", fontWeight: "700", color: "var(--color-on-surface)", marginBottom: "var(--space-3)" }}>
           Rescisão de Contrato: {locatario.nome}
         </h2>
 
         {feedback.message && (
           <div style={{
-            padding: "10px 14px", borderRadius: "6px", marginBottom: "16px", fontSize: "13px",
-            backgroundColor: feedback.type === "error" ? "#fee2e2" : "#dcfce7",
-            color: feedback.type === "error" ? "#991b1b" : "#166534"
+            padding: "var(--space-2) var(--space-3)", borderRadius: "var(--radius-sm)", marginBottom: "var(--space-4)", fontSize: "var(--font-body-md)",
+            backgroundColor: feedback.type === "error" ? "var(--color-error-container)" : "var(--color-success-container)",
+            color: feedback.type === "error" ? "var(--color-error)" : "var(--color-success)"
           }}>
             {feedback.message}
           </div>
         )}
 
         {loading ? (
-          <p style={{ textAlign: "center", color: "#64748b", padding: "24px 0" }}>A processar...</p>
+          <p style={{ textAlign: "center", color: "var(--color-on-surface)", padding: "var(--space-5) 0" }}>A processar...</p>
         ) : (
           <div>
             {temDebitos ? (
               <div style={{
-                backgroundColor: "#fef2f2", border: "1px solid #fecaca", padding: "12px",
-                borderRadius: "6px", marginBottom: "16px", color: "#991b1b", fontSize: "13px",
-                display: "flex", gap: "8px", alignItems: "flex-start"
+                backgroundColor: "var(--color-error-container)", border: "1px solid var(--color-error)", padding: "var(--space-3)",
+                borderRadius: "var(--radius-sm)", marginBottom: "var(--space-4)", color: "var(--color-error)", fontSize: "var(--font-body-md)",
+                display: "flex", gap: "var(--space-2)", alignItems: "flex-start"
               }}>
-                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+                <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: "var(--space-1)" }} />
                 <div>
                   <strong>Atenção:</strong> Foram encontrados <strong>{pagamentos.length} pagamento(s) pendente(s)</strong> para este locatário.
                 </div>
               </div>
             ) : (
               <div style={{
-                backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "12px",
-                borderRadius: "6px", marginBottom: "16px", color: "#166534", fontSize: "13px",
-                display: "flex", gap: "8px", alignItems: "center"
+                backgroundColor: "var(--color-success-container)", border: "1px solid var(--color-success)", padding: "var(--space-3)",
+                borderRadius: "var(--radius-sm)", marginBottom: "var(--space-4)", color: "var(--color-success)", fontSize: "var(--font-body-md)",
+                display: "flex", gap: "var(--space-2)", alignItems: "center"
               }}>
                 <CheckCircle size={18} style={{ flexShrink: 0 }} />
                 <span>Nenhum débito pendente encontrado. Imóvel apto para liberação.</span>
               </div>
             )}
 
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#334155", marginBottom: "6px" }}>
+            <div style={{ marginBottom: "var(--space-4)" }}>
+              <label style={{ display: "block", fontSize: "var(--font-body-md)", fontWeight: "600", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
                 Motivo / Observações da Rescisão:
               </label>
               <textarea
@@ -287,23 +286,23 @@ function ModalRescisao({ locatario, onClose, onSucesso }) {
                 onChange={(e) => setMotivo(e.target.value)}
                 placeholder="Insira notas sobre a rescisão..."
                 rows={3}
-                style={{ width: "100%", padding: "10px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "14px", boxSizing: "border-box" }}
+                style={{ width: "100%", padding: "var(--space-2)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", fontSize: "var(--font-body-md)", boxSizing: "border-box" }}
               />
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
               <button
                 onClick={onClose}
-                style={{ background: "#e2e8f0", color: "#334155", border: "none", padding: "10px 16px", borderRadius: "6px", fontWeight: "600", cursor: "pointer", fontSize: "14px" }}
+                style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)", fontWeight: "600", cursor: "pointer", fontSize: "var(--font-body-md)" }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleConfirmarRescisao}
                 style={{
-                  background: temDebitos ? "#d97706" : "#dc2626",
-                  color: "#fff", border: "none", padding: "10px 16px", borderRadius: "6px",
-                  fontWeight: "600", cursor: "pointer", fontSize: "14px"
+                  background: temDebitos ? "var(--color-warning)" : "var(--color-error)",
+                  color: "var(--color-on-surface-variant)", border: "none", padding: "var(--space-2) var(--space-4)", borderRadius: "var(--radius-sm)",
+                  fontWeight: "600", cursor: "pointer", fontSize: "var(--font-body-md)"
                 }}
               >
                 {temDebitos ? "Prosseguir com Débitos e Rescindir" : "Confirmar Rescisão"}
@@ -327,9 +326,8 @@ export default function Locatarios() {
   const [form, setForm] = useState(formVazio);
   const [editando, setEditando] = useState(null);
   const [locatarioParaRescindir, setLocatarioParaRescindir] = useState(null);
-  const [alertaAberto, setAlertaAberto] = useState(true);
-  const [avisoDisparo, setAvisoDisparo] = useState("");
-  const notificouSessaoRef = useRef(false);
+  const [alertaDisparo, setAlertaDisparo] = useState({ type: "", message: "" });
+  const [disparandoAlerta, setDisparandoAlerta] = useState(false);
 
   const carregarDados = async () => {
     try {
@@ -423,43 +421,27 @@ export default function Locatarios() {
 
   const inadimplentes = locatarios.filter((l) => l.status === "Atrasado");
 
-  function dispararAlertaInadimplentes(listaAlvo = inadimplentes, manual = false) {
-    if (!listaAlvo || listaAlvo.length === 0) return;
+  async function dispararAlertaInadimplentes() {
+    if (inadimplentes.length === 0 || disparandoAlerta) return;
+    setDisparandoAlerta(true);
+    setAlertaDisparo({ type: "", message: "" });
 
-    const nomes = listaAlvo.map((l) => l.nome).filter(Boolean);
-    const resumoNomes = nomes.slice(0, 3).join(", ") + (nomes.length > 3 ? ` e +${nomes.length - 3}` : "");
-
-    setAlertaAberto(true);
-    setAvisoDisparo(
-      manual
-        ? `Alerta de atraso disparado para ${listaAlvo.length} ${listaAlvo.length === 1 ? "locatário" : "locatários"}: ${resumoNomes}.`
-        : ""
-    );
-
-    if (typeof Notification !== "undefined") {
-      const enviar = () => {
-        new Notification("Alerta de Inadimplência", {
-          body: `${listaAlvo.length} ${listaAlvo.length === 1 ? "locatário em atraso" : "locatários em atraso"}: ${resumoNomes}`,
-          tag: "alerta-inadimplentes",
-        });
-      };
-
-      if (Notification.permission === "granted") {
-        enviar();
-      } else if (Notification.permission === "default" && manual) {
-        Notification.requestPermission().then((perm) => {
-          if (perm === "granted") enviar();
-        });
-      }
+    try {
+      const resultado = await window.api.overdue.triggerAlerts({ force: true });
+      setAlertaDisparo({
+        type: "success",
+        message: `${resultado.triggeredCount} novo(s) alerta(s) registrado(s) no sino. As notificações nativas são exibidas quando o app não está em foco.`,
+      });
+    } catch (error) {
+      console.error("Não foi possível disparar os alertas de inadimplência:", error);
+      setAlertaDisparo({
+        type: "error",
+        message: "Não foi possível enviar os alertas. Tente novamente.",
+      });
+    } finally {
+      setDisparandoAlerta(false);
     }
   }
-
-  useEffect(() => {
-    if (!loading && inadimplentes.length > 0 && !notificouSessaoRef.current) {
-      notificouSessaoRef.current = true;
-      dispararAlertaInadimplentes(inadimplentes, false);
-    }
-  }, [loading, inadimplentes.length]);
 
   const filtrados = locatarios.filter((l) => {
     const nome = l.nome || "";
@@ -575,14 +557,14 @@ export default function Locatarios() {
   }
 
   if (loading) {
-    return <p style={{ padding: "24px", color: "#667085" }}>A carregar locatários...</p>;
+    return <p style={{ padding: "var(--space-5)", color: "var(--color-on-surface-variant)" }}>A carregar locatários...</p>;
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div style={{ padding: "var(--space-5)", maxWidth: "1200px", margin: "0 auto" }}>
       <BotaoVoltar destino="/home" texto="Voltar" />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#1d2939" }}>Locatários</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-5)" }}>
+        <h1 style={{ fontSize: "var(--font-headline-md)", fontWeight: "bold", color: "var(--color-on-surface)" }}>Locatários</h1>
         <button
           className={mostrarForm ? "botao-voltar-padrao" : "ui-button"}
           onClick={() => {
@@ -595,106 +577,51 @@ export default function Locatarios() {
         </button>
       </div>
 
-      {inadimplentes.length > 0 && alertaAberto && (
-        <div
-          role="alert"
-          style={{
-            backgroundColor: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderLeft: "4px solid #dc2626",
-            borderRadius: "8px",
-            padding: "14px 16px",
-            marginBottom: "20px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: "12px",
-            color: "#991b1b"
-          }}
-        >
-          <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-            <AlertTriangle size={20} style={{ flexShrink: 0, marginTop: "2px", color: "#dc2626" }} />
-            <div>
-              <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>
-                Alerta de atraso: {inadimplentes.length}{" "}
-                {inadimplentes.length === 1 ? "locatário inadimplente" : "locatários inadimplentes"}
-              </div>
-              <div style={{ fontSize: "13px", color: "#7f1d1d" }}>
-                {inadimplentes.map((l) => `${l.nome} (${l.imovel})`).join(" • ")}
-              </div>
-              {avisoDisparo && (
-                <div style={{ fontSize: "12px", color: "#15803d", fontWeight: "600", marginTop: "6px" }}>
-                  {avisoDisparo}
-                </div>
-              )}
-              <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRascunho((atual) => ({ ...atual, status: "Atrasado" }));
-                    setFiltros((atual) => ({ ...atual, status: "Atrasado" }));
-                    setPagina(1);
-                  }}
-                  style={{
-                    backgroundColor: "#dc2626",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "6px 12px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    cursor: "pointer"
-                  }}
-                >
-                  Filtrar atrasados
-                </button>
-                <button
-                  type="button"
-                  onClick={() => dispararAlertaInadimplentes(inadimplentes, true)}
-                  style={{
-                    backgroundColor: "#fff",
-                    color: "#991b1b",
-                    border: "1px solid #fca5a5",
-                    borderRadius: "6px",
-                    padding: "6px 12px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px"
-                  }}
-                >
-                  <BellRing size={13} /> Disparar alerta
-                </button>
-              </div>
-            </div>
-          </div>
-
+      {inadimplentes.length > 0 && (
+        <div style={{ marginBottom: "var(--space-4)" }}>
           <button
             type="button"
-            onClick={() => setAlertaAberto(false)}
-            aria-label="Fechar alerta de atraso"
+            onClick={dispararAlertaInadimplentes}
+            disabled={disparandoAlerta}
             style={{
-              background: "none",
-              border: "none",
-              color: "#991b1b",
-              cursor: "pointer",
-              padding: "2px",
-              display: "flex"
+              minHeight: "44px",
+              padding: "var(--space-2) var(--space-3)",
+              border: "1px solid var(--color-error)",
+              borderRadius: "var(--radius-sm)",
+              background: "var(--color-surface)",
+              color: "var(--color-error)",
+              fontWeight: 600,
+              cursor: disparandoAlerta ? "wait" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              opacity: disparandoAlerta ? 0.7 : 1,
             }}
           >
-            <X size={16} />
+            <BellRing size={16} aria-hidden="true" />
+            {disparandoAlerta ? "Enviando alertas..." : `Notificar ${inadimplentes.length} inadimplente(s)`}
           </button>
+          {alertaDisparo.message && (
+            <p
+              role={alertaDisparo.type === "error" ? "alert" : "status"}
+              style={{
+                margin: "var(--space-2) 0 0",
+                color: alertaDisparo.type === "error" ? "var(--color-error)" : "var(--color-success)",
+                fontSize: "var(--font-body-md)",
+              }}
+            >
+              {alertaDisparo.message}
+            </p>
+          )}
         </div>
       )}
 
       {mostrarForm && (
-        <form onSubmit={salvar} style={{ background: "#f8fafc", padding: "20px", borderRadius: "8px", marginBottom: "24px", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "18px", marginBottom: "16px", color: "#334155" }}>
+        <form onSubmit={salvar} style={{ background: "var(--color-primary-container)", padding: "var(--space-4)", borderRadius: "var(--radius-sm)", marginBottom: "var(--space-5)", border: "1px solid var(--color-outline-variant)" }}>
+          <h2 style={{ fontSize: "var(--font-title-lg)", marginBottom: "var(--space-4)", color: "var(--color-on-surface)" }}>
             {editando ? "Editar locatário" : "Cadastrar novo locatário"}
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)", marginBottom: "var(--space-4)" }}>
             <div>
               <label className="ui-label ui-label-required">Nome completo</label>
               <input
@@ -703,7 +630,7 @@ export default function Locatarios() {
                 value={form.nome}
                 onChange={(e) => atualizarForm("nome", e.target.value)}
                 required
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)" }}
               />
             </div>
             <div>
@@ -715,7 +642,7 @@ export default function Locatarios() {
                 value={form.cpfCnpj}
                 onChange={(e) => atualizarForm("cpfCnpj", e.target.value)}
                 required
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)" }}
               />
             </div>
             <div>
@@ -725,7 +652,7 @@ export default function Locatarios() {
                 type="text"
                 value={form.telefone}
                 onChange={(e) => atualizarForm("telefone", e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)" }}
               />
             </div>
             <div>
@@ -735,7 +662,7 @@ export default function Locatarios() {
                 type="email"
                 value={form.email}
                 onChange={(e) => atualizarForm("email", e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1" }}
+                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)" }}
               />
             </div>
             <div>
@@ -744,7 +671,7 @@ export default function Locatarios() {
                 className="ui-control"
                 value={form.status}
                 onChange={(e) => atualizarForm("status", e.target.value)}
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #cbd5e1", background: "#fff" }}
+                style={{ width: "100%", padding: "var(--space-2)", borderRadius: "var(--radius-xs)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)" }}
               >
                 <option value="Em dia">Em dia</option>
                 <option value="Pendente">Pendente</option>
@@ -758,40 +685,40 @@ export default function Locatarios() {
         </form>
       )}
 
-      <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
+      <div style={{ display: "flex", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
         <input
           type="text"
           placeholder="Procurar por nome, CPF, e-mail ou imóvel..."
           value={rascunho.busca}
           onChange={(e) => setRascunho({ ...rascunho, busca: e.target.value })}
-          style={{ flex: 1, padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+          style={{ flex: 1, padding: "var(--space-2)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)" }}
         />
         <select
           value={rascunho.status}
           onChange={(e) => setRascunho({ ...rascunho, status: e.target.value })}
-          style={{ padding: "10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff" }}
+          style={{ padding: "var(--space-2)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", background: "var(--color-surface)" }}
         >
           <option value="">Todos os status</option>
           <option value="Em dia">Em dia</option>
           <option value="Pendente">Pendente</option>
           <option value="Atrasado">Atrasado</option>
         </select>
-        <button onClick={buscar} style={{ padding: "10px 16px", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>Buscar</button>
-        <button onClick={limpar} style={{ padding: "10px 16px", backgroundColor: "#e2e8f0", color: "#334155", border: "none", borderRadius: "6px", cursor: "pointer" }}>Limpar</button>
+        <button onClick={buscar} style={{ padding: "var(--space-2) var(--space-4)", backgroundColor: "var(--color-primary)", color: "var(--color-on-primary)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer" }}>Buscar</button>
+        <button onClick={limpar} style={{ padding: "var(--space-2) var(--space-4)", backgroundColor: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer" }}>Limpar</button>
       </div>
 
-      <div style={{ overflowX: "auto", background: "#fff", borderRadius: "8px", border: "1px solid #e2e8f0", padding: "16px" }}>
+      <div style={{ overflowX: "auto", background: "var(--color-surface)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)", padding: "var(--space-4)" }}>
         <div style={{ minWidth: "720px" }}>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: COLUNAS,
-              gap: "12px",
-              padding: "0 16px 10px",
-              fontSize: "12px",
+              gap: "var(--space-3)",
+              padding: "0 var(--space-4) var(--space-2)",
+              fontSize: "var(--font-body-sm)",
               fontWeight: "600",
-              color: AZUL,
-              borderBottom: "1px solid #e2e8f0"
+              color: "var(--color-on-surface)",
+              borderBottom: "1px solid var(--color-outline-variant)"
             }}
           >
             <span>Locatário</span>
@@ -803,11 +730,11 @@ export default function Locatarios() {
           </div>
 
           {visiveis.length === 0 ? (
-            <p style={{ color: "#667085", padding: "24px 16px", textAlign: "center" }}>
+            <p style={{ color: "var(--color-on-surface-variant)", padding: "var(--space-5) var(--space-4)", textAlign: "center" }}>
               Nenhum locatário encontrado. Ajuste a busca ou clique em "Novo locatário" para cadastrar.
             </p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", marginTop: "var(--space-2)" }}>
               {visiveis.map((l, i) => (
                 <div
                   key={l.id}
@@ -815,26 +742,26 @@ export default function Locatarios() {
                   style={{
                     display: "grid",
                     gridTemplateColumns: COLUNAS,
-                    gap: "12px",
+                    gap: "var(--space-3)",
                     alignItems: "center",
-                    padding: "12px 16px",
-                    borderRadius: "8px",
-                    backgroundColor: l.status === "Atrasado" ? "#fff5f5" : (i % 2 === 0 ? "#f8fafc" : "#ffffff"),
-                    fontSize: "14px",
-                    color: "#101828",
+                    padding: "var(--space-3) var(--space-4)",
+                    borderRadius: "var(--radius-sm)",
+                    backgroundColor: l.status === "Atrasado" ? "var(--color-error-container)" : (i % 2 === 0 ? "var(--color-primary-container)" : "var(--color-on-surface-variant)"),
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                     cursor: "pointer",
-                    border: l.status === "Atrasado" ? "1px solid #fecaca" : "1px solid transparent",
+                    border: l.status === "Atrasado" ? "1px solid var(--color-error)" : "1px solid transparent",
                     transition: "border-color 0.2s"
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "#f87171" : "#cbd5e1"}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "#fecaca" : "transparent"}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error)" : "var(--color-primary-container)"}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = l.status === "Atrasado" ? "var(--color-error-container)" : "transparent"}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: "500", color: "#2563eb" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", fontWeight: "500", color: "var(--color-on-surface)" }}>
                     <Avatar nome={l.nome} />
                     {l.nome}
                   </span>
-                  <span style={{ color: "#475569" }}>{l.imovel || "—"}</span>
-                  <span style={{ color: "#475569" }}>{l.telefone || "—"}</span>
+                  <span style={{ color: "var(--color-on-surface)" }}>{l.imovel || "—"}</span>
+                  <span style={{ color: "var(--color-on-surface)" }}>{l.telefone || "—"}</span>
                   <span>
                     <Pilula status={l.status} />
                   </span>
@@ -846,12 +773,12 @@ export default function Locatarios() {
                         navigate(`/locatarios/${l.id}`);
                       }}
                       style={{
-                        backgroundColor: "#eff6ff",
-                        color: "#2563eb",
-                        border: "1px solid #bfdbfe",
-                        borderRadius: "6px",
-                        padding: "4px 8px",
-                        fontSize: "12px",
+                        backgroundColor: "var(--color-primary-container)",
+                        color: "var(--color-on-surface)",
+                        border: "1px solid var(--color-outline-variant)",
+                        borderRadius: "var(--radius-sm)",
+                        padding: "var(--space-1) var(--space-2)",
+                        fontSize: "var(--font-body-sm)",
                         fontWeight: "600",
                         cursor: "pointer",
                       }}
@@ -859,14 +786,14 @@ export default function Locatarios() {
                       Dossiê
                     </button>
                   </span>
-                  <span style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span style={{ display: "flex", gap: "var(--space-1)", alignItems: "center" }}>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         editar(l);
                       }}
-                      style={{ background: "#e2e8f0", color: "#334155", border: "none", borderRadius: "6px", padding: "6px 8px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
+                      style={{ background: "var(--color-primary-container)", color: "var(--color-on-surface)", border: "none", borderRadius: "var(--radius-sm)", padding: "var(--space-1) var(--space-2)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                     >
                       Editar
                     </button>
@@ -876,7 +803,7 @@ export default function Locatarios() {
                         e.stopPropagation();
                         setLocatarioParaRescindir(l);
                       }}
-                      style={{ background: "#fee2e2", color: "#991b1b", border: "none", borderRadius: "6px", padding: "6px 8px", fontSize: "11px", fontWeight: "600", cursor: "pointer" }}
+                      style={{ background: "var(--color-error-container)", color: "var(--color-error)", border: "none", borderRadius: "var(--radius-sm)", padding: "var(--space-1) var(--space-2)", fontSize: "var(--font-body-sm)", fontWeight: "600", cursor: "pointer" }}
                       title="Encerrar Contrato / Quebra de Contrato"
                     >
                       Rescindir

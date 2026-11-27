@@ -149,21 +149,21 @@ function Imoveis() {
                         justify-content: space-between;
                         align-items: flex-start;
                         margin-bottom: 24px;
-                        gap: 16px;
+                        gap: var(--space-4);
                         flex-wrap: wrap;
                     }
 
                     .imoveis-titulo {
-                        font-size: 24px;
+                        font-size: var(--font-headline-sm);
                         font-weight: 700;
-                        color: #0f172a;
+                        color: var(--color-on-surface);
                         margin: 0;
                     }
 
                     .imoveis-subtitulo {
-                        font-size: 14px;
-                        color: #64748b;
-                        margin: 4px 0 0 0;
+                        font-size: var(--font-body-md);
+                        color: var(--color-on-surface);
+                        margin: var(--space-1) 0 0 0;
                     }
 
                     .imoveis-acao {
@@ -173,33 +173,33 @@ function Imoveis() {
                     .imoveis-grade {
                         display: grid;
                         grid-template-columns: repeat(2, minmax(0, 1fr));
-                        gap: 24px;
+                        gap: var(--space-5);
                     }
 
                     .imoveis-filtros {
                         display: grid;
                         grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) auto auto;
-                        gap: 12px;
+                        gap: var(--space-3);
                         align-items: end;
                         margin-bottom: 24px;
-                        padding: 18px 20px;
-                        background: #ffffff;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 8px;
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                        padding: var(--space-4) var(--space-4);
+                        background: var(--color-surface);
+                        border: 1px solid var(--color-outline-variant);
+                        border-radius: var(--radius-sm);
+                        box-shadow: var(--elevation-2);
                     }
 
                     .filtro-campo {
                         display: flex;
                         flex-direction: column;
-                        gap: 6px;
+                        gap: var(--space-1);
                         min-width: 0;
                     }
 
                     .filtro-label {
-                        font-size: 13px;
+                        font-size: var(--font-body-md);
                         font-weight: 600;
-                        color: #334155;
+                        color: var(--color-on-surface-variant);
                         display: block;
                         white-space: nowrap;
                         overflow: hidden;
@@ -211,34 +211,34 @@ function Imoveis() {
                         min-width: 0;
                         box-sizing: border-box;
                         height: 40px;
-                        padding: 0 12px;
-                        border: 1px solid #cbd5e1;
-                        border-radius: 6px;
-                        background: #ffffff;
-                        color: #1e293b;
-                        font-size: 14px;
+                        padding: 0 var(--space-3);
+                        border: 1px solid var(--color-outline-variant);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-input-surface);
+                        color: var(--color-on-surface);
+                        font-size: var(--font-body-md);
                         transition: border-color 0.15s ease, box-shadow 0.15s ease;
                     }
 
                     .filtro-input:focus {
                         outline: none;
-                        border-color: #2563eb;
-                        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+                        border-color: var(--color-primary);
+                        box-shadow: var(--elevation-2);
                     }
 
                     .filtro-input::placeholder {
-                        color: #94a3b8;
-                        font-size: 13px;
+                        color: var(--color-on-surface-variant);
+                        font-size: var(--font-body-md);
                     }
 
                     .filtro-botao {
                         height: 40px;
-                        padding: 0 18px;
+                        padding: 0 var(--space-4);
                         border: none;
-                        border-radius: 6px;
+                        border-radius: var(--radius-sm);
                         cursor: pointer;
                         font-weight: 600;
-                        font-size: 14px;
+                        font-size: var(--font-body-md);
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
@@ -247,23 +247,23 @@ function Imoveis() {
                     }
 
                     .filtro-buscar {
-                        background: #2563eb;
-                        color: #ffffff;
+                        background: var(--color-primary);
+                        color: var(--color-on-primary);
                     }
 
                     .filtro-buscar:hover {
-                        background: #1d4ed8;
+                        background: var(--color-primary);
                     }
 
                     .filtro-limpar {
-                        background: #f1f5f9;
-                        color: #475569;
-                        border: 1px solid #cbd5e1;
+                        background: var(--color-surface-variant);
+                        color: var(--color-on-surface);
+                        border: 1px solid var(--color-outline-variant);
                     }
 
                     .filtro-limpar:hover {
-                        background: #e2e8f0;
-                        color: #1e293b;
+                        background: var(--color-surface-variant);
+                        color: var(--color-on-surface);
                     }
 
                     @media (max-width: 1100px) {
@@ -278,13 +278,13 @@ function Imoveis() {
                     .imoveis-erro {
                         display: flex;
                         align-items: flex-start;
-                        gap: 12px;
-                        margin: 0 0 24px;
-                        padding: 14px 16px;
-                        border: 1px solid #f2b8b5;
-                        border-radius: 8px;
-                        background: #fff5f5;
-                        color: #8a1c1c;
+                        gap: var(--space-3);
+                        margin: 0 0 var(--space-5);
+                        padding: var(--space-3) var(--space-4);
+                        border: 1px solid var(--color-error);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-error-container);
+                        color: var(--color-error);
                     }
 
                     .imoveis-erro strong {
@@ -298,37 +298,37 @@ function Imoveis() {
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        background: rgba(0, 0, 0, .35);
+                        background: var(--color-scrim);
                         z-index: 1000;
                         backdrop-filter: blur(2px);
                     }
 
                     .confirmacao-exclusao-conteudo {
                         width: min(420px, calc(100vw - 32px));
-                        padding: 24px;
-                        border-radius: 8px;
-                        background: white;
-                        box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+                        padding: var(--space-5);
+                        border-radius: var(--radius-sm);
+                        background: var(--color-surface);
+                        box-shadow: var(--elevation-2);
                     }
 
                     .confirmacao-exclusao-acoes {
                         display: flex;
                         justify-content: flex-end;
-                        gap: 8px;
+                        gap: var(--space-2);
                         margin-top: 20px;
                     }
 
                     .confirmacao-exclusao-acoes button {
                         min-height: 38px;
-                        padding: 0 14px;
+                        padding: 0 var(--space-3);
                         border: 0;
-                        border-radius: 4px;
+                        border-radius: var(--radius-xs);
                         cursor: pointer;
                     }
 
                     .confirmacao-excluir {
-                        color: white;
-                        background: #d32f2f;
+                        color: var(--color-on-primary);
+                        background: var(--color-error);
                     }
                 `}
             </style>
@@ -448,15 +448,15 @@ function Imoveis() {
                 </div>
             )}
 
-            {carregando && <p role="status" style={{ color: "#64748b", textAlign: "center", padding: "30px 0" }}>Carregando imóveis...</p>}
+            {carregando && <p role="status" style={{ color: "var(--color-on-surface)", textAlign: "center", padding: "var(--space-6) 0" }}>Carregando imóveis...</p>}
             {!carregando && !erro && imoveis.length === 0 && (
-                <div style={{ textAlign: "center", padding: "48px 24px", background: "#ffffff", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                    <p style={{ fontSize: "16px", fontWeight: "600", color: "#334155", margin: 0 }}>Nenhum imóvel encontrado</p>
-                    <p style={{ fontSize: "14px", color: "#64748b", margin: "6px 0 16px 0" }}>Tente ajustar os filtros de busca ou cadastre um novo imóvel.</p>
+                <div style={{ textAlign: "center", padding: "var(--space-7) var(--space-5)", background: "var(--color-surface)", borderRadius: "var(--radius-sm)", border: "1px solid var(--color-outline-variant)" }}>
+                    <p style={{ fontSize: "var(--font-body-lg)", fontWeight: "600", color: "var(--color-on-surface)", margin: 0 }}>Nenhum imóvel encontrado</p>
+                    <p style={{ fontSize: "var(--font-body-md)", color: "var(--color-on-surface)", margin: "var(--space-1) 0 var(--space-4) 0" }}>Tente ajustar os filtros de busca ou cadastre um novo imóvel.</p>
                     <button
                         type="button"
                         onClick={limparFiltros}
-                        style={{ background: "#f1f5f9", color: "#2563eb", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "8px 16px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}
+                        style={{ background: "var(--color-surface-variant)", color: "var(--color-on-surface)", border: "1px solid var(--color-outline-variant)", borderRadius: "var(--radius-sm)", padding: "var(--space-2) var(--space-4)", fontSize: "var(--font-body-md)", fontWeight: "600", cursor: "pointer" }}
                     >
                         Limpar filtros
                     </button>

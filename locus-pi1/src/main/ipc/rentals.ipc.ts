@@ -1,5 +1,6 @@
 import { UpdateRentalPrerequisites, UpdateRentalPrerequisitesDTO } from "../application/use-cases/UpdateRentalPrerequisites";
-import { ipcMain } from "electron";
+import { ipcMain, shell } from "electron";
+import path from "node:path";
 import { CreateRental, CreateRentalDTO } from "../application/use-cases/CreateRental";
 import { GetRental } from "../application/use-cases/GetRental";
 import { ListRentals } from "../application/use-cases/ListRentals";
@@ -13,6 +14,8 @@ import { CancelRental, CancelRentalOptions } from "../application/use-cases/Canc
 import { GetRentalTerminationSummary } from "../application/use-cases/GetRentalTerminationSummary";
 import { TerminateRental, TerminateRentalDTO } from "../application/use-cases/TerminateRental";
 import { ListPayments } from "../application/use-cases/ListPayments";
+import { SettleRentalInstallment, SettleRentalInstallmentInput } from "../application/use-cases/SettleRentalInstallment";
+import { LocalFileStorage } from "../infrastructure/filesystem/LocalFileStorage";
 
 export function registerRentalsIpc() {
   const rentalRepo = new DrizzleRentalRepository();
@@ -20,6 +23,7 @@ export function registerRentalsIpc() {
   const clientRepo = new DrizzleClientRepository();
   const inspectionRepo = new DrizzleInspectionRepository();
   const historyRepo = new DrizzlePropertyHistoryRepository();
+  const fileStorage = new LocalFileStorage();
   ipcMain.handle("rentals:list-contract-history", async () => {
   return historyRepo.findAllContracts();
 });
@@ -33,6 +37,7 @@ export function registerRentalsIpc() {
   const getTerminationSummary = new GetRentalTerminationSummary(rentalRepo, historyRepo, inspectionRepo, clientRepo, propertyRepo);
   const terminateRental = new TerminateRental(rentalRepo, inspectionRepo, historyRepo, clientRepo, propertyRepo);
   const listPayments = new ListPayments(rentalRepo, historyRepo, clientRepo, propertyRepo);
+  const settleRentalInstallment = new SettleRentalInstallment(rentalRepo, historyRepo, listPayments, fileStorage);
 
   ipcMain.handle("rentals:create", async (_, data: CreateRentalDTO) => createRental.execute(data));
   ipcMain.handle("rentals:get", async (_, id: string) => getRental.execute(id));
@@ -48,4 +53,17 @@ export function registerRentalsIpc() {
 
   ipcMain.handle("payments:list", async () => listPayments.execute());
   ipcMain.handle("payments:get-by-tenant", async (_, tenantId: string) => listPayments.execute(tenantId));
+  ipcMain.handle("payments:settle-installment", async (_, input: SettleRentalInstallmentInput) => settleRentalInstallment.execute(input));
+  ipcMain.handle("payments:open-receipt", async (_, paymentId: string) => {
+    const payment = await historyRepo.findPaymentById?.(paymentId);
+    if (!payment?.receiptPath) throw new Error("Este pagamento não possui comprovante vinculado.");
+    const receiptRoot = path.resolve(fileStorage.getPath("payment-receipts", ""));
+    const receiptPath = path.resolve(payment.receiptPath);
+    if (!receiptPath.startsWith(`${receiptRoot}${path.sep}`) || !(await fileStorage.exists(receiptPath))) {
+      throw new Error("O arquivo do comprovante não foi encontrado.");
+    }
+    const error = await shell.openPath(receiptPath);
+    if (error) throw new Error(`Não foi possível abrir o comprovante: ${error}`);
+    return { success: true };
+  });
 }

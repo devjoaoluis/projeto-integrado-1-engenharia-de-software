@@ -346,25 +346,25 @@ function VisaoGeralImovel() {
         .visao-geral-container {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: var(--space-5);
         }
 
         .voltar-btn {
           align-self: flex-start;
           background: none;
           border: none;
-          color: #1976d2;
+          color: var(--color-on-surface);
           font-weight: bold;
           cursor: pointer;
           margin-bottom: 8px;
         }
 
         .imovel-header-card {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+          background: var(--color-surface);
+          border-radius: var(--radius-md);
+          box-shadow: var(--elevation-2);
           display: flex;
-          gap: 24px;
+          gap: var(--space-5);
           overflow: hidden;
         }
 
@@ -372,34 +372,34 @@ function VisaoGeralImovel() {
           width: 300px;
           height: 200px;
           object-fit: cover;
-          background-color: #e0e0e0;
+          background-color: var(--color-surface-variant);
         }
 
         .imovel-header-info {
-          padding: 20px;
+          padding: var(--space-4);
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 14px;
+          gap: var(--space-3);
         }
 
         .galeria-imovel {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 20px;
+          background: var(--color-surface);
+          border-radius: var(--radius-md);
+          box-shadow: var(--elevation-2);
+          padding: var(--space-4);
         }
 
         .galeria-imovel h3 {
-          margin: 0 0 16px;
-          color: #1976d2;
+          margin: 0 0 var(--space-4);
+          color: var(--color-on-surface);
         }
 
         .galeria-visualizador {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 16px;
+          gap: var(--space-4);
         }
 
         .galeria-conteudo {
@@ -408,8 +408,8 @@ function VisaoGeralImovel() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f1f3f5;
-          border-radius: 8px;
+          background: var(--color-primary-container);
+          border-radius: var(--radius-sm);
           overflow: hidden;
         }
 
@@ -424,44 +424,44 @@ function VisaoGeralImovel() {
           width: 40px;
           height: 40px;
           border: none;
-          border-radius: 50%;
-          background: #1976d2;
-          color: white;
-          font-size: 22px;
+          border-radius: var(--radius-full);
+          background: var(--color-primary);
+          color: var(--color-on-primary);
+          font-size: var(--font-title-lg);
           cursor: pointer;
         }
 
         .galeria-navegacao:disabled {
-          background: #c8cdd2;
+          background: var(--color-background);
           cursor: default;
         }
 
         .galeria-legenda {
-          margin: 12px 0 0;
+          margin: var(--space-3) 0 0;
           text-align: center;
-          color: #666;
-          font-size: 13px;
+          color: var(--color-on-surface-variant);
+          font-size: var(--font-body-md);
         }
 
         .associacao-locacao {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 20px;
+          background: var(--color-surface);
+          border-radius: var(--radius-md);
+          box-shadow: var(--elevation-2);
+          padding: var(--space-4);
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: var(--space-3);
         }
 
         .associacao-locacao h3 {
-          margin: 0 0 2px;
-          color: #1976d2;
+          margin: 0 0 var(--space-1);
+          color: var(--color-on-surface);
         }
 
         .form-locacao {
           display: grid;
           grid-template-columns: 2fr repeat(3, 1fr) auto;
-          gap: 12px;
+          gap: var(--space-3);
           align-items: end;
           margin-top: 2px;
         }
@@ -469,28 +469,28 @@ function VisaoGeralImovel() {
         .form-locacao label {
           display: flex;
           flex-direction: column;
-          gap: 6px;
-          color: #555;
-          font-size: 12px;
+          gap: var(--space-1);
+          color: var(--color-on-surface-variant);
+          font-size: var(--font-body-sm);
           font-weight: 600;
         }
 
         .form-locacao input,
         .form-locacao select {
           min-height: 40px;
-          padding: 0 10px;
-          border: 1px solid #c8cdd2;
-          border-radius: 4px;
-          background: white;
+          padding: 0 var(--space-2);
+          border: 1px solid var(--color-outline-variant);
+          border-radius: var(--radius-xs);
+          background: var(--color-surface);
         }
 
         .form-locacao button {
           min-height: 40px;
-          padding: 0 14px;
+          padding: 0 var(--space-3);
           border: none;
-          border-radius: 4px;
-          background: #1976d2;
-          color: white;
+          border-radius: var(--radius-xs);
+          background: var(--color-primary);
+          color: var(--color-on-primary);
           cursor: pointer;
           font-weight: 600;
         }
@@ -498,11 +498,11 @@ function VisaoGeralImovel() {
         .botao-desassociar {
           align-self: flex-start;
           min-height: 40px;
-          padding: 0 14px;
+          padding: 0 var(--space-3);
           border: none;
-          border-radius: 4px;
-          background: #1976d2;
-          color: white;
+          border-radius: var(--radius-xs);
+          background: var(--color-primary);
+          color: var(--color-on-primary);
           cursor: pointer;
           font-weight: 600;
         }
@@ -510,18 +510,18 @@ function VisaoGeralImovel() {
         .form-locacao-valor {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: var(--space-1);
           min-height: 40px;
-          color: #555;
-          font-size: 12px;
+          color: var(--color-on-surface);
+          font-size: var(--font-body-sm);
         }
 
         .form-locacao-valor span {
           min-height: 40px;
           display: flex;
           align-items: center;
-          color: #1976d2;
-          font-size: 16px;
+          color: var(--color-on-surface);
+          font-size: var(--font-body-lg);
         }
 
         @media (max-width: 900px) {
@@ -535,22 +535,22 @@ function VisaoGeralImovel() {
         }
 
         .imovel-titulo {
-          font-size: 24px;
+          font-size: var(--font-headline-sm);
           font-weight: bold;
-          color: #1976d2;
+          color: var(--color-on-surface);
           margin: 0;
         }
 
         .imovel-endereco {
-          color: #666;
-          font-size: 14px;
+          color: var(--color-on-surface-variant);
+          font-size: var(--font-body-md);
           margin: 0;
         }
 
         .imovel-descricao {
           max-width: 720px;
           margin: 0;
-          color: #444;
+          color: var(--color-on-surface);
           white-space: pre-wrap;
           line-height: 1.5;
         }
@@ -558,37 +558,37 @@ function VisaoGeralImovel() {
         .imovel-detalhes {
           display: flex;
           flex-wrap: wrap;
-          gap: 12px 20px;
+          gap: var(--space-3) var(--space-4);
           margin: 0;
-          color: #555;
-          font-size: 14px;
+          color: var(--color-on-surface);
+          font-size: var(--font-body-md);
         }
 
         .locatario-atual {
-          background: #eef8f1;
-          border: 1px solid #b7dfc1;
-          border-radius: 8px;
-          padding: 12px;
-          color: #245b32;
+          background: var(--color-success-container);
+          border: 1px solid var(--color-success);
+          border-radius: var(--radius-sm);
+          padding: var(--space-3);
+          color: var(--color-success);
           margin: 0;
         }
 
         .historico-locacao {
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          padding: 20px;
+          background: var(--color-surface);
+          border-radius: var(--radius-md);
+          box-shadow: var(--elevation-2);
+          padding: var(--space-4);
         }
 
         .historico-locacao h3 {
-          margin: 0 0 16px;
-          color: #1976d2;
+          margin: 0 0 var(--space-4);
+          color: var(--color-on-surface);
         }
 
         .historico-locacao-lista {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: var(--space-2);
           margin: 0;
           padding: 0;
           list-style: none;
@@ -597,12 +597,12 @@ function VisaoGeralImovel() {
         .historico-locacao-item {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 12px;
-          padding: 12px;
-          border: 1px solid #e5e7eb;
-          border-radius: 6px;
-          color: #444;
-          font-size: 14px;
+          gap: var(--space-3);
+          padding: var(--space-3);
+          border: 1px solid var(--color-outline-variant);
+          border-radius: var(--radius-sm);
+          color: var(--color-on-surface);
+          font-size: var(--font-body-md);
         }
 
         .associacao-locacao > p[role="alert"],
@@ -616,9 +616,9 @@ function VisaoGeralImovel() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(0, 0, 0, .35);
+          background: var(--color-scrim);
           z-index: 1000;
-          padding: 16px;
+          padding: var(--space-4);
           overflow-y: auto;
         }
 
@@ -626,67 +626,67 @@ function VisaoGeralImovel() {
           width: min(420px, calc(100vw - 32px));
           max-height: calc(100vh - 32px);
           overflow-y: auto;
-          padding: 24px;
-          border-radius: 8px;
-          background: white;
-          box-shadow: 0 8px 28px rgba(0, 0, 0, .2);
+          padding: var(--space-5);
+          border-radius: var(--radius-sm);
+          background: var(--color-surface);
+          box-shadow: var(--elevation-2);
           box-sizing: border-box;
         }
 
         .confirmacao-exclusao-acoes {
           display: flex;
           justify-content: flex-end;
-          gap: 8px;
+          gap: var(--space-2);
           margin-top: 20px;
           flex-wrap: wrap;
         }
 
         .confirmacao-exclusao-acoes button {
           min-height: 38px;
-          padding: 0 14px;
+          padding: 0 var(--space-3);
           border: 0;
-          border-radius: 4px;
+          border-radius: var(--radius-xs);
           cursor: pointer;
         }
 
         .confirmacao-excluir {
-          color: white;
-          background: #d32f2f;
+          color: var(--color-on-primary);
+          background: var(--color-error);
         }
 
         .imovel-tags {
           display: flex;
-          gap: 8px;
+          gap: var(--space-2);
         }
 
         .abas-container {
           display: flex;
-          border-bottom: 2px solid #e0e0e0;
-          gap: 16px;
+          border-bottom: 2px solid var(--color-outline-variant);
+          gap: var(--space-4);
         }
 
         .aba-btn {
-          padding: 12px 16px;
+          padding: var(--space-3) var(--space-4);
           background: none;
           border: none;
-          font-size: 15px;
+          font-size: var(--font-body-md);
           font-weight: 600;
-          color: #666;
+          color: var(--color-on-surface-variant);
           cursor: pointer;
           border-bottom: 3px solid transparent;
           transition: all 0.2s;
         }
 
         .aba-btn.ativa {
-          color: #1976d2;
-          border-bottom-color: #1976d2;
+          color: var(--color-on-surface);
+          border-bottom-color: var(--color-primary);
         }
 
         .aba-conteudo {
-          background: white;
-          padding: 24px;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          background: var(--color-surface);
+          padding: var(--space-5);
+          border-radius: var(--radius-md);
+          box-shadow: var(--elevation-2);
         }
 
         .tabela-custom {
@@ -697,17 +697,17 @@ function VisaoGeralImovel() {
 
         .tabela-custom th,
         .tabela-custom td {
-          padding: 12px;
-          border-bottom: 1px solid #eee;
+          padding: var(--space-3);
+          border-bottom: 1px solid var(--color-outline-variant);
         }
 
         .tabela-custom th {
-          color: #444;
-          font-size: 14px;
+          color: var(--color-on-surface);
+          font-size: var(--font-body-md);
         }
 
         .modal-rescisao-resumo p {
-          margin: 8px 0;
+          margin: var(--space-2) 0;
         }
 
         .modal-rescisao-tabela {
@@ -889,11 +889,11 @@ function VisaoGeralImovel() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "12px",
-                background: "#f8fafc",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
+                marginBottom: "var(--space-3)",
+                background: "var(--color-primary-container)",
+                padding: "var(--space-2) var(--space-3)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-outline-variant)",
               }}
             >
               <p style={{ margin: 0 }}>
@@ -910,12 +910,12 @@ function VisaoGeralImovel() {
                     )
                   }
                   style={{
-                    backgroundColor: "#2563eb",
-                    color: "#ffffff",
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-on-primary)",
                     border: "none",
-                    borderRadius: "6px",
-                    padding: "6px 12px",
-                    fontSize: "13px",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "var(--space-1) var(--space-3)",
+                    fontSize: "var(--font-body-md)",
                     fontWeight: "600",
                     cursor: "pointer",
                   }}
@@ -1022,9 +1022,9 @@ function VisaoGeralImovel() {
             <div
               style={{
                 display: "flex",
-                gap: "10px",
+                gap: "var(--space-2)",
                 flexWrap: "wrap",
-                marginTop: "10px",
+                marginTop: "var(--space-2)",
               }}
             >
               <button
@@ -1041,14 +1041,14 @@ function VisaoGeralImovel() {
                 type="button"
                 onClick={abrirRescisao}
                 style={{
-                  backgroundColor: "#dc2626",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-error)",
+                  color: "var(--color-on-error)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 Encerrar contrato
@@ -1062,14 +1062,14 @@ function VisaoGeralImovel() {
                   )
                 }
                 style={{
-                  backgroundColor: "#16a34a",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-success)",
+                  color: "var(--color-on-success)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 Vistoria de Entrada
@@ -1083,14 +1083,14 @@ function VisaoGeralImovel() {
                   )
                 }
                 style={{
-                  backgroundColor: "#ea580c",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-warning)",
+                  color: "var(--color-on-warning)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 Vistoria de Saída
@@ -1102,14 +1102,14 @@ function VisaoGeralImovel() {
                   navigate(`/contratos?imovelId=${imovel.id}`)
                 }
                 style={{
-                  backgroundColor: "#1877f2",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-on-primary)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "8px 16px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-4)",
                   fontWeight: "bold",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "var(--font-body-md)",
                 }}
               >
                 Gerar Contrato em PDF
@@ -1173,13 +1173,13 @@ function VisaoGeralImovel() {
 
               <div
                 style={{
-                  backgroundColor: "#fff7ed",
-                  border: "1px solid #fed7aa",
-                  padding: "10px 14px",
-                  borderRadius: "6px",
-                  margin: "12px 0",
-                  fontSize: "13px",
-                  color: "#9a3412",
+                  backgroundColor: "var(--color-warning-container)",
+                  border: "1px solid var(--color-warning)",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--radius-sm)",
+                  margin: "var(--space-3) 0",
+                  fontSize: "var(--font-body-md)",
+                  color: "var(--color-on-surface)",
                   textAlign: "left",
                 }}
               >
@@ -1202,11 +1202,11 @@ function VisaoGeralImovel() {
                 <button
                   type="button"
                   style={{
-                    backgroundColor: "#ea580c",
-                    color: "#ffffff",
+                    backgroundColor: "var(--color-warning)",
+                    color: "var(--color-on-warning)",
                     border: "none",
-                    borderRadius: "6px",
-                    padding: "8px 14px",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "var(--space-2) var(--space-3)",
                     fontWeight: "bold",
                     cursor: "pointer",
                   }}
@@ -1264,7 +1264,7 @@ function VisaoGeralImovel() {
               {erroRescisao && (
                 <p
                   role="alert"
-                  style={{ color: "#dc2626" }}
+                  style={{ color: "var(--color-error)" }}
                 >
                   {erroRescisao}
                 </p>
@@ -1276,11 +1276,11 @@ function VisaoGeralImovel() {
                   <div
                     className="modal-rescisao-resumo"
                     style={{
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                      padding: "14px",
-                      margin: "16px 0",
+                      background: "var(--color-primary-container)",
+                      border: "1px solid var(--color-outline-variant)",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "var(--space-3)",
+                      margin: "var(--space-4) 0",
                     }}
                   >
                     <p>
@@ -1355,19 +1355,19 @@ function VisaoGeralImovel() {
                   {/* VISTORIA DE SAÍDA */}
                   <div
                     style={{
-                      margin: "16px 0",
-                      padding: "12px",
-                      borderRadius: "8px",
+                      margin: "var(--space-4) 0",
+                      padding: "var(--space-3)",
+                      borderRadius: "var(--radius-sm)",
                       background:
                         resumoRescisao.exitInspectionRequired &&
                         !resumoRescisao.hasExitInspection
-                          ? "#fff7ed"
-                          : "#f0fdf4",
+                          ? "var(--color-warning-container)"
+                          : "var(--color-success-container)",
                       color:
                         resumoRescisao.exitInspectionRequired &&
                         !resumoRescisao.hasExitInspection
-                          ? "#9a3412"
-                          : "#166534",
+                          ? "var(--color-primary)"
+                          : "var(--color-success)",
                     }}
                   >
                     <strong>Vistoria de saída:</strong>{" "}
@@ -1391,12 +1391,12 @@ function VisaoGeralImovel() {
                           }}
                           style={{
                             display: "block",
-                            marginTop: "10px",
-                            padding: "8px 12px",
+                            marginTop: "var(--space-2)",
+                            padding: "var(--space-2) var(--space-3)",
                             border: "none",
-                            borderRadius: "5px",
-                            background: "#ea580c",
-                            color: "white",
+                            borderRadius: "var(--radius-xs)",
+                            background: "var(--color-warning)",
+                            color: "var(--color-on-primary)",
                             cursor: "pointer",
                           }}
                         >
@@ -1410,10 +1410,10 @@ function VisaoGeralImovel() {
                     <label
                       style={{
                         display: "flex",
-                        gap: "8px",
+                        gap: "var(--space-2)",
                         alignItems: "flex-start",
-                        margin: "14px 0",
-                        fontSize: "13px",
+                        margin: "var(--space-3) 0",
+                        fontSize: "var(--font-body-md)",
                       }}
                     >
                       <input
@@ -1436,8 +1436,8 @@ function VisaoGeralImovel() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
-                      marginTop: "14px",
+                      gap: "var(--space-1)",
+                      marginTop: "var(--space-3)",
                     }}
                   >
                     Observações sobre o encerramento
@@ -1451,9 +1451,9 @@ function VisaoGeralImovel() {
                       rows={3}
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        border: "1px solid #cbd5e1",
-                        borderRadius: "6px",
+                        padding: "var(--space-2)",
+                        border: "1px solid var(--color-outline-variant)",
+                        borderRadius: "var(--radius-sm)",
                         resize: "vertical",
                         boxSizing: "border-box",
                       }}
@@ -1465,8 +1465,8 @@ function VisaoGeralImovel() {
                     <p
                       role="alert"
                       style={{
-                        color: "#dc2626",
-                        fontSize: "13px",
+                        color: "var(--color-error)",
+                        fontSize: "var(--font-body-md)",
                       }}
                     >
                       {resumoRescisao.blockReason}
@@ -1522,13 +1522,13 @@ function VisaoGeralImovel() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "14px",
+                marginBottom: "var(--space-3)",
               }}
             >
               <span
                 style={{
-                  fontSize: "14px",
-                  color: "#64748b",
+                  fontSize: "var(--font-body-md)",
+                  color: "var(--color-on-surface)",
                 }}
               >
                 Histórico de locações e contratos do imóvel
@@ -1540,13 +1540,13 @@ function VisaoGeralImovel() {
                   navigate(`/contratos?imovelId=${imovel.id}`)
                 }
                 style={{
-                  backgroundColor: "#1877f2",
-                  color: "#ffffff",
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-on-primary)",
                   border: "none",
-                  borderRadius: "6px",
-                  padding: "6px 14px",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-1) var(--space-3)",
                   fontWeight: "bold",
-                  fontSize: "13px",
+                  fontSize: "var(--font-body-md)",
                   cursor: "pointer",
                 }}
               >
@@ -1602,6 +1602,26 @@ function VisaoGeralImovel() {
             )}
 
           {/* PAGAMENTOS */}
+          {abaAtiva === "pagamentos" && (
+            <div style={{ marginBottom: "var(--space-3)" }}>
+              <button
+                type="button"
+                onClick={() => navigate(`/pagamentos?propertyId=${imovel.id}`)}
+                style={{
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-on-primary)",
+                  border: "none",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "var(--space-2) var(--space-3)",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
+              >
+                Ver parcelas e histórico financeiro
+              </button>
+            </div>
+          )}
+
           {abaAtiva === "pagamentos" &&
             imovel.pagamentos.length === 0 && (
               <p>Nenhum registro encontrado.</p>
@@ -1654,21 +1674,21 @@ function VisaoGeralImovel() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "14px",
+                  marginBottom: "var(--space-3)",
                   flexWrap: "wrap",
-                  gap: "10px",
+                  gap: "var(--space-2)",
                 }}
               >
                 <span
                   style={{
-                    fontSize: "14px",
-                    color: "#64748b",
+                    fontSize: "var(--font-body-md)",
+                    color: "var(--color-on-surface)",
                   }}
                 >
                   Vistorias de entrada e saída com fotos e vídeos
                 </span>
 
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ display: "flex", gap: "var(--space-2)" }}>
                   <button
                     type="button"
                     onClick={() =>
@@ -1677,14 +1697,14 @@ function VisaoGeralImovel() {
                       )
                     }
                     style={{
-                      backgroundColor: "#16a34a",
-                      color: "#ffffff",
+                      backgroundColor: "var(--color-success)",
+                      color: "var(--color-on-success)",
                       border: "none",
-                      borderRadius: "6px",
-                      padding: "8px 14px",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "var(--space-2) var(--space-3)",
                       fontWeight: "bold",
                       cursor: "pointer",
-                      fontSize: "13px",
+                      fontSize: "var(--font-body-md)",
                     }}
                   >
                     + Vistoria de Entrada
@@ -1698,14 +1718,14 @@ function VisaoGeralImovel() {
                       )
                     }
                     style={{
-                      backgroundColor: "#ea580c",
-                      color: "#ffffff",
+                      backgroundColor: "var(--color-warning)",
+                      color: "var(--color-on-warning)",
                       border: "none",
-                      borderRadius: "6px",
-                      padding: "8px 14px",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "var(--space-2) var(--space-3)",
                       fontWeight: "bold",
                       cursor: "pointer",
-                      fontSize: "13px",
+                      fontSize: "var(--font-body-md)",
                     }}
                   >
                     + Vistoria de Saída
@@ -1740,18 +1760,18 @@ function VisaoGeralImovel() {
                             <span
                               style={{
                                 display: "inline-block",
-                                padding: "2px 8px",
-                                borderRadius: "10px",
-                                fontSize: "12px",
+                                padding: "var(--space-1) var(--space-2)",
+                                borderRadius: "var(--radius-md)",
+                                fontSize: "var(--font-body-sm)",
                                 fontWeight: "600",
                                 backgroundColor:
                                   item.tipoVistoria === "EXIT"
-                                    ? "#ffedd5"
-                                    : "#dcfce7",
+                                    ? "var(--color-warning-container)"
+                                    : "var(--color-success-container)",
                                 color:
                                   item.tipoVistoria === "EXIT"
-                                    ? "#c2410c"
-                                    : "#15803d",
+                                    ? "var(--color-primary)"
+                                    : "var(--color-success)",
                               }}
                             >
                               {item.tipoVistoria === "EXIT"
@@ -1781,12 +1801,12 @@ function VisaoGeralImovel() {
                                 );
                               }}
                               style={{
-                                backgroundColor: "#f1f5f9",
-                                color: "#1877f2",
-                                border: "1px solid #cbd5e1",
-                                borderRadius: "4px",
-                                padding: "4px 8px",
-                                fontSize: "12px",
+                                backgroundColor: "var(--color-primary-container)",
+                                color: "var(--color-on-surface)",
+                                border: "1px solid var(--color-outline-variant)",
+                                borderRadius: "var(--radius-xs)",
+                                padding: "var(--space-1) var(--space-2)",
+                                fontSize: "var(--font-body-sm)",
                                 fontWeight: "600",
                                 cursor: "pointer",
                               }}
@@ -1796,8 +1816,8 @@ function VisaoGeralImovel() {
                           ) : (
                             <span
                               style={{
-                                fontSize: "12px",
-                                color: "#94a3b8",
+                                fontSize: "var(--font-body-sm)",
+                                color: "var(--color-on-surface)",
                               }}
                             >
                               —

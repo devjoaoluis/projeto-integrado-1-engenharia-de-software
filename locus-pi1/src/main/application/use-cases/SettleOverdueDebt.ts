@@ -33,6 +33,9 @@ export class SettleOverdueDebt {
     if (!input.referenceMonth || !input.referenceMonth.trim()) {
       throw new Error("O mês de referência (referenceMonth) é obrigatório.");
     }
+    if (input.automatic === true) {
+      throw new Error("A baixa de parcelas deve ser realizada manualmente pela usuária.");
+    }
 
     const paidAt = input.paidAt ?? Date.now();
 
@@ -52,17 +55,10 @@ export class SettleOverdueDebt {
       );
     }
 
-    // 2. Regra de Negócio RN05:
-    // Bloquear baixa automática para débitos com mais de 2 meses de atraso (>60 dias), mantendo-os pendentes.
-    const isAutomatic = input.automatic === true;
-    if (isAutomatic && targetDebt.isOverTwoMonths) {
-      throw new Error(
-        "RN05: Baixa automática bloqueada para débitos com mais de 2 meses de atraso. O débito permanece pendente."
-      );
+    const finalAmount = targetDebt.totalAmount;
+    if (input.amount !== undefined && Math.abs(input.amount - finalAmount) > 0.01) {
+      throw new Error("O valor da baixa deve corresponder ao total atualizado do débito.");
     }
-
-    // 3. Montar e persistir o registro financeiro de pagamento no histórico do imóvel
-    const finalAmount = input.amount !== undefined ? input.amount : targetDebt.totalAmount;
 
     const payment: PropertyPayment = {
       id: crypto.randomUUID(),
@@ -70,10 +66,11 @@ export class SettleOverdueDebt {
       contractId: targetDebt.contractId || "",
       amount: finalAmount,
       paidAt,
-      description:
-        input.description ||
-        `Quitação de aluguel (${targetDebt.referenceMonth}) com encargos moratórios (RN06) - ${isAutomatic ? "Baixa Automática" : "Baixa Manual"}`,
+      description: input.description || `Baixa manual de aluguel - ${targetDebt.referenceMonth}`,
       createdAt: Date.now(),
+      referenceMonth: targetDebt.referenceMonth,
+      dueDate: targetDebt.dueDate,
+      receiptPath: null,
     };
 
     const savedPayment = await this.historyRepository.createPayment(payment);

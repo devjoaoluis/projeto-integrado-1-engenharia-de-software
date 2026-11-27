@@ -10,13 +10,17 @@ import { UpdateVisit, UpdateVisitDTO } from "../application/use-cases/UpdateVisi
 import { DeleteVisit } from "../application/use-cases/DeleteVisit";
 import { ListUpcomingVisits } from "../application/use-cases/ListUpcomingVisits";
 import { GetVisitAlertsOptions } from "../application/use-cases/GetVisitAlerts";
-import { VisitReminderService } from "../application/services/VisitReminderService";
+import {
+  NotificationServiceVisitNotifier,
+  VisitReminderService,
+} from "../application/services/VisitReminderService";
 import { VisitReminderStage } from "../domain/entities/VisitReminder";
 import { VisitFilter } from "../domain/repositories/IVisitRepository";
+import { NotificationService } from "../application/services/NotificationService";
 
 let activeReminderService: VisitReminderService | null = null;
 
-export function registerVisitsIpc() {
+export function registerVisitsIpc(notificationService: NotificationService) {
   const visitRepo = new DrizzleVisitRepository();
   const reminderRepo = new DrizzleVisitReminderRepository();
   const propertyRepo = new DrizzlePropertyRepository();
@@ -28,14 +32,18 @@ export function registerVisitsIpc() {
   const updateVisit = new UpdateVisit(visitRepo, propertyRepo, clientRepo);
   const deleteVisit = new DeleteVisit(visitRepo);
   const listUpcomingVisits = new ListUpcomingVisits(visitRepo);
-  const reminderService = new VisitReminderService(visitRepo, reminderRepo);
+  const reminderService = new VisitReminderService(
+    visitRepo,
+    reminderRepo,
+    new NotificationServiceVisitNotifier(notificationService)
+  );
   activeReminderService = reminderService;
 
   ipcMain.handle("visits:create", async (_, data: CreateVisitDTO) => {
     const result = await createVisit.execute(data);
     // Dispara checagem de lembretes ao criar nova visita
     reminderService.checkAndDispatch().catch((err) => {
-      void err;
+      console.error("Erro ao verificar lembretes após criar visita:", err);
     });
     return result;
   });
@@ -47,7 +55,7 @@ export function registerVisitsIpc() {
     const result = await updateVisit.execute(data);
     // Dispara checagem de lembretes após remarcação/atualização
     reminderService.checkAndDispatch().catch((err) => {
-      void err;
+      console.error("Erro ao verificar lembretes após atualizar visita:", err);
     });
     return result;
   });
@@ -74,9 +82,6 @@ export function registerVisitsIpc() {
       return reminderService.dismissReminder(data.visitId, data.stage);
     }
   );
-
-  // Inicia o monitoramento periódico em background a cada 60 segundos
-  reminderService.start(60000);
 
   return reminderService;
 }

@@ -2,6 +2,7 @@ import { PropertyContract, PropertyHistory, PropertyPayment, PropertyInspection,
 
 export interface IPropertyHistoryRepository {
   findByPropertyId(propertyId: string): Promise<PropertyHistory>;
+  findPaymentById?(id: string): Promise<PropertyPayment | null>;
   findContractById(id: string): Promise<PropertyContract | null>;
   findAllContracts(): Promise<PropertyContract[]>;
   findContractsByTenantId?(tenantId: string): Promise<PropertyContract[]>;
